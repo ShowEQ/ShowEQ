@@ -31,8 +31,6 @@ struct ShowEQParams
   bool           fast_machine;
   bool           createUnknownSpawns;
   bool           keep_selected_visible;
-  bool           promisc;
-  bool           net_stats;
   bool           pvp;
   bool		 deitypvp;
   bool           walkpathrecord;

@@ -1,5 +1,16 @@
 Version: $Id$ $Name$
 
+dohpaZ (12/?/03)
+---------------------
++ Updated version to 5.0.0.2
++ Added code to configure.in to force the use of autoconf 2.5 or higher and 
+  updated the documentation to reflect the new version requirement.
++ Updated the default ArqSeqGiveUp to 512 since with the current encryption
+  scheme a single missed packet can have greater ramifications then under the
+  previous one.
++ Removed some extraneous command line options.
++ Removed some more cruft from ShowEQParams.
+
 dohpaZ (12/7/03)
 ---------------------
 + Updated version to 5.0.0.1
