@@ -53,7 +53,7 @@ void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
 
   if (guildsfile.exists()) {
      if (!guildsfile.remove()) {
-       seqWarn("WARNING: could not remove old %s, unable to replace with server data!"
+       seqWarn("GuildMgr: Could not remove old %s, unable to replace with server data!"
 ,
                 guildsFileName.latin1());
         return;
@@ -61,7 +61,7 @@ void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
   }
 
   if(!guildsfile.open(IO_WriteOnly))
-    seqWarn("WARNING: could not open %s for writing, unable to replace with server data!",
+    seqWarn("GuildMgr: Could not open %s for writing, unable to replace with server data!",
              guildsFileName.latin1());
 
   QDataStream guildDataStream(&guildsfile);
@@ -69,7 +69,7 @@ void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
   guildDataStream.writeRawBytes((char *)gls->guilds, sizeof(gls->guilds));
 
   guildsfile.close();
-  seqInfo("GuildMgr: new guildsfile written");
+  seqInfo("GuildMgr: New guildsfile written");
 }
 
 void GuildMgr::readGuildList()
@@ -82,7 +82,7 @@ void GuildMgr::readGuildList()
     worldGuildListStruct tmp;
      if (guildsfile.size() != sizeof(tmp.guilds))
      {
-	seqWarn("WARNING: guildsfile not loaded, expected size %d got %ld",
+	seqWarn("GuildMgr: Guildsfile not loaded, expected size %d got %ld",
                 sizeof(worldGuildListStruct), guildsfile.size()); 
 	return;
      }
@@ -99,10 +99,10 @@ void GuildMgr::readGuildList()
      }
      
     guildsfile.close();
-    seqInfo("GuildMgr: guildsfile loaded");
+    seqInfo("GuildMgr: Guildsfile loaded");
   }
   else
-    seqWarn("GuildMgr: WARNING - could not load guildsfile, %s", (const char*)guildsFileName);
+    seqWarn("GuildMgr: Could not load guildsfile, %s", (const char*)guildsFileName);
 }
 
 void GuildMgr::guildList2text(QString fn)
@@ -112,14 +112,14 @@ void GuildMgr::guildList2text(QString fn)
 
     if (guildsfile.exists()) {
          if (!guildsfile.remove()) {
-             seqWarn("WARNING: could not remove old %s, unable to process request!",
+             seqWarn("GuildMgr: Could not remove old %s, unable to process request!",
                    fn.latin1());
            return;
         }
    }
 
    if (!guildsfile.open(IO_WriteOnly)) {
-     seqWarn("WARNING: could not open %s for writing, unable to process request!",
+     seqWarn("GuildMgr: Could not open %s for writing, unable to process request!",
               fn.latin1());
       return;
    }

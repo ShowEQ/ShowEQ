@@ -44,7 +44,7 @@ bool EQStr::load(const QString& fileName)
   // open the file read only
   if (!formatFile.open(IO_ReadOnly))
   {
-    seqWarn("EQInterface::loadFormatStrings(): Failed to open '%s'",
+    seqWarn("EQStr: Failed to open '%s'",
 	    fileName.latin1());
     return false;
   }
