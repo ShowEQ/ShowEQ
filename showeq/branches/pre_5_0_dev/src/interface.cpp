@@ -235,8 +235,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_player = new Player(this, m_zoneMgr);
 
    section = "ItemDB";
-   if (pSEQPrefs->getPrefBool("Enabled", section, true))
+   if (pSEQPrefs->getPrefBool("Enabled", section, false))
    {
+     seqDebug("ItemDB: Enabled");
+
      // Create an instance of the ItemDB
      m_itemDB = new EQItemDB(m_dataLocationMgr);
 
@@ -261,6 +263,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      // Make sure the databases are upgraded to the current format
      m_itemDB->Upgrade();
    }
+   else
+     seqDebug("ItemDB: Disabled");
 
    // Create the filter manager
    m_filterMgr = new FilterMgr(m_dataLocationMgr,

@@ -68,6 +68,7 @@ static const char *id="@(#) $Id$ $Name$";
 #define   SYSTIME_SPAWNTIME_OPTION      22
 #define   SPAWNLOG_FILENAME_OPTION      23
 #define   DISABLE_SPAWNLOG_OPTION       24
+#define   ITEMDB_ENABLE                 25
 #define   ITEMDB_DATA_FILENAME_OPTION   28
 #define   ITEMDB_RAW_FILENAME_OPTION    29
 #define   ITEMDB_DATABASES_ENABLED      30
@@ -138,6 +139,7 @@ static struct option option_list[] = {
   {"itemdb-raw-data-filename",     required_argument,  NULL, ITEMDB_RAW_FILENAME_OPTION},
   {"itemdb-databases-enabled",     required_argument,  NULL, ITEMDB_DATABASES_ENABLED},
   {"itemdb-disable",               no_argument,        NULL, ITEMDB_DISABLE},
+  {"itemdb-enable",                no_argument,        NULL, ITEMDB_ENABLE},
   {"restore-player-state",         no_argument,        NULL, RESTORE_PLAYER_STATE},
   {"restore-zone",                 no_argument,        NULL, RESTORE_ZONE_STATE},
   {"restore-spawns",               no_argument,        NULL, RESTORE_SPAWNS},
@@ -627,6 +629,13 @@ int main (int argc, char **argv)
 	   break;
 	 }
 
+         case ITEMDB_ENABLE:
+	 {
+	   pSEQPrefs->setPrefBool("Enabled", "ItemDB", true, 
+				 XMLPreferences::Runtime);
+	   break;
+	 }
+
          case RESTORE_PLAYER_STATE:
 	 {
 	   showeq_params->restorePlayerState = true;
@@ -812,6 +821,7 @@ void displayOptions(const char* progName)
   printf ("      --itemdb-databases-enabled=DBS    Use DBS to enable different item\n");
   printf ("                                        databases.\n");
   printf ("      --itemdb-disable                  Disable use of the item DB.\n");
+  printf ("      --itemdb-enable                   Enable use of the item DB.\n");
   printf ("  -W, --dont-autodetectcharsettings     Don't auto-detect your character's\n");
   printf ("                                        Level/Race/Class.\n");
   printf ("  -X, --default-level=##                Default player level. (1-60)\n");
