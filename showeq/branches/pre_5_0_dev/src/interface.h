@@ -68,6 +68,7 @@ class UnknownPacketLog;
 class OPCodeMonitorPacketLog;
 class DataLocationMgr;
 class EQStr;
+class MessageFilters;
 class Messages;
 class MessageShell;
 class MessageWindow;
@@ -326,6 +327,7 @@ class EQInterface:public QMainWindow
    GuildMgr* m_guildmgr;
    DateTimeMgr* m_dateTimeMgr;
    EQStr* m_eqStrings;
+   MessageFilters* m_messageFilters;
    Messages* m_messages;
    MessageShell* m_messageShell;
    Terminal* m_terminal;

@@ -390,6 +390,7 @@ MessageWindow::MessageWindow(Messages* messages,
     m_typeFilterMenu(0),
     m_findDialog(0),
     m_enabledTypes(0xFFFFFFFFFFFFFFFF),
+    m_enabledUserFilters(0xFFFFFFFF),
     m_defaultColor(black),
     m_defaultBGColor(white),
     m_dateTimeFormat("hh:mm"),
@@ -405,6 +406,9 @@ MessageWindow::MessageWindow(Messages* messages,
 {
   m_enabledTypes = pSEQPrefs->getPrefUInt64("EnabledTypes", preferenceName(), 
 					    m_enabledTypes);
+  m_enabledUserFilters = pSEQPrefs->getPrefUInt("EnabledUserFilters",
+						preferenceName(), 
+						m_enabledUserFilters);
   m_defaultColor = pSEQPrefs->getPrefColor("DefaultColor", preferenceName(),
 					   m_defaultColor);
   m_defaultBGColor = pSEQPrefs->getPrefColor("DefaultBGColor", 
@@ -576,7 +580,8 @@ void MessageWindow::addMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) || m_lockedText)
+  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
+      ((m_enabledUserFilters & message.filterFlags()) == 0))
     return;
   
   QString text;
@@ -607,8 +612,8 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) || m_lockedText)
-    return;
+  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
+      ((m_enabledUserFilters & message.filterFlags()) == 0))
   
   // if the message has a specific color, then use it
   if (message.color() != ME_InvalidColor)
@@ -655,6 +660,10 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
 
 void MessageWindow::newMessage(const MessageEntry& message)
 {
+  // if text is locked, nothing to do
+  if (m_lockedText)
+    return;
+
   if (m_useTypeStyles)
     addColorMessage(message);
   else

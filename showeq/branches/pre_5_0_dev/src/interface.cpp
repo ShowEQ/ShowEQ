@@ -37,6 +37,7 @@
 #include "datetimemgr.h"
 #include "datalocationmgr.h"
 #include "eqstr.h"
+#include "messagefilter.h"
 #include "messages.h"
 #include "messageshell.h"
 #include "messagewindow.h"
@@ -104,7 +105,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_guildmgr(NULL),
     m_dateTimeMgr(NULL),
     m_eqStrings(NULL),
-    m_messages(NULL),
+    m_messageFilters(0),
+    m_messages(0),
     m_messageShell(NULL),
     m_terminal(NULL),
     m_filteredSpawnLog(0),
@@ -209,8 +211,12 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // Create the EQStr storage
    m_eqStrings = new EQStr(8009); // increase if the number of stings exeeds
 
+   // Create Message Filters object
+   m_messageFilters = new MessageFilters(this, "messagefilters");
+
    // Create Messages storage
-   m_messages = new Messages(m_dateTimeMgr, this, "messages");
+   m_messages = new Messages(m_dateTimeMgr, m_messageFilters, 
+			     this, "messages");
 
    // Create the terminal object
    m_terminal = new Terminal(m_messages, this, "terminal");
