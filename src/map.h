@@ -148,6 +148,7 @@ class MapMgr : public QObject
   void zoneBegin(const QString& shortZoneName);
   void zoneChanged(const QString& shortZoneName);
   void zoneEnd(const QString& shortZoneName, const QString& longZoneName);
+  void loadZoneMap(const QString& shortZoneName);
 
    // Map Handling
   void loadMap(void);

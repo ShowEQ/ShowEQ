@@ -17,6 +17,7 @@
 
 #include <qstring.h>
 #include <qregexp.h>
+#include <qapplication.h>
 
 FilterNotifications::FilterNotifications(QObject* parent, const char* name)
   : QObject(parent, name),
@@ -101,9 +102,7 @@ void FilterNotifications::handleAlert(const Item* item,
 
 void FilterNotifications::beep(void)
 {
-  // Send ASCII BEL character to terminal
-  //   ZBNOTE: We really should do this in a better fashion
-  fputs("\a", stderr);
+  QApplication::beep();
 }
 
 void FilterNotifications::executeCommand(const Item* item, 

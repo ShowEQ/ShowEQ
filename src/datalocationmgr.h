@@ -28,6 +28,9 @@ class DataLocationMgr
 			  bool caseSensitive = true,
 			  bool preferUser = true) const;
 
+  QDir pkgDataDir(const QString& subdir) const;
+  QDir userDataDir(const QString& subdir) const;
+
  protected:
   QFileInfo findFile(const QString& dir1, const QString& dir2,
 		     const QString& subdir, const QString& filename,

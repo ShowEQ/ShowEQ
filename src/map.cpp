@@ -266,15 +266,7 @@ MapMgr::MapMgr(const DataLocationMgr* dataLocMgr,
   // if there is a short zone name already, try to load its map
   QString shortZoneName = zoneMgr->shortZoneName();
   if (!shortZoneName.isEmpty())
-  {
-    // construct the map file name
-    QString fileName = shortZoneName + ".map";
-    
-    QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
-
-    // load the map
-    loadFileMap(fileInfo.absFilePath());
-  }
+    loadZoneMap(shortZoneName);
 }
 
 MapMgr::~MapMgr()
@@ -300,22 +292,8 @@ void MapMgr::zoneBegin(const QString& shortZoneName)
   // signal that the map has been unloaded
   emit mapUnloaded();
   
-  // first attempt to find map with .map suffix
-  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", 
-						      shortZoneName + ".map");
-  
-  // if that file doesn't exist, try a straight .txt suffix
-  if (!fileInfo.exists())
-    fileInfo = m_dataLocMgr->findExistingFile("maps", 
-					      shortZoneName + ".txt");
-
-  // if that file doesn't exist, try a  _1.txt suffix
-  if (!fileInfo.exists())
-    fileInfo = m_dataLocMgr->findExistingFile("maps", 
-					      shortZoneName + "_1.txt");
-  
-  // load the map
-  loadFileMap(fileInfo.absFilePath());
+  // atttempt to load the new map
+  loadZoneMap(shortZoneName);
 }
 
 void MapMgr::zoneChanged(const QString& shortZoneName)
@@ -331,22 +309,8 @@ void MapMgr::zoneChanged(const QString& shortZoneName)
   // signal that the map has been unloaded
   emit mapUnloaded();
 
-  // first attempt to find map with .map suffix
-  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", 
-						      shortZoneName + ".map");
-  
-  // if that file doesn't exist, try a straight .txt suffix
-  if (!fileInfo.exists())
-    fileInfo = m_dataLocMgr->findExistingFile("maps", 
-					      shortZoneName + ".txt");
-
-  // if that file doesn't exist, try a  _1.txt suffix
-  if (!fileInfo.exists())
-    fileInfo = m_dataLocMgr->findExistingFile("maps", 
-					      shortZoneName + "_1.txt");
-
-  // load the map
-  loadFileMap(fileInfo.absFilePath());
+  // atttempt to load the new map
+  loadZoneMap(shortZoneName);
 }
 
 void MapMgr::zoneEnd(const QString& shortZoneName, const QString& longZoneName)
@@ -356,6 +320,12 @@ void MapMgr::zoneEnd(const QString& shortZoneName, const QString& longZoneName)
 	 (const char*)longZoneName, (const char*)shortZoneName);
 #endif /* DEBUGMAP */
 
+  // atttempt to load the new map
+  loadZoneMap(shortZoneName);
+}
+
+void MapMgr::loadZoneMap(const QString& shortZoneName)
+{
   // first attempt to find map with .map suffix
   QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", 
 						      shortZoneName + ".map");
@@ -369,10 +339,23 @@ void MapMgr::zoneEnd(const QString& shortZoneName, const QString& longZoneName)
   if (!fileInfo.exists())
     fileInfo = m_dataLocMgr->findExistingFile("maps", 
 					      shortZoneName + "_1.txt");
-  
-  // load the map if it's not already loaded
-  if (fileInfo.absFilePath() != m_mapData.fileName())
-    loadFileMap(fileInfo.absFilePath());
+
+  if (fileInfo.exists())
+  {
+    // load the map if it's not already loaded
+    if (fileInfo.absFilePath() != m_mapData.fileName())
+      loadFileMap(fileInfo.absFilePath());
+  }
+  else 
+  {
+    seqInfo("No Map found for zone '%s'!", (const char*)shortZoneName);
+    seqInfo("    Checked for all variants of '%s.map', '%s.txt', and '%s_1.txt'",
+	    (const char*)shortZoneName, 
+	    (const char*)shortZoneName, (const char*)shortZoneName);
+    seqInfo("    in directories '%s' and '%s'!",
+	    (const char*)m_dataLocMgr->userDataDir("maps").absPath(),
+	    (const char*)m_dataLocMgr->pkgDataDir("maps").absPath());
+  }
 }
 
 void MapMgr::loadMap ()
