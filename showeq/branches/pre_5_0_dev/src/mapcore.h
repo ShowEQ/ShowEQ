@@ -28,7 +28,7 @@
 #include <qstring.h>
 #include <qcolor.h>
 #include <qpixmap.h>
-#include <qlist.h>
+#include <qptrlist.h>
 #include <qpointarray.h>
 
 #include "point.h"
@@ -390,19 +390,33 @@ class MapCommon
  public:
   MapCommon() {}
   MapCommon(const QString& name, const QString& color)
+    : m_name(name), m_colorName(color), m_color(color) {}
+  MapCommon(const QString& name, const QColor& color)
     : m_name(name), m_color(color) {}
   virtual ~MapCommon();
 
-  const QString& name() { return m_name; }
-  const QString& color() { return m_color; }
+  const QString& name() const { return m_name; }
+  const QColor& color() const { return m_color; }
+  QString colorName() const;
 
   void setName(const QString& name) { m_name = name; }
   void setColor(const QString& color) { m_color = color; }
 
  private:
   QString m_name;
-  QString m_color;
+  QString m_colorName;
+  QColor m_color;
 };
+
+inline QString MapCommon::colorName() const
+{
+  // if a color name was specified, return it
+  if (!m_colorName.isEmpty())
+    return m_colorName;
+
+  // otherwise return the string form of a QColor
+  return m_color.name();
+}
 
 //----------------------------------------------------------------------
 // MapLineL
@@ -435,10 +449,11 @@ class MapLineM : public MapCommon, public MapPointArray
  public:
   MapLineM();
   MapLineM(const QString& name, const QString& color, uint32_t size);
+  MapLineM(const QString& name, const QColor& color, uint32_t size);
   MapLineM(const QString& name, const QString& color, const MapPoint& point);
   virtual ~MapLineM();
 
-  QRect boundingRect() const { return m_bounds; }
+  const QRect& boundingRect() const { return m_bounds; }
   void calcBounds() { m_bounds = MapPointArray::boundingRect(); }
 
  private:
@@ -453,6 +468,8 @@ class MapLocation : public MapCommon, public QPoint
   MapLocation();
   MapLocation(const QString& name, const QString& color, const QPoint& point);
   MapLocation(const QString& name, const QString& color, 
+	      int16_t x, int16_t y);
+  MapLocation(const QString& name, const QColor& color, 
 	      int16_t x, int16_t y);
   virtual ~MapLocation();
  private:
@@ -489,6 +506,7 @@ class MapData
   // map loading/clearing/saving
   void clear();
   void loadMap(const QString& fileName);
+  void loadSOEMap(const QString& fileName);
   void saveMap(const QString& fileName) const;
 
   // accessors
@@ -502,6 +520,10 @@ class MapData
   int16_t minY() const { return m_minY; }
   int16_t maxX() const { return m_maxX; }
   int16_t maxY() const { return m_maxY; }
+  QPtrList<MapLineL>& lLines() { return m_lLines; }
+  QPtrList<MapLineM>& mLines() { return m_mLines; }
+  QPtrList<MapLocation>& locations() { return m_locations; }
+  QPtrList<MapAggro>& aggros() { return m_aggros; }
   const QPixmap& image() const { return m_image; }
   bool imageLoaded() const { return m_imageLoaded; }
   bool mapLoaded() const { return m_mapLoaded; }
@@ -544,12 +566,12 @@ class MapData
   QString m_fileName;
   QString m_zoneLongName;
   QString m_zoneShortName;
-  QList<MapLineL> m_lLines;
-  QList<MapLineM> m_mLines;
+  QPtrList<MapLineL> m_lLines;
+  QPtrList<MapLineM> m_mLines;
   MapLineM* m_editLineM;
-  QList<MapLocation> m_locations;
+  QPtrList<MapLocation> m_locations;
   MapLocation* m_editLocation;
-  QList<MapAggro> m_aggros;
+  QPtrList<MapAggro> m_aggros;
   uint8_t m_zoneZEM;
   QPixmap m_image;
   bool m_imageLoaded;

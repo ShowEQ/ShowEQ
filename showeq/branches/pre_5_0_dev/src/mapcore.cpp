@@ -14,10 +14,16 @@
 // dependencies will be migrated out.
 //
 
-#include <dirent.h>
+//#define DEBUGMAPLOAD
+
 #include <errno.h>
 
 #include <qpainter.h>
+#include <qstring.h>
+#include <qstringlist.h>
+#include <qfileinfo.h>
+#include <qfile.h>
+#include <qregexp.h>
 
 #include "mapcore.h"
 
@@ -140,7 +146,7 @@ void MapParameters::reAdjust()
   // calculate the scaling ratio to use
   m_ratio = (double)m_zoomMapLength.width() / (double)m_screenLength.width();
 
-  // calculate fixed point inverse ratio using the defiend qFormat 
+  // calculate fixed point inverse ratio using the defined qFormat 
   // for calculate speed purposes (* is faster than /)
   m_ratioIFixPt = fixPtToFixed<int, double>((1.0 / m_ratio), qFormat);
 
@@ -313,6 +319,12 @@ MapLineM::MapLineM(const QString& name, const QString& color, uint32_t size)
 {
 }
 
+MapLineM::MapLineM(const QString& name, const QColor& color, uint32_t size)
+  : MapCommon(name, color),
+    MapPointArray(size)
+{
+}
+
 MapLineM::MapLineM(const QString& name, const QString& color, const MapPoint& point)
   : MapCommon(name, color),
     MapPointArray(1)
@@ -341,6 +353,15 @@ MapLocation::MapLocation(const QString& name,
 
 MapLocation::MapLocation(const QString& name, 
 			 const QString& color, 
+			 int16_t x, 
+			 int16_t y)
+  : MapCommon(name, color),
+    QPoint(x, y)
+{
+}
+
+MapLocation::MapLocation(const QString& name, 
+			 const QColor& color, 
 			 int16_t x, 
 			 int16_t y)
   : MapCommon(name, color),
@@ -400,17 +421,9 @@ void MapData::clear()
   m_zoneZEM = 75;
 }
 
-#define	MAX_LINE_LENGTH		16384
-
 void MapData::loadMap(const QString& fileName)
 {
-  FILE* fh;
-  char line    [MAX_LINE_LENGTH];
-  char tempstr [MAX_LINE_LENGTH];
-  char* tempStr;
-  int mx, my, mz;
-  QPoint lPoint;
-  MapPoint mPoint;
+  uint16_t mx, my, mz;
   uint numPoints;
   int globHeight=0;
   bool globHeightSet = false;
@@ -419,6 +432,7 @@ void MapData::loadMap(const QString& fileName)
   QString color;
   uint16_t rangeVal;
   uint32_t linePoints;
+  uint32_t specifiedLinePoints;
   MapLineL* currentLineL = NULL;
   MapLineM* currentLineM = NULL;
 
@@ -436,372 +450,622 @@ void MapData::loadMap(const QString& fileName)
   if (fileName.contains("/.map") != 0)
     return;
 
+  
   const char* filename = (const char*)fileName;
 
-  fh = fopen (filename, "r");
+  QFile mapFile(fileName);
 
-  if (fh == NULL)
+  if (!mapFile.open(IO_ReadOnly))
   {
-    printf("Error opening map file '%s'!\n", filename);
+    fprintf(stderr, "Error opening map file '%s'!\n", filename);
 
     return;
   }
 
   // note the file name 
   m_fileName = filename;
+    
+  // allocate memory in a QCString to hold the entire file contents
+  QCString textData(mapFile.size() + 1);
+  
+  // read the file as one big chunk
+  mapFile.readBlock(textData.data(), textData.size());
+  
+  // construct a regex to deal with either style line termination
+  QRegExp lineTerm("[\r\n]{1,2}");
 
-  // read the first line
-  if (fgets(line, MAX_LINE_LENGTH, fh) == NULL) 
-  {
-    printf("Error reading map file '%s'!\n", filename);
-    return;
-  }
+  // split the data into lines at the line termination
+  QStringList lines = QStringList::split(lineTerm, 
+					 QString::fromUtf8(textData), false);
+
+
+  // start iterating over the lines
+  QStringList::Iterator lit = lines.begin();
+
   filelines = 1;
 
 #ifdef DEBUGMAPLOAD
-  printf("Zone info line: %s\n", line);
+  fprintf(stderr, "Zone info line: %s\n", (const char*)(*lit));
 #endif
 
-  // Zone name
-  tempStr = strtok(line, ",");
-  if (tempStr == NULL) 
-  {
-    fprintf(stderr, "Error reading zone name in map '%s'!\n", filename);
-    return;
-  }
-  m_zoneLongName = tempStr;
+  QString fieldSep = ",";
 
-  // Zone short name
-  tempStr = strtok(NULL, ",");
-  if (tempStr == NULL) 
+  // split the line into fields
+  QStringList fields = QStringList::split(fieldSep, *lit);
+
+  size_t count = fields.count();
+  if (!count)
   {
-    fprintf(stderr, "Error reading short name in map '%s'!\n", filename);
+    fprintf(stderr, "Error, no fields in first line of map file '%s'\n",
+	    filename);
     return;
   }
-  m_zoneShortName = tempStr;
   
-  // Zone size in X direction
-  tempStr = strtok(NULL, ",");
-  if (tempStr == NULL) 
+  if (count < 2)
   {
-    fprintf(stderr, "Error reading X size in map '%s'!\n", filename);
+    fprintf(stderr, "Error, too few fields in first line of map file '%s'\n",
+	    filename);
     return;
   }
-  m_size.setWidth(atoi(tempStr));
 
-  // Zone size in Y direction
-  tempStr = strtok(NULL, "\n");
-  if (tempStr == NULL) 
+  // start iterator over the fields
+  QStringList::Iterator fit = fields.begin();
+
+  m_zoneLongName = (*fit++);
+  m_zoneShortName = (*fit++);
+
+  if (count > 2)
   {
-    fprintf(stderr, "Error reading Y size in map '%s'!\n", filename);
-    return;
+    m_size.setWidth((*fit++).toInt());
+    m_size.setHeight((*fit++).toInt());
   }
-  m_size.setHeight(atoi(tempStr));
 
-    // For each line of file
-  while (fgets(line, MAX_LINE_LENGTH, fh) != NULL)
+  // start looping at the next map line
+  for (++lit; lit != lines.end(); ++lit)
   {
     // increment line count
     filelines++;
      
 #ifdef DEBUGMAPLOAD
-    printf("Map line %d: %s", filelines, line);
+    fprintf(stderr, "Map line %d: %s\n", filelines, (const char*)*lit);
 #endif
-    strcpy (tempstr, strtok (line, ","));
-    switch (tempstr[0]) 
+
+    // split the line into fields
+    fields = QStringList::split(fieldSep, *lit);
+
+    // skip empty lines
+    if (fields.isEmpty())
+      continue;
+
+    // entry type is the first character of the line
+    QChar entryType = fields.first().at(0);
+
+    // pop the entry type off the front of the fields list
+    fields.pop_front();
+
+    // start at the first argument to the entry
+    fit = fields.begin();
+
+    // get the field count
+    count = fields.count();
+
+    bool ok;
+
+    switch (entryType) 
     {
-    case 'L':
-#ifdef DEBUGMAPLOAD
-      printf("L record  [%d]: %s\n", filelines, line);
-#endif
-      // Line Name
-      name = strtok(NULL, ",");
-      if (name.isNull()) 
-      {
-	fprintf(stderr, "Error reading line name on line %d in map '%s'!\n", 
-		filelines, filename);
-	continue;
-      }
-      
-      // Line Color
-      color = strtok(NULL, ",");
-      if (color.isEmpty()) 
-      {
-	fprintf(stderr, "Error reading line color on line %d in map '%s'!\n", 
-		filelines, filename);
-	continue;
-      }
-      
-      // Number of points
-      tempStr = strtok (NULL, ",");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Error reading number of points on line %d in map '%s'!\n",
-		filelines, filename);
-	continue;
-      }
-      linePoints = atoi(tempStr);
-
-      // create the appropriate style L line depending on if the global 
-      // height has been set
-      if (globHeightSet)
-	currentLineL = new MapLineL(name, color, linePoints, globHeight);
-      else
-	currentLineL = new MapLineL(name, color, linePoints);
-
-      numPoints = 0;
-      while (1) 
-      {
-	lPoint.setX(0);
-	lPoint.setY(0);
-	
-	// X coord
-	tempStr = strtok (NULL, ",\n");
-	if (tempStr == NULL)
-	  break;
-	mx = atoi(tempStr);
-	
-	// Y coord
-	tempStr = strtok (NULL, ",\n");
-	if (tempStr == NULL) 
-	{
-	  fprintf(stderr, "Line %d in map '%s' has an X coordinate with no Y!\n", 
-		  filelines, filename);
-	  continue;
-	}
-	my = atoi(tempStr);
-	
-	// make sure there is space for the point
-	if (numPoints >= currentLineL->size())
-	  currentLineL->resize(2 * currentLineL->size());
-
-	// store the point
-	currentLineL->setPoint(numPoints, mx, my);
-
-	// adjust map boundaries
-	quickCheckPos(mx, my);
-
-	numPoints++;
-      }
-
-      if (numPoints > linePoints) 
-	fprintf(stderr, "L Line %d in map '%s' has more points than specified!\n", 
-		filelines, filename);
-      else if (numPoints < linePoints) 
-	fprintf(stderr, "L Line %d in map '%s' has fewer points than specified!\n",
-		filelines, filename);
-
-      // if there are no points, or just the obligatory point from someone just
-      // hitting the line button, don't bother adding the line
-      if (numPoints < 2)
-      {
-	fprintf(stderr, "L Line %d in map '%s' only had %d points, not loading.\n",
-		filelines, filename, numPoints);
-
-	// delete the line
-	delete currentLineL;
-
-	// next...
-	continue;
-      }
-
-      // remove any extras to save memory
-      if (numPoints < currentLineL->size())
-	currentLineL->resize(numPoints);
-
-      // calculate the XY bounds of the line
-      currentLineL->calcBounds();
-
-      // add it to the list of L lines
-      m_lLines.append(currentLineL);
-
-      break;
-      
     case 'M':
+      {
 #ifdef DEBUGMAPLOAD
-      printf("M record  [%d]: %s\n", filelines, line);
+	fprintf(stderr, "M record  [%d] [%d fields]: %s\n", 
+		filelines, count, (const char*)*lit);
 #endif
-      // Line Name
-      name = strtok(NULL, ",");
-      if (name.isNull()) 
-      {
-	fprintf(stderr, "Error reading line name on line %d in map '%s'!\n", 
-		filelines, filename);
-	continue;
-      }
-      
-      // Line Color
-      color = strtok(NULL, ",");
-      if (color.isEmpty()) 
-      {
-	fprintf(stderr, "Error reading line color on line %d in map '%s'!\n", 
-	       filelines, filename);
-	continue;
-      }
-      
-      // Number of points
-      tempStr = strtok (NULL, ",");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Error reading number of points on line %d in map '%s'!\n", 
-		filelines, filename);
-	continue;
-      }
-      linePoints = atoi(tempStr);
-
-      // make sure twit didn't pass 0
-      if (linePoints == 0)
-	linePoints = 1;
-
-      // create an M line
-      currentLineM = new MapLineM(name, color, linePoints);
-
-      numPoints = 0;
-      while (1) 
-      {
-	mx = my = mz = 0;
 	
-	// X coord
-	tempStr = strtok (NULL, ",\n");
-	if (tempStr == NULL)
-	  break;
-	mx = atoi(tempStr);
-	
-	// Y coord
-	tempStr = strtok (NULL, ",\n");
-	if (tempStr == NULL) 
+	if (count < 3)
 	{
-	  fprintf(stderr, "Line %d in map '%s' has an X coordinate with no Y!\n", 
+	  fprintf(stderr, 
+		  "Error reading M line %d on map '%s'! %d is too few fields\n",
+		  filelines, filename, count);
+	  continue;
+	}
+	
+	// calculate the number of line points
+	linePoints = ((count - 3) / 3);
+	
+	// only bother going forward if there will be enough line points
+        if (linePoints < 2)
+	{
+	  fprintf(stderr, "M Line %d in map '%s' only had %d points, not loading.\n",
+		  filelines, filename, linePoints );
+	  continue;
+	}
+	
+	// Line Name
+	name = (*fit++);
+	
+	// Line Color
+	color = (*fit++);
+	if (color.isEmpty()) 
+	  color = "#7F7F7F";
+	
+	// Number of points
+	specifiedLinePoints = (*fit++).toUInt(&ok);
+	if (!ok) 
+	{
+	  fprintf(stderr, "Error reading number of points on line %d in map '%s'!\n",
 		  filelines, filename);
 	  continue;
 	}
-	my = atoi(tempStr);
 	
-	// Z coord
-	tempStr = strtok (NULL, ",\n");
-	if (tempStr == NULL) 
+	if (specifiedLinePoints != linePoints)
 	{
-	  fprintf(stderr, "Line %d in map '%s' has X and Y coordinates with no Z!\n", 
+	  fprintf(stderr, "L Line %d in map '%s' has %d points as opposed to the %d points it specified!\n", 
+		  filelines, filename, linePoints, specifiedLinePoints);
+	}
+	
+	// create an M line
+	currentLineM = new MapLineM(name, color, linePoints);
+	
+	numPoints = 0;
+	while (fit != fields.end()) 
+        {
+	  // X coord
+	  mx = (*fit++).toShort();
+	  my = (*fit++).toShort();
+	  mz = (*fit++).toShort();
+	  
+	  // set the point data
+	  currentLineM->setPoint(numPoints, mx, my, mz);
+	  
+	  // increment point count
+	  numPoints++;
+	}
+	
+	// calculate the XY bounds of the line
+	currentLineM->calcBounds();
+	
+	// get the bounding rect
+	const QRect& bounds = currentLineM->boundingRect();
+	
+	// adjust map boundaries based on the bounding rect
+	quickCheckPos(bounds.left(), bounds.top());
+	quickCheckPos(bounds.right(), bounds.bottom());
+	
+	// add it to the list of L lines
+	m_mLines.append(currentLineM);
+      }
+      break;
+	
+    case 'L':
+      {
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "L record  [%d] [%d fields] %s\n", 
+		filelines, count, (const char*)*lit);
+#endif
+	
+	if (count < 3)
+        {
+	  fprintf(stderr, 
+		  "Error reading L line %d on map '%s'! %d is too few fields\n",
+		  filelines, filename, count);
+	  continue;
+	}
+
+	// calculate the number of line points
+	linePoints = ((count - 3) >> 1);
+	
+	// only bother going forward if there will be enough line points
+	if (linePoints < 2)
+	{
+	  fprintf(stderr, "L Line %d in map '%s' only had %d points, not loading.\n",
+		  filelines, filename, linePoints);
+	  continue;
+	}
+	
+	// Line Name
+	name = (*fit++);
+	
+	// Line Color
+	color = (*fit++);
+	if (color.isEmpty()) 
+	  color = "#7F7F7F";
+	
+	// Number of points
+	specifiedLinePoints = (*fit++).toUInt(&ok);
+	if (!ok) 
+	{
+	  fprintf(stderr, "Error reading number of points on line %d in map '%s'!\n",
 		  filelines, filename);
 	  continue;
 	}
-	mz = atoi(tempStr);
+	
+	if (specifiedLinePoints != linePoints)
+	{
+	  fprintf(stderr, "L Line %d in map '%s' has %d points as opposed to the %d points it specified!\n", 
+		  filelines, filename, linePoints, specifiedLinePoints);
+	}
+	
+	// create the appropriate style L line depending on if the global 
+	// height has been set
+	if (globHeightSet)
+	  currentLineL = new MapLineL(name, color, linePoints, globHeight);
+	else
+	  currentLineL = new MapLineL(name, color, linePoints);
 
-	// expand the line if necessary
-	if (numPoints >= currentLineM->size())
-	  currentLineM->resize(2 * currentLineM->size());
+	numPoints = 0;
+	
+	// keep going until we run out of fields... 
+	while (numPoints < linePoints) 
+        {
+	  // X coord
+	  mx = (*fit++).toShort();
+	  
+	  // Y coord
+	  my = (*fit++).toShort();
+	  
+	  // store the point
+	  currentLineL->setPoint(numPoints, mx, my);
+	  
+	  // increment point count
+	  numPoints++;
+	}
+	
+	// calculate the XY bounds of the line
+	currentLineL->calcBounds();
+	
+	// get the bounding rect
+	const QRect& bounds = currentLineL->boundingRect();
+	
+	// adjust map boundaries based on the bounding rect
+	quickCheckPos(bounds.left(), bounds.top());
+	quickCheckPos(bounds.right(), bounds.bottom());
+	
+	// add it to the list of L lines
+	m_lLines.append(currentLineL);
+      }
+      break;
 
-	// set the point data
-	currentLineM->setPoint(numPoints, mx, my, mz);
-
+    case 'P':
+      {
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "P record [%d] [%d fields]: %s\n", 
+		filelines, count, (const char*)*lit);
+#endif
+	
+	name = (*fit++); // Location name
+	color = (*fit++); // Location color
+	mx = (*fit++).toShort();
+	my = (*fit++).toShort();
+	
+	// add it to the list of locations
+	m_locations.append(new MapLocation(name, color, mx, my));
+	
 	// adjust map boundaries
 	quickCheckPos(mx, my);
-
-	// increment point count
-	numPoints++;
       }
-
-      // verify number of points, versus those specified
-      if (numPoints > linePoints) 
-	fprintf(stderr, "M Line %d in map '%s' has more points than specified!\n", 
-		filelines, filename);
-      else if (numPoints < linePoints) 
-	fprintf(stderr, "M Line %d in map '%s' has fewer points than specified!\n",
-		filelines, filename);
-
-      // if there are no points, or just the obligatory point from someone just
-      // hitting the line button, don't bother adding the line
-      if (numPoints < 2)
-      {
-	fprintf(stderr, "L Line %d in map '%s' only had %d points, not loading.\n",
-		filelines, filename, numPoints);
-
-	// delete the line
-	delete currentLineL;
-
-	// next...
-	continue;
-      }
-      
-      // remove any extras to save memory
-      if (numPoints < currentLineM->size())
-	currentLineM->resize(numPoints);
-
-      // calculate the XY bounds of the line
-      currentLineM->calcBounds();
-
-      // add it to the list of L lines
-      m_mLines.append(currentLineM);
-
       break;
-	
-    case 'P':
-#ifdef DEBUGMAPLOAD
-      printf("P record  [%d]: %s\n", filelines, line);
-#endif
-      
-      name = strtok (NULL,","); // Location name
-      color = strtok(NULL, ","); // Location color
-      mx = atoi (strtok (NULL, ",\n"));
-      my = atoi (strtok (NULL, ",\n"));
 
-      // add it to the list of locations
-      m_locations.append(new MapLocation(name, color, mx, my));
-
-      // adjust map boundaries
-      quickCheckPos(mx, my);
-
-      break;
     case 'A':  //Creates aggro ranges.
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
       {
-	fprintf(stderr, "Line %d in map '%s' has an A marker with no Name expression!\n", 
-		filelines, filename);
-	break;
-      }
-      name = tempStr;
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an A marker with no Range radius!\n", 
-		filelines, filename);
-	break;
-      }
-      rangeVal = atoi(tempStr);
-
-      // create and add a new aggro object
-      m_aggros.append(new MapAggro(name, rangeVal));
-
-      break;
-    case 'H':  //Sets global height for L lines.
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an H marker with no Z!\n", 
-		filelines, filename);
-	break;
-      }
-      globHeight = atoi(tempStr);
-      globHeightSet = true;
-      break;
-    case 'Z':  // Quick and dirty ZEM implementation
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an Z marker with no ZEM!\n", 
-		filelines, filename);
-	break;
-      }
-      m_zoneZEM = atoi(tempStr);
 #ifdef DEBUGMAPLOAD
-      printf("ZEM set to %d\n", m_zoneZEM);
+	fprintf(stderr, "A record  [%d] [%d fields]: %s\n",
+		filelines, count, (const char*)*lit);
 #endif
+	
+	if (count < 2)
+        {
+	  fprintf(stderr, 
+		  "Line %d in map '%s' has an A record with too few fields (%d)!\n",
+		  filelines, filename, count);
+	  break;
+	}
+	
+	name = (*fit++);
+	if (name.isEmpty()) 
+        {
+	  fprintf(stderr, "Line %d in map '%s' has an A marker with no Name expression!\n", 
+		  filelines, filename);
+	  break;
+	}
+	rangeVal = (*fit++).toUShort();
+	if (!rangeVal) 
+        {
+	  fprintf(stderr, "Line %d in map '%s' has an A marker with no or 0 Range radius!\n", 
+		  filelines, filename);
+	  break;
+	}
+	
+	// create and add a new aggro object
+	m_aggros.append(new MapAggro(name, rangeVal));
+	
+	break;
+      case 'H':  //Sets global height for L lines.
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "H record [%d] [%d fields]: %s\n", 
+		filelines, count, (const char*)*lit);
+#endif
+	
+	if (count < 1)
+        {
+	  fprintf(stderr, 
+		  "Line %d in map '%s' has an H record with too few fields (%d)!\n", 
+		  filelines, filename, count);
+	  break;
+	}
+	
+	// get global height
+	globHeight = (*fit++).toShort(&ok);
+	if (!ok) 
+        {
+	  fprintf(stderr, "Line %d in map '%s' has an H marker with invalid Z!\n", 
+		  filelines, filename);
+	  break;
+	}
+	globHeightSet = true;
+      }
       break;
+
+    case 'Z':  // Quick and dirty ZEM implementation
+      {
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "Z record [%d] [%d fields]: %s\n", 
+		filelines, count, (const char*)*lit);
+#endif
+	
+	if (count < 1)
+        {
+	  fprintf(stderr, 
+		  "Line %d in map '%s' has a Z record with too few fields (%d)!\n", 
+		  filelines, filename, count);
+	  break;
+	}
+	
+	m_zoneZEM = (*fit++).toUShort(&ok);
+	if (!ok) 
+        {
+	  fprintf(stderr, "Line %d in map '%s' has an Z marker with invalid ZEM!\n", 
+		  filelines, filename);
+	  break;
+	}
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "ZEM set to %d\n", m_zoneZEM);
+#endif
+      }
+      break;
+
     }
   }
 
-  fclose (fh);
+  // calculate the bounding rect
+  updateBounds();
+
+  m_mapLoaded = true;
+  
+  m_imageLoaded = false;
+  QString imageFileName = filename;
+  imageFileName.truncate(imageFileName.findRev('.'));
+  imageFileName += ".pgm";
+
+  if (m_image.load(imageFileName))
+  {
+    m_imageLoaded = true;
+    printf("Loaded map image: '%s'\n", (const char*)imageFileName);
+  }
+
+  printf("Loaded map: '%s'\n", filename);
+}
+
+void MapData::loadSOEMap(const QString& fileName)
+{
+  int16_t x1, y1, z1;
+  int16_t x2, y2, z2;
+  MapPoint src, dest, oldSrc;
+  uint8_t r, g, b;
+  uint32_t numPoints;
+  uint32_t checkPoint;
+  int filelines = 1;  // number of lines in map file
+  QString name;
+  MapLineM* currentLineM = 0;
+  size_t count;
+
+  // if the same map is already loaded, don't reload it.
+  if (m_mapLoaded && (m_fileName.lower() == fileName.lower()))
+    return;
+
+  // set the map filename
+  setFileName(fileName);
+
+  // clear any existing map data
+  clear();
+
+  /* Kind of stupid to try a non-existant map, don't you think? */
+  if (fileName.contains("/.txt") != 0)
+    return;
+  
+  const char* filename = (const char*)fileName;
+
+  QFile mapFile(fileName);
+
+  if (!mapFile.open(IO_ReadOnly))
+  {
+    fprintf(stderr, "Error opening map file '%s'!\n", filename);
+
+    return;
+  }
+
+  // note the file name 
+  m_fileName = filename;
+    
+  // allocate memory in a QCString to hold the entire file contents
+  QCString textData(mapFile.size() + 1);
+  
+  // read the file as one big chunk
+  mapFile.readBlock(textData.data(), textData.size());
+  
+  // construct a regex to deal with either style line termination
+  QRegExp lineTerm("[\r\n]{1,2}");
+
+  // split the data into lines at the line termination
+  QStringList lines = QStringList::split(lineTerm, 
+					 QString::fromUtf8(textData), false);
+
+
+  // start iterating over the lines
+  QStringList::Iterator lit = lines.begin();
+
+  filelines = 1;
+
+#ifdef DEBUGMAPLOAD
+  fprintf(stderr, "Zone info line: %s\n", (const char*)(*lit));
+#endif
+
+  QRegExp fieldSep(",\\s*");
+
+  // split the line into fields
+  QStringList fields;
+  QStringList::Iterator fit;
+
+  // use the file base name as the zone long/short name, it isn't perfect,
+  // but neither is this file format
+  QFileInfo fileInfo(m_fileName);
+  QRegExp reStripTrailer("_[1-3]");
+  
+  m_zoneLongName = fileInfo.baseName().remove(reStripTrailer);
+  m_zoneShortName = m_zoneLongName;
+
+  // start looping at the next map line
+  for (++lit; lit != lines.end(); ++lit)
+  {
+    // increment line count
+    filelines++;
+     
+#ifdef DEBUGMAPLOAD
+    fprintf(stderr, "Map line %d: %s\n", filelines, (const char*)*lit);
+#endif
+
+    // entry type is the first character of the line
+    QChar entryType = (*lit).at(0);
+
+    // remove the entryType and the leading space
+    (*lit).remove(0, 2);
+
+    // split the line into fields
+    fields = QStringList::split(fieldSep, *lit);
+
+    // skip empty lines
+    if (fields.isEmpty())
+      continue;
+
+    // start at the first argument to the entry
+    fit = fields.begin();
+
+    // get the field count
+    count = fields.count();
+
+    switch (entryType) 
+    {
+    case 'L':
+      {
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "L record  [%d] [%d fields]: %s\n", 
+		filelines, count, (const char*)*lit);
+#endif
+	
+	if (count != 9)
+	{
+	  fprintf(stderr, 
+		  "Error reading L line %d on map '%s'! %d is an incorrect field count!\n",
+		  filelines, filename, count);
+	  continue;
+	}
+
+	x1 = -int16_t((*fit++).toFloat());
+	y1 = -int16_t((*fit++).toFloat());
+	z1 = -int16_t((*fit++).toFloat());
+	x2 = -int16_t((*fit++).toFloat());
+	y2 = -int16_t((*fit++).toFloat());
+	z2 = -int16_t((*fit++).toFloat());
+	r = (*fit++).toUShort();
+	g = (*fit++).toUShort();
+	b = (*fit).toUShort();
+	
+	if (!currentLineM || 
+	    !currentLineM->point(checkPoint).isEqual(x2, y2, z2) ||
+	    (currentLineM->color().red() != r) ||
+	    (currentLineM->color().green() != g) ||
+	    (currentLineM->color().blue() != b))
+	{
+	  numPoints = 0;
+
+	  // create an M line (start with 2 points because of SOE's lame
+	  // format).
+	  currentLineM = new MapLineM("soe", QColor(r, g, b), 2);
+
+	  // set the first point
+	  currentLineM->setPoint(numPoints++, x2, y2, z2);
+	  
+	  // set the second point
+	  currentLineM->setPoint(checkPoint = numPoints++, x1, y1, z1);
+	
+	  // add it to the list of M lines
+	  m_mLines.append(currentLineM);
+	}
+	else 
+	{
+	  // if necessary, add room for a point
+	  if (currentLineM->size() < (numPoints+1))
+	    currentLineM->resize(numPoints+1);
+
+	  // add the point
+	  currentLineM->setPoint(checkPoint = numPoints++, x1, y1, z1);
+	}
+
+	// calculate the XY bounds of the line
+	currentLineM->calcBounds();
+	
+	// get the bounding rect
+	const QRect& bounds = currentLineM->boundingRect();
+	
+	// adjust map boundaries based on the bounding rect
+	quickCheckPos(bounds.left(), bounds.top());
+	quickCheckPos(bounds.right(), bounds.bottom());
+      }
+      break;
+
+    case 'P':
+      {
+#ifdef DEBUGMAPLOAD
+	fprintf(stderr, "P record [%d] [%d fields]: %s\n", 
+		filelines, count, (const char*)*lit);
+#endif
+	
+	if (count != 8)
+	{
+	  fprintf(stderr, 
+		  "Error reading L line %d on map '%s'! %d is an incorrect field count!\n",
+		  filelines, filename, count);
+	  continue;
+	}
+	
+	x1 = -int16_t((*fit++).toFloat());
+	y1 = -int16_t((*fit++).toFloat());
+	z1 = -int16_t((*fit++).toFloat());
+	r = (*fit++).toUShort();
+	g = (*fit++).toUShort();
+	b = (*fit++).toUShort();
+	fit++; // skip unknown
+	name = (*fit); // Location name
+	
+	// add it to the list of locations
+	m_locations.append(new MapLocation(name, QColor(r, g, b), 
+					   int16_t(x1), int16_t(y1)));
+	
+	// adjust map boundaries
+	quickCheckPos(x1, y1);
+      }
+      break;
+
+    }
+  }
 
   // calculate the bounding rect
   updateBounds();
@@ -879,7 +1143,7 @@ void MapData::saveMap(const QString& fileName) const
     // write out the start of the line info
     fprintf (fh, "L,%s,%s,%d", 
 	     (const char*)currentLineL->name(), 
-	     (const char*)currentLineL->color(), 
+	     (const char*)currentLineL->colorName(), 
 	     currentLineL->size());
 
     // write out all the 2D points in the line
@@ -903,7 +1167,7 @@ void MapData::saveMap(const QString& fileName) const
     // write out the start of the line info
     fprintf (fh, "M,%s,%s,%d", 
 	     (const char*)currentLineM->name(), 
-	     (const char*)currentLineM->color(), 
+	     (const char*)currentLineM->colorName(), 
 	     currentLineM->size());
 
     // write out all the 3D points in the line
@@ -926,7 +1190,7 @@ void MapData::saveMap(const QString& fileName) const
 
     fprintf (fh, "P,%s,%s,%d,%d\n", 
 	     (const char*)currentLoc->name(), 
-	     (const char*)currentLoc->color(), 
+	     (const char*)currentLoc->colorName(), 
 	     currentLoc->x(),
 	     currentLoc->y());
   }
@@ -947,6 +1211,8 @@ void MapData::saveMap(const QString& fileName) const
 #endif
   
   fclose (fh);
+
+  printf("Saved map: '%s'\n", filename);
 }
 
 bool MapData::isAggro(const QString& name, uint16_t* range) const

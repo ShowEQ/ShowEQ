@@ -110,6 +110,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_netDiag(NULL),
     m_formattedMessageStrings(8009) // increase if eqstr_us.txt gets longer
 {
+  setDockMenuEnabled(false);
   for (int l = 0; l < maxNumMaps; l++)
     m_map[l] = NULL;
 
@@ -2490,7 +2491,6 @@ EQInterface::toggle_main_UseStdout (int id)
 void
 EQInterface::savePrefs(void)
 {
-  int i;
    printf("==> EQInterface::savePrefs()\n");
    if( isVisible() ) {
      QString section;
@@ -2507,36 +2507,6 @@ EQInterface::savePrefs(void)
 			      topLevelWidget()->pos());
 	pSEQPrefs->setPrefSize("WindowSize", section, 
 			       topLevelWidget()->size());
-      }
-
-      QValueList<int> list = m_splitV->sizes();
-      QValueList<int>::Iterator it = list.begin();
-      i = 0;
-      while(it != list.end()) {
-         i++;
-         tempStr.sprintf("SplitVSize%d", i);
-         pSEQPrefs->setPrefInt(tempStr, section, (*it));
-         ++it;
-      }
-
-      list = m_splitH->sizes();
-      it = list.begin();
-      i = 0;
-      while(it != list.end()) {
-         i++;
-         tempStr.sprintf("SplitHSize%d", i);
-         pSEQPrefs->setPrefInt(tempStr, section, (*it));
-         ++it;
-      }
-
-      list = m_splitT->sizes();
-      it = list.begin();
-      i = 0;
-      while(it != list.end()) {
-         i++;
-         tempStr.sprintf("SplitT_Size%d", i);
-         pSEQPrefs->setPrefInt(tempStr, section, (*it));
-         ++it;
       }
 
       // save prefs to file
@@ -2595,7 +2565,7 @@ void EQInterface::loadFormatStrings()
     uint32_t maxFormatId = 0;
 
     // next skip over the count, etc...
-    ++it;
+    it++;
 
     // now iterate over the format lines
     for (; it != lines.end(); ++it)

@@ -51,6 +51,7 @@ class Point3D
   Point3D& operator/=(int coef);
   Point3D& operator/=(double coef);
   bool operator==(const Point3D& point) const;
+  bool isEqual(_T x, _T y, _T z) const;
 
   // get methods
   _T x() const { return m_x; }
@@ -206,6 +207,14 @@ bool Point3D<_T>::operator==(const Point3D<_T>& point) const
   return ((x() == point.x()) &&
 	  (y() == point.y()) &&
 	  (z() == point.z()));
+}
+
+template <class _T> inline
+bool Point3D<_T>::isEqual(_T x, _T y, _T z) const
+{
+  return ((m_x == x) &&
+	  (m_y == y) &&
+	  (m_z == z));
 }
 
 // returns true if all 3 dimensions are 0

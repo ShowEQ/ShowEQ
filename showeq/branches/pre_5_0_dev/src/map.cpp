@@ -299,9 +299,19 @@ void MapMgr::zoneBegin(const QString& shortZoneName)
   // signal that the map has been unloaded
   emit mapUnloaded();
   
-  QString fileName = shortZoneName + ".map";
+  // first attempt to find map with .map suffix
+  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", 
+						      shortZoneName + ".map");
   
-  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
+  // if that file doesn't exist, try a straight .txt suffix
+  if (!fileInfo.exists())
+    fileInfo = m_dataLocMgr->findExistingFile("maps", 
+					      shortZoneName + ".txt");
+
+  // if that file doesn't exist, try a  _1.txt suffix
+  if (!fileInfo.exists())
+    fileInfo = m_dataLocMgr->findExistingFile("maps", 
+					      shortZoneName + "_1.txt");
   
   // load the map
   loadFileMap(fileInfo.absFilePath());
@@ -320,10 +330,20 @@ void MapMgr::zoneChanged(const QString& shortZoneName)
   // signal that the map has been unloaded
   emit mapUnloaded();
 
-  QString fileName = shortZoneName + ".map";
+  // first attempt to find map with .map suffix
+  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", 
+						      shortZoneName + ".map");
   
-  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
-  
+  // if that file doesn't exist, try a straight .txt suffix
+  if (!fileInfo.exists())
+    fileInfo = m_dataLocMgr->findExistingFile("maps", 
+					      shortZoneName + ".txt");
+
+  // if that file doesn't exist, try a  _1.txt suffix
+  if (!fileInfo.exists())
+    fileInfo = m_dataLocMgr->findExistingFile("maps", 
+					      shortZoneName + "_1.txt");
+
   // load the map
   loadFileMap(fileInfo.absFilePath());
 }
@@ -335,9 +355,19 @@ void MapMgr::zoneEnd(const QString& shortZoneName, const QString& longZoneName)
 	 (const char*)longZoneName, (const char*)shortZoneName);
 #endif /* DEBUGMAP */
 
-  QString fileName = shortZoneName + ".map";
+  // first attempt to find map with .map suffix
+  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", 
+						      shortZoneName + ".map");
   
-  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
+  // if that file doesn't exist, try a straight .txt suffix
+  if (!fileInfo.exists())
+    fileInfo = m_dataLocMgr->findExistingFile("maps", 
+					      shortZoneName + ".txt");
+
+  // if that file doesn't exist, try a  _1.txt suffix
+  if (!fileInfo.exists())
+    fileInfo = m_dataLocMgr->findExistingFile("maps", 
+					      shortZoneName + "_1.txt");
   
   // load the map if it's not already loaded
   if (fileInfo.absFilePath() != m_mapData.fileName())
@@ -350,10 +380,13 @@ void MapMgr::loadMap ()
   debug ("loadMap()");
 #endif /* DEBUGMAP */
 
-  QString fileName;
+  QString fileName = m_mapData.fileName();
+
+  if (fileName.isEmpty())
+    fileName = m_dataLocMgr->findExistingFile("maps", fileName).absFilePath();
 
   // create a file dialog the defaults to the currently open map
-  fileName = QFileDialog::getOpenFileName(m_mapData.fileName(), "*.map");
+  fileName = QFileDialog::getOpenFileName(fileName, "*.map;*.txt");
 
   if (fileName.isEmpty ())
     return;
@@ -372,7 +405,10 @@ void MapMgr::loadFileMap (const QString& fileName)
 #endif /* DEBUGMAP */
 
   // load the specified map
-  m_mapData.loadMap(fileName);
+  if (!fileName.endsWith(".txt"))
+    m_mapData.loadMap(fileName);
+  else
+    m_mapData.loadSOEMap(fileName);
 
   const ItemMap& itemMap = m_spawnShell->spawns();
   ItemConstIterator it(itemMap);
@@ -418,7 +454,8 @@ void MapMgr::saveMap ()
 #endif /* DEBUGMAP */
   QFileInfo fileInfo(m_mapData.fileName());
 
-  fileInfo = m_dataLocMgr->findWriteFile("maps", fileInfo.fileName(), false);
+  fileInfo = m_dataLocMgr->findWriteFile("maps", fileInfo.baseName() + ".map", 
+					 false);
 
   m_mapData.saveMap(fileInfo.absFilePath());
 }
@@ -614,6 +651,10 @@ void MapMgr::dumpInfo(QTextStream& out)
   out << "size: width(" << m_mapData.size().width()
       << ") height(" << m_mapData.size().height() << ")" << endl;
   out << "ZoneZEM: " << m_mapData.zoneZEM() << endl;
+  out << "LLines: " << m_mapData.lLines().count() << endl;
+  out << "MLines: " << m_mapData.mLines().count() << endl;
+  out << "Locations: " << m_mapData.locations().count() << endl;
+  out << "Aggros: " << m_mapData.aggros().count() << endl;
   out << endl;
 }
 
