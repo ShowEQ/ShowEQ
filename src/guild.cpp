@@ -12,12 +12,13 @@
  *
  */
 
+#include "guild.h"
+#include "packet.h"
+#include "diagnosticmessages.h"
+
 #include <qfile.h>
 #include <qdatastream.h>
 #include <qtextstream.h>
-
-#include "guild.h"
-#include "packet.h"
 
 GuildMgr::GuildMgr(QString fn, QObject* parent, const char* name)
   : QObject(parent, name)
@@ -52,7 +53,7 @@ void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
 
   if (guildsfile.exists()) {
      if (!guildsfile.remove()) {
-        fprintf(stderr, "WARNING: could not remove old %s, unable to replace with server data!\n"
+       seqWarn("WARNING: could not remove old %s, unable to replace with server data!"
 ,
                 guildsFileName.latin1());
         return;
@@ -60,7 +61,7 @@ void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
   }
 
   if(!guildsfile.open(IO_WriteOnly))
-     fprintf(stderr, "WARNING: could not open %s for writing, unable to replace with server data!\n",
+    seqWarn("WARNING: could not open %s for writing, unable to replace with server data!",
              guildsFileName.latin1());
 
   QDataStream guildDataStream(&guildsfile);
@@ -68,7 +69,7 @@ void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
   guildDataStream.writeRawBytes((char *)gls->guilds, sizeof(gls->guilds));
 
   guildsfile.close();
-  printf("GuildMgr: new guildsfile written\n");
+  seqInfo("GuildMgr: new guildsfile written");
 }
 
 void GuildMgr::readGuildList()
@@ -81,7 +82,7 @@ void GuildMgr::readGuildList()
     worldGuildListStruct tmp;
      if (guildsfile.size() != sizeof(tmp.guilds))
      {
-	fprintf(stderr, "WARNING: guildsfile not loaded, expected size %d got %ld\n",
+	seqWarn("WARNING: guildsfile not loaded, expected size %d got %ld",
                 sizeof(worldGuildListStruct), guildsfile.size()); 
 	return;
      }
@@ -98,10 +99,10 @@ void GuildMgr::readGuildList()
      }
      
     guildsfile.close();
-    printf("GuildMgr: guildsfile loaded\n");
+    seqInfo("GuildMgr: guildsfile loaded");
   }
   else
-    printf("GuildMgr: WARNING - could not load guildsfile, %s\n", (const char*)guildsFileName);
+    seqWarn("GuildMgr: WARNING - could not load guildsfile, %s", (const char*)guildsFileName);
 }
 
 void GuildMgr::guildList2text(QString fn)
@@ -111,14 +112,14 @@ void GuildMgr::guildList2text(QString fn)
 
     if (guildsfile.exists()) {
          if (!guildsfile.remove()) {
-             fprintf(stderr, "WARNING: could not remove old %s, unable to process request!\n",
+             seqWarn("WARNING: could not remove old %s, unable to process request!",
                    fn.latin1());
            return;
         }
    }
 
    if (!guildsfile.open(IO_WriteOnly)) {
-      fprintf(stderr, "WARNING: could not open %s for writing, unable to process request!\n",
+     seqWarn("WARNING: could not open %s for writing, unable to process request!",
               fn.latin1());
       return;
    }
@@ -126,7 +127,7 @@ void GuildMgr::guildList2text(QString fn)
    for (unsigned int i =0 ; i < m_guildMap.size(); i++) 
    {
        if (m_guildMap[i])
-          guildtext << i << "\t" << m_guildMap[i] << "\n";
+          guildtext << i << "\t" << m_guildMap[i] << "";
    }
 
    guildsfile.close();
@@ -139,7 +140,7 @@ void GuildMgr::listGuildInfo()
 {
    for (unsigned int i = 0; i < m_guildMap.size(); i++) 
    {
-       if (m_guildMap[i])
-           printf("%d	%s\n", i, (const char*)m_guildMap[i]);
+     if (m_guildMap[i])
+       seqInfo("%d\t%s", i, (const char*)m_guildMap[i]);
    }
 }

@@ -13,6 +13,7 @@
 #ifndef FILTER_H
 #define FILTER_H
 
+#include <stdint.h>
 #include <sys/types.h>
 
 #include <qstring.h>

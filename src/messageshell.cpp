@@ -39,8 +39,8 @@ MessageShell::MessageShell(Messages* messages, EQStr* eqStrings,
 void MessageShell::channelMessage(const uint8_t* data, size_t, uint8_t dir)
 {
   // avoid client chatter and do nothing if not viewing channel messages
-  if (dir == DIR_Client)
-    return;
+  //  if (dir == DIR_Client)
+  //    return;
 
   const channelMessageStruct* cmsg = (const channelMessageStruct*)data;
 
@@ -92,6 +92,69 @@ void MessageShell::channelMessage(const uint8_t* data, size_t, uint8_t dir)
   m_messages->addMessage((MessageType)cmsg->chanNum, tempStr);
 }
 
+static MessageType chatColor2MessageType(ChatColor chatColor)
+{
+  MessageType messageType;
+
+  // use the message color to differentiate between certain messages
+  switch(chatColor)
+  {
+  case CC_User_Say:
+  case CC_User_EchoSay:
+    messageType = MT_Say;
+    break;
+  case CC_User_Tell:
+  case CC_User_EchoTell:
+    messageType = MT_Tell;
+    break;
+  case CC_User_Group:
+  case CC_User_EchoGroup:
+    messageType = MT_Group;
+    break;
+  case CC_User_Guild:
+  case CC_User_EchoGuild:
+    messageType = MT_Guild;
+    break;
+  case CC_User_OOC:
+  case CC_User_EchoOOC:
+    messageType = MT_OOC;
+    break;
+  case CC_User_Auction:
+  case CC_User_EchoAuction:
+    messageType = MT_Auction;
+    break;
+  case CC_User_Shout:
+  case CC_User_EchoShout:
+    messageType = MT_Shout;
+    break;
+  case CC_User_Emote:
+  case CC_User_EchoEmote:
+    messageType = MT_Emote;
+    break;
+  case CC_User_RaidSay:
+    messageType = MT_Raid;
+    break;
+  case CC_User_Spells:
+  case CC_User_SpellWornOff:
+  case CC_User_OtherSpells:
+  case CC_User_SpellFailure:
+  case CC_User_SpellCrit:
+    messageType = MT_Spell;
+    break;
+  case CC_User_MoneySplit:
+    messageType = MT_Money;
+    break;
+  case CC_User_Random:
+    messageType = MT_Random;
+    break;
+  default:
+    messageType = MT_General;
+    break;
+  }
+  
+  return messageType;
+}
+
 void MessageShell::formattedMessage(const uint8_t* data, size_t len, uint8_t dir)
 {
   // avoid client chatter and do nothing if not viewing channel messages
@@ -101,12 +164,13 @@ void MessageShell::formattedMessage(const uint8_t* data, size_t len, uint8_t dir
   const formattedMessageStruct* fmsg = (const formattedMessageStruct*)data;
   QString tempStr;
 
+
   size_t messagesLen = 
     len
     - ((uint8_t*)&fmsg->messages[0] - (uint8_t*)fmsg) 
     - sizeof(fmsg->unknownXXXX);
 
-  m_messages->addMessage(MT_General, 
+  m_messages->addMessage(chatColor2MessageType(fmsg->messageColor), 
 			 m_eqStrings->formatMessage(fmsg->messageFormat,
 						    fmsg->messages, 
 						    messagesLen));
@@ -121,9 +185,8 @@ void MessageShell::simpleMessage(const uint8_t* data, size_t len, uint8_t dir)
   const simpleMessageStruct* smsg = (const simpleMessageStruct*)data;
   QString tempStr;
  
-  m_messages->addMessage(MT_General, 
-			 m_eqStrings->message(smsg->messageFormat), 
-			 smsg->color);
+  m_messages->addMessage(chatColor2MessageType(smsg->messageColor), 
+			 m_eqStrings->message(smsg->messageFormat));
 }
 
 void MessageShell::specialMessage(const uint8_t* data, size_t, uint8_t dir)
@@ -144,13 +207,13 @@ void MessageShell::specialMessage(const uint8_t* data, size_t, uint8_t dir)
     + sizeof(smsg->unknown0xxx);
   
   if (target)
-    m_messages->addMessage(MT_General, 
+    m_messages->addMessage(chatColor2MessageType(smsg->messageColor), 
 			   QString("Special: '%1' -> '%2' - %3")
 			   .arg(smsg->source)
 			   .arg(target->name())
 			   .arg(message));
   else
-    m_messages->addMessage(MT_General,
+    m_messages->addMessage(chatColor2MessageType(smsg->messageColor),
 			   QString("Special: '%1' - %2")
 			   .arg(smsg->source)
 			   .arg(message));
@@ -275,11 +338,11 @@ void MessageShell::inspectData(const uint8_t* data)
   for (int inp = 0; inp < 21; inp ++)
   {
     tempStr.sprintf("He has %s (icn:%i)", inspt->itemNames[inp], inspt->icons[inp]);
-    m_messages->addMessage(MT_Zone, tempStr);
+    m_messages->addMessage(MT_Inspect, tempStr);
   }
 
   tempStr.sprintf("His info: %s", inspt->mytext);
-  m_messages->addMessage(MT_Zone, tempStr);
+  m_messages->addMessage(MT_Inspect, tempStr);
 }
 
 void MessageShell::logOut(const uint8_t*, size_t, uint8_t)

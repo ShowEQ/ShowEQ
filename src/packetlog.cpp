@@ -14,6 +14,7 @@
 #include "packetformat.h"
 #include "packetinfo.h"
 #include "decode.h"
+#include "diagnosticmessages.h"
 
 //----------------------------------------------------------------------
 // PacketLog
@@ -261,7 +262,7 @@ void PacketLog::printData(const uint8_t* data, size_t len, uint8_t dir,
 			  uint16_t opcode, const QString& origPrefix)
 {
   if (!origPrefix.isEmpty())
-    ::printf("\n%s ", (const char*)origPrefix);
+    ::printf("%s ", (const char*)origPrefix);
   else
     ::putchar('\n');
   
@@ -369,13 +370,13 @@ void OPCodeMonitorPacketLog::init(QString monitoredOPCodes)
 {
   if (monitoredOPCodes.isEmpty() || monitoredOPCodes == "0") /* DISABLED */
   {
-    printf( "\nOpCode monitoring COULD NOT BE ENABLED!\n"
-	    ">> Please check your ShowEQ.xml file for a list entry under [OpCodeMonitoring]\n\n");
+    seqWarn("OpCode monitoring COULD NOT BE ENABLED!");
+    seqWarn(">> Please check your showeq.xml file for a list entry under [OpCodeMonitoring]");
     return;
   }
 
-  printf( "OpCode monitoring ENABLED...\n"
-	  "Using list:\t%s\n\n",
+  seqInfo("OpCode monitoring ENABLED...");
+  seqInfo("Using list:\t%s",
 	  (const char*)monitoredOPCodes);
 
 
@@ -442,11 +443,11 @@ void OPCodeMonitorPacketLog::init(QString monitoredOPCodes)
     }
     
 #if 1 // ZBTEMP
-    fprintf(stderr, "opcode=%04x name='%s' dir=%d known=%d\n",
-	    MonitoredOpCodeList [uiIndex] [0],
-	    (const char*)MonitoredOpCodeAliasList [uiIndex],
-	    MonitoredOpCodeList [uiIndex] [1],
-	    MonitoredOpCodeList [uiIndex] [2]);
+    seqDebug("opcode=%04x name='%s' dir=%d known=%d",
+	     MonitoredOpCodeList [uiIndex] [0],
+	     (const char*)MonitoredOpCodeAliasList [uiIndex],
+	     MonitoredOpCodeList [uiIndex] [1],
+	     MonitoredOpCodeList [uiIndex] [2]);
 #endif
   }
 }

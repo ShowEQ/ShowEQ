@@ -21,6 +21,7 @@
 #include "packetinfo.h"
 #include "packetcommon.h"
 #include "everquest.h"
+#include "diagnosticmessages.h"
 
 #if 1 // ZBTEMP
 #include "decode.h"
@@ -110,14 +111,14 @@ bool EQPacketTypeDB::valid(const char* typeName) const
 
 void EQPacketTypeDB::list(void) const
 {
-  fprintf(stderr, "EQPacketTypeDB contains %d types (in %d buckets)\n",
+  seqInfo("EQPacketTypeDB contains %d types (in %d buckets)",
 	  m_typeSizeDict.count(), m_typeSizeDict.size());
 
   QAsciiDictIterator<size_t> it(m_typeSizeDict);
 
   while (it.current())
   {
-    fprintf(stderr, "\t%s = %d\n", it.currentKey(), *(it.current()));
+    seqInfo("\t%s = %d", it.currentKey(), *(it.current()));
     ++it;
   }
 }
@@ -146,7 +147,7 @@ void EQPacketDispatch::activate(const uint8_t* data, size_t len, uint8_t dir)
 bool EQPacketDispatch::connect(const QObject* receiver, const char* member)
 {
 #ifdef PACKET_DISPATCH_DIAG
-  fprintf(stderr, "Connecting '%s:%s' to '%s:%s' objects %s.\n",
+  seqDebug("Connecting '%s:%s' to '%s:%s' objects %s.",
 	  className(), name(), receiver->className(), receiver->name(),
 	  (const char*)member);
 #endif
@@ -423,7 +424,7 @@ void EQPacketOPCodeDB::list(void) const
 {
   m_opcodes.statistics();
 
-  fprintf(stderr, "EQPacketOPCodeDB contains %d opcodes (in %d buckets)\n",
+  seqInfo("EQPacketOPCodeDB contains %d opcodes (in %d buckets)",
 	  m_opcodes.count(), m_opcodes.size());
 
   EQPacketOPCode* current;
@@ -459,7 +460,7 @@ void EQPacketOPCodeDB::list(void) const
     QPtrListIterator<EQPacketPayload> pit(*current);
     while ((currentPayload = pit.current()) != 0)
     {
-      fprintf(stderr, "\t\t\tdir=%d typename=%s size=%d sizechecktype=%d\n",
+      seqInfo("\t\t\tdir=%d typename=%s size=%d sizechecktype=%d",
 	      currentPayload->dir(), (const char*)currentPayload->typeName(),
 	      currentPayload->typeSize(), currentPayload->sizeCheckType());
 
@@ -574,8 +575,7 @@ bool OPCodeXmlContentHandler::startElement(const QString&, const QString&,
     int index = attr.index("id");
     if (index == -1)
     {
-      fprintf(stderr,
-	      "OPCodeXmlContentHandler::startElement(): opcode element without id!\n");
+      seqWarn("OPCodeXmlContentHandler::startElement(): opcode element without id!");
 	      
       return false; // this is an error, something is wrong
     }
@@ -589,8 +589,7 @@ bool OPCodeXmlContentHandler::startElement(const QString&, const QString&,
 
     if (!ok)
     {
-      fprintf(stderr, 
-	      "OPCodeXmlContentHandler::startElement(): opcode '%s' failed to convert to uint16_t (result: %#04x)\n",
+      seqWarn("OPCodeXmlContentHandler::startElement(): opcode '%s' failed to convert to uint16_t (result: %#04x)",
 	      attr.value(index).latin1(), opcode);
 
       return false; // this is an error
@@ -602,8 +601,7 @@ bool OPCodeXmlContentHandler::startElement(const QString&, const QString&,
     // if name attribute was found, set the opcode objects name
     if (index == -1)
     {
-      fprintf(stderr, 
-	      "OPCodeXmlContentHandler::startElement(): opcode %#04x missing name parameter!\n",
+      seqWarn("OPCodeXmlContentHandler::startElement(): opcode %#04x missing name parameter!",
 	      opcode);
 
       return false;
@@ -614,7 +612,7 @@ bool OPCodeXmlContentHandler::startElement(const QString&, const QString&,
 
     if (!m_currentOPCode)
     {
-      fprintf(stderr, "Failed to add opcode %04x\n", opcode);
+      seqWarn("Failed to add opcode %04x", opcode);
       return false;
     }
 
@@ -680,8 +678,7 @@ bool OPCodeXmlContentHandler::startElement(const QString&, const QString&,
       if (!value.isEmpty())
       {
 	if (!m_currentPayload->setType(m_typeDB, value))
-	  fprintf(stderr,
-		  "Warning: Unknown payload typename '%s' for opcode '%04x\n",
+	  seqWarn("Warning: Unknown payload typename '%s' for opcode '%04x",
 		  value.latin1(), m_currentOPCode->opcode());
       }
     }

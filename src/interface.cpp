@@ -44,6 +44,7 @@
 #include "terminal.h"
 #include "filteredspawnlog.h"
 #include "messagefilterdialog.h"
+#include "diagnosticmessages.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -127,10 +128,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
   setDockMenuEnabled(false);
 
   for (int l = 0; l < maxNumMaps; l++)
-    m_map[l] = NULL;
+    m_map[l] = 0;
 
   for (int l = 0; l < maxNumMessageWindows; l++)
-    m_messageWindow[l] = NULL;
+    m_messageWindow[l] = 0;
 
    QString tempStr;
    QString section = "Interface";
@@ -156,6 +157,16 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // initialize packet count
    m_initialcount = 0;
    m_packetStartTime = 0;
+
+   // Create the date/time manager
+   m_dateTimeMgr = new DateTimeMgr(this, "datetimemgr");
+
+   // Create Message Filters object
+   m_messageFilters = new MessageFilters(this, "messagefilters");
+
+   // Create Messages storage
+   m_messages = new Messages(m_dateTimeMgr, m_messageFilters, 
+			     this, "messages");
 
    QString fileName, fileName2;
    QFileInfo fileInfo, fileInfo2;
@@ -205,19 +216,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    fileInfo = m_dataLocationMgr->findExistingFile(".", fileName);
    
    m_spells = new Spells(fileInfo.absFilePath());
-
-   // Create the date/time manager
-   m_dateTimeMgr = new DateTimeMgr(this, "datetimemgr");
    
    // Create the EQStr storage
    m_eqStrings = new EQStr(8009); // increase if the number of stings exeeds
-
-   // Create Message Filters object
-   m_messageFilters = new MessageFilters(this, "messagefilters");
-
-   // Create Messages storage
-   m_messages = new Messages(m_dateTimeMgr, m_messageFilters, 
-			     this, "messages");
 
    // Create the terminal object
    m_terminal = new Terminal(m_messages, this, "terminal");
@@ -1594,14 +1595,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 		      "newCorpseStruct", SZC_Match,
 		      this, SLOT(combatKillSpawn(const uint8_t*)));
 #if 0 // ZBTEMP
-   connect(m_packet, SIGNAL(spMessage(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(spMessage(const uint8_t*)));
-#endif
-#if 0 // ZBTEMP
    connect(m_packet, SIGNAL(interruptSpellCast(const uint8_t*, size_t, uint8_t)),
 	   this, SLOT(interruptSpellCast(const uint8_t*)));
-   connect(m_packet, SIGNAL(systemMessage(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(systemMessage(const uint8_t*)));
    connect(m_packet, SIGNAL(moneyUpdate(const uint8_t*, size_t, uint8_t)),
 	   this, SLOT(moneyUpdate(const uint8_t*)));
    connect(m_packet, SIGNAL(moneyThing(const uint8_t*, size_t, uint8_t)),
@@ -2559,7 +2554,7 @@ EQInterface::toggle_main_UseStdout (int id)
 void
 EQInterface::savePrefs(void)
 {
-   printf("==> EQInterface::savePrefs()\n");
+  seqInfo("==> EQInterface::savePrefs()");
    
    if( isVisible() ) 
    {
@@ -2679,9 +2674,6 @@ void EQInterface::toggle_filter_Log(int id)
     filters &= ~filter;
   else
     filters |= filter;
-
-  fprintf(stderr, "toggle_filter_Log(%u): filter(%08x) filters(%08x)\n",
-	  id, filter, filters);
 
   m_filteredSpawnLog->setFilters(filters);
 
@@ -2902,7 +2894,7 @@ void EQInterface::dumpSpellBook(void)
   QTextStream out(&file);
   QString txt;
 
-  fprintf(stderr, "Dumping Spell Book to '%s'\n", 
+  seqInfo("Dumping Spell Book to '%s'\n", 
 	  (const char*)file.name().utf8());
   out << "Spellbook of " << m_player->name() << " a level " 
       << m_player->level() << " " << m_player->raceString() 
@@ -3459,7 +3451,7 @@ EQInterface::toggle_opcode_monitoring(int id)
       pSEQPrefs->setPrefString("OpCodeList", section, opCodeList);
       
 
-      printf("OpCode monitoring is now ENABLED...\nUsing list:\t%s\n", 
+      seqInfo("OpCode monitoring is now ENABLED...\nUsing list:\t%s", 
 	     (const char*)opCodeList);
     }
   }
@@ -3468,7 +3460,7 @@ EQInterface::toggle_opcode_monitoring(int id)
     delete m_opcodeMonitorLog;
     m_opcodeMonitorLog = 0;
 
-    printf("OpCode monitoring has been DISABLED...\n");
+    seqInfo("OpCode monitoring has been DISABLED...");
   }
 
   bool state = (m_opcodeMonitorLog != 0);
@@ -3487,7 +3479,7 @@ void EQInterface::set_opcode_monitored_list(void)
   {
     m_opcodeMonitorLog->init(opCodeList);
     
-    printf("The monitored OpCode list has been reloaded...\nUsing list:\t%s\n", 
+    seqInfo("The monitored OpCode list has been reloaded...\nUsing list:\t%s", 
 	   (const char*)opCodeList);
     
     // set the list of monitored opcodes
@@ -3654,50 +3646,6 @@ EQInterface::select_opt_conColorBase(int id)
     // force the spawn lists to get rebuilt with the new colors
     rebuildSpawnList();
   }
-}
-
-void
-EQInterface::msgReceived(const QString &instring)
-{
-  //
-  // getting reports of a lot of blank lines being spammed about....
-  // thinking its CR's in the msgs themselves.  Putting a CR/LF stripper here
-  // WARNING:  If you send a msg with a CR or LF in the middle of it, this will
-  // replace it with a space.  So far, I don't think we do that anywhere.
-  //  - Maerlyn 3/28
-  QString string(instring);
-  int index = 0;
-
-  if (string.left(28) != "System: Players in EverQuest") {
-  while( -1 != (index = string.find('\n')) )
-    string.replace(index, 1, " ");
-  //  string.remove(index);
-  while( -1 != (index = string.find('\r')) )
-    string.replace(index, 1, " ");
-  //  string.remove(index);
-   }
-
-  if (pSEQPrefs->getPrefBool("UseStdout", "Interface")) 
-  {
-    	if (!strncmp(string.ascii(), "Guild", 5)) fprintf(stdout, "\e[1;32m"); // Light Green
-	if (!strncmp(string.ascii(), "Group", 5)) fprintf(stdout, "\e[0;36m"); // Cyan
-	if (!strncmp(string.ascii(), "Shout", 5)) fprintf(stdout, "\e[1;31m"); // Light Red
-	if (!strncmp(string.ascii(), "Aucti", 5)) fprintf(stdout, "\e[1;42m"); // Light White on Green Background
-	if (!strncmp(string.ascii(), "OOC",   3)) fprintf(stdout, "\e[0;32m"); // Green
-	if (!strncmp(string.ascii(), "Tell",  4)) fprintf(stdout, "\e[0;35m"); // Magenta
-	if (!strncmp(string.ascii(), "Say",   3)) fprintf(stdout, "\e[1;37m"); // White
-	if (!strncmp(string.ascii(), "GM-Te", 5)) fprintf(stdout, "\e[5;31m"); // Blinking Red
-	if (!strncmp(string.ascii(), "Raid",  4)) fprintf(stdout, "\e[1;36m"); // Cyan
-
-	fprintf(stdout, "%s", string.ascii());
-	fprintf(stdout, "\e[0;0m\n"); // Shut off all ANSI
-    	fflush(stdout);
-  }
-
-  m_StringList.append(string);
-
-  emit 
-    newMessage(m_StringList.count() - 1);
 }
 
 void EQInterface::setExp(uint32_t totalExp, uint32_t totalTick,
@@ -3897,85 +3845,6 @@ void EQInterface::syncDateTime(const QDateTime& dt)
   QString dateString = dt.toString(pSEQPrefs->getPrefString("DateTimeFormat", "Interface", "ddd MMM dd,yyyy - hh:mm ap"));
 
   m_stsbarEQTime->setText(dateString);
-}
-
-void EQInterface::spMessage(const uint8_t* data)
-{
-  const spMesgStruct *spmsg = (const spMesgStruct *)data;
-  QString tempStr;
-
-  // Seems to be lots of blanks
-  if (!spmsg->message[0])
-    return;
-  
-  //printf("== msgType=%d, msg='%s'\n", spmsg->msgType, spmsg->message);
-  // This seems to be several type of message...
-  // CJD - why was there no breaks in each case?
-  switch(spmsg->msgType)
-  {
-  case 13:
-  {
-    if (!strncmp(spmsg->message, "Your target is too far away", 20))
-      tempStr.sprintf("Attack: %s", spmsg->message);
-    
-    else if (!strncmp(spmsg->message, "You can't see your target", 18))
-      tempStr.sprintf("Attack: %s", spmsg->message);
-    
-    // CJD - is this resist any longer type 13, or was it
-    // moved to 289 (what I see from some brief logging)?
-    else if (!strncmp(spmsg->message, "Your target resisted", 18))
-    {
-      printf("== let cjd1@users.sourceforge.net know if you ever see this message.\n");
-      tempStr.sprintf("Spell: %s", spmsg->message);
-    }
-    else
-      tempStr.sprintf("Special: %s (%d)", spmsg->message, spmsg->msgType);
-    break;
-  }
-  case 15:
-    tempStr.sprintf("\e[0;33mExp: %s\e[0;0m", spmsg->message);
-    break;
-    
-    // CJD TODO - make these signals themselves? or just one
-    // spellMessage(QString&) and let spellshell split them up...
-  case 284: // Your xxx spell has worn off.
-    // CJD - No way with this to tell which spell wore off
-    // if the same spell is on two different targets...
-    tempStr.sprintf("Spell: %s", spmsg->message);
-    break;
-    
-    // Your target resisted the xxx spell.  OR
-    // Your spell fizzles.
-  case 289:
-    tempStr.sprintf("Spell: %s", spmsg->message);
-    break;
-    
-  default:
-    tempStr.sprintf("Special: %s (%d)", spmsg->message, spmsg->msgType);
-  }
-  
-  if (tempStr.left(6) == "Spell:")
-    emit spellMessage(tempStr);
-  
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::systemMessage(const uint8_t* data)
-{
-  const sysMsgStruct* smsg = (const sysMsgStruct*)data;
-  QString tempStr;
-
-  // Seems to be lots of blanks
-  if (!smsg->message[0])
-    return;
-  
-  // This seems to be several type of message...
-  if (!strncmp(smsg->message, "Your faction", 12))
-    tempStr.sprintf("Faction: %s", smsg->message);
-  else
-    tempStr.sprintf("System: %s", smsg->message);
-  
-  emit msgReceived(tempStr);
 }
 
 void EQInterface::zoneBegin(const QString& shortZoneName)
@@ -4300,7 +4169,7 @@ void EQInterface::saveSelectedSpawnPath(void)
     // append the selected spawns path to the end
     saveSpawnPath(out, m_selectedSpawn);
 
-    fprintf(stderr, "Finished appending '%s'!\n", (const char*)fileName);
+    seqInfo("Finished appending '%s'!\n", (const char*)fileName);
   }
 }
 
@@ -4332,7 +4201,7 @@ void EQInterface::saveSpawnPaths(void)
 	saveSpawnPath(out, it.current());
     }
 
-    fprintf(stderr, "Finished writing '%s'!\n", (const char*)fileName);
+    seqInfo("Finished writing '%s'!\n", (const char*)fileName);
   }
 }
 
@@ -4418,7 +4287,7 @@ void EQInterface::set_net_client_MAC_address()
   {
     if (address.length() != 17)
     {
-      fprintf(stderr, "Invalid MAC Address (%s)! Ignoring!",
+      seqWarn("Invalid MAC Address (%s)! Ignoring!",
 	      (const char*)address);
       return;
     }

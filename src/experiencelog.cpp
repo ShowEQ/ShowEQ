@@ -5,8 +5,6 @@
  *  http://www.sourceforge.net/projects/seq
  */
 
-#include <stdio.h>
-#include <time.h>
 
 #include "experiencelog.h"
 #include "interface.h"
@@ -15,6 +13,10 @@
 #include "group.h"
 #include "player.h"
 #include "datalocationmgr.h"
+#include "diagnosticmessages.h"
+
+#include <stdio.h>
+#include <time.h>
 
 #include <qgrid.h>
 #include <qtimer.h>
@@ -115,9 +117,9 @@ long ExperienceRecord::getExpValueg() const
    gbonus = m_group->groupPercentBonus();
 
    /* calculate group aggregate level */
-   printf("GROUPSIZE: %d\n", m_group->groupSize());
+   seqInfo("GROUPSIZE: %d", m_group->groupSize());
    group_ag = m_group->totalLevels();
-   printf("MY Level: %d\n GroupTot: %d\n BONUS   :%d\n", 
+   seqInfo("MY Level: %d GroupTot: %d BONUS   :%d", 
 	  myLevel, group_ag, gbonus);
 
    return (int) (((float)pExp)*((float)gbonus/(float)100)*((float)myLevel/(float)group_ag));
@@ -261,7 +263,7 @@ ExperienceWindow::ExperienceWindow(const DataLocationMgr* dataLocMgr,
    if (m_log == 0)
    {
       m_log_exp = 0;
-      printf("Error opening exp.log, no exp will be logged this session\n");
+      seqWarn("Error opening exp.log, no exp will be logged this session");
    }
 
    fileInfo = m_dataLocMgr->findWriteFile("logs", "newexp.log");
@@ -661,7 +663,7 @@ void ExperienceWindow::calculateZEM(long xp_gained, int mob_level)
    group_ag = m_group->totalLevels();
    if (m_group->groupSize())
    {
-      printf("MY Level: %d\n GroupTot: %d\n BONUS   :%d\n", 
+     seqInfo("MY Level: %d GroupTot: %d BONUS   :%d", 
 	     myLevel, group_ag, gbonus);
    }
    // WAR and ROG are at 10 since thier EXP is not scaled to compensate
@@ -685,7 +687,7 @@ void ExperienceWindow::calculateZEM(long xp_gained, int mob_level)
          penalty = 10; break; 
    }
    unsigned char ZEM = (unsigned char) ((float)xp_gained*((float)((float)group_ag/(float)myLevel)*(float)((float)100/(float)gbonus))*((float)1/(float)(mob_level*mob_level))*((float)10/(float)penalty));
-   printf("xpgained: %ld\ngroup_ag: %d\nmyLevel: %d\ngbonus: %d\nmob_level: %d\npenalty: %d\n", xp_gained, group_ag, myLevel, gbonus, mob_level, penalty);
-   printf("ZEM - ZEM - ZEM ===== %d\n", ZEM);
+   seqInfo("xpgained: %ld group_ag: %d myLevel: %d gbonus: %d mob_level: %d penalty: %d ", xp_gained, group_ag, myLevel, gbonus, mob_level, penalty);
+   seqInfo("ZEM - ZEM - ZEM ===== %d ", ZEM);
    parent->mapMgr()->setZEM(ZEM);
 }

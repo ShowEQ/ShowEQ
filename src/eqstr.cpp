@@ -10,6 +10,7 @@
 
 
 #include "eqstr.h"
+#include "diagnosticmessages.h"
 
 #include <stdio.h>
 
@@ -43,8 +44,7 @@ bool EQStr::load(const QString& fileName)
   // open the file read only
   if (!formatFile.open(IO_ReadOnly))
   {
-    fprintf(stderr,
-	    "EQInterface::loadFormatStrings(): Failed to open '%s'\n",
+    seqWarn("EQInterface::loadFormatStrings(): Failed to open '%s'",
 	    fileName.latin1());
     return false;
   }
@@ -94,8 +94,7 @@ bool EQStr::load(const QString& fileName)
   // note that strings are loaded
   m_loaded = true;
 
-  fprintf(stderr,
-	  "Loaded %d message strings from '%s' maxFormat=%d\n",
+  seqInfo("Loaded %d message strings from '%s' maxFormat=%d",
 	  m_messageStrings.count(), fileName.latin1(),
 	  maxFormatId);
   

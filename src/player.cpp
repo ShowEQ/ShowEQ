@@ -5,16 +5,17 @@
  *  http://seq.sourceforge.net/
  */
 
+#include "player.h"
+#include "util.h"
+#include "packetcommon.h"
+#include "diagnosticmessages.h"
+
 #include <stdio.h>
 #include <unistd.h>
 
 #include <qdir.h>
 #include <qfile.h>
 #include <qdatastream.h>
-
-#include "player.h"
-#include "util.h"
-#include "packetcommon.h"
 
 
 //#define DEBUG_PLAYER
@@ -139,8 +140,8 @@ void Player::player(const uint8_t* data)
   emit getPlayerGuildTag();
 
 #if 1 // ZBTEMP
-  printf("charProfile(%f/%f/%f - %f)\n",
-	 player->x, player->y, player->z, player->heading);
+  seqDebug("charProfile(%f/%f/%f - %f)",
+	   player->x, player->y, player->z, player->heading);
 #endif
   setPos((int16_t)lrintf(player->x), 
          (int16_t)lrintf(player->y), 
@@ -150,10 +151,10 @@ void Player::player(const uint8_t* data)
         );
   setDeltas(0,0,0);
 #if 1 // ZBTEMP
-  printf("Player::backfill(): Pos (%f/%f/%f) Heading: %f\n",
-	 player->x, player->y, player->z, player->heading);
-  printf("Player::backfill(bind): Pos (%f/%f/%f) Heading: %f\n",
-	 player->bind_x, player->bind_y, player->bind_z, player->bind_heading);
+  seqDebug("Player::backfill(): Pos (%f/%f/%f) Heading: %f",
+	   player->x, player->y, player->z, player->heading);
+  seqDebug("Player::backfill(bind): Pos (%f/%f/%f) Heading: %f",
+	   player->bind_x, player->bind_y, player->bind_z, player->bind_heading);
 #endif // ZBTEMP  
   setHeading((int8_t)lrintf(player->heading), 0);
   m_headingDegrees = 360 - ((((int8_t)lrintf(player->heading)) * 360) >> 11);
@@ -741,8 +742,8 @@ void Player::zoneBegin(const ServerZoneEntryStruct* zsentry)
         );
   setDeltas(0,0,0);
 #if 1 // ZBTEMP
-  printf("Player::zoneBegin(): Pos (%f/%f/%f) Heading: %f\n",
-	 zsentry->x, zsentry->y, zsentry->z, zsentry->heading);
+  seqDebug("Player::zoneBegin(): Pos (%f/%f/%f) Heading: %f",
+	   zsentry->x, zsentry->y, zsentry->z, zsentry->heading);
 #endif // ZBTEMP  
   setHeading((int8_t)lrintf(zsentry->heading), 0);
   m_validPos = true;
@@ -824,7 +825,7 @@ void Player::tradeSpellBookSlots(const uint8_t* data, size_t, uint8_t dir)
 {
   const tradeSpellBookSlotsStruct* tsb = (const tradeSpellBookSlotsStruct*)data;
 
-  fprintf(stderr, "tradeSpellBookSlots(dir=%d): Swapping %d (%04x) with %d (%04x)\n",
+  seqDebug("tradeSpellBookSlots(dir=%d): Swapping %d (%04x) with %d (%04x)",
 	  dir,
 	  tsb->slot1, m_spellBookSlots[tsb->slot1],
 	  tsb->slot2, m_spellBookSlots[tsb->slot2]);
@@ -843,7 +844,7 @@ void Player::setPlayerID(uint16_t playerID)
 {
   if (id() != playerID)
   {
-     printf("Your player's id is %i\n", playerID);
+     seqInfo("Your player's id is %i", playerID);
      setID(playerID);
      emit changedID(id());
      updateLastChanged();
@@ -1285,8 +1286,7 @@ void Player::restorePlayerState(void)
 
     if (magicTest != *magic)
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad magic string!\n",
+      seqWarn("Failure loading %s: Bad magic string!",
 	      (const char*)fileName);
       reset();
       clear();
@@ -1297,8 +1297,7 @@ void Player::restorePlayerState(void)
     d >> testVal;
     if (testVal != sizeof(charProfileStruct))
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad player size!\n", 
+      seqWarn("Failure loading %s: Bad player size!", 
 	      (const char*)fileName);
       reset();
       clear();
@@ -1308,8 +1307,7 @@ void Player::restorePlayerState(void)
     d >> testVal;
     if (testVal != MAX_KNOWN_SKILLS)
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad known skills!\n", 
+      seqWarn("Failure loading %s: Bad known skills!", 
 	      (const char*)fileName);
       reset();
       clear();
@@ -1319,8 +1317,7 @@ void Player::restorePlayerState(void)
     d >> testVal;
     if (testVal != MAX_KNOWN_LANGS)
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad known langs!\n", 
+      seqWarn("Failure loading %s: Bad known langs!", 
 	      (const char*)fileName);
       reset();
       clear();
@@ -1332,8 +1329,7 @@ void Player::restorePlayerState(void)
     d >> zoneShortName;
     if (zoneShortName != m_zoneMgr->shortZoneName().lower())
     {
-      fprintf(stderr,
-	      "\aWARNING: Restoring player state for potentially incorrect zone (%s != %s)!\n",
+      seqWarn("\aWARNING: Restoring player state for potentially incorrect zone (%s != %s)!",
 	      (const char*)zoneShortName, 
 	      (const char*)m_zoneMgr->shortZoneName().lower());
     }
@@ -1404,14 +1400,13 @@ void Player::restorePlayerState(void)
     // now fill out the con table
     fillConTable();
 
-    fprintf(stderr, "Restored PLAYER: %s (%s)!\n",
+    seqInfo("Restored PLAYER: %s (%s)!",
 	    (const char*)m_name,
 	    (const char*)m_lastName);
   }
   else
   {
-    fprintf(stderr,
-	    "Failure loading %s: Unable to open!\n", 
+    seqWarn("Failure loading %s: Unable to open!", 
 	    (const char*)fileName);
     reset();
     clear();

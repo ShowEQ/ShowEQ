@@ -14,14 +14,15 @@
  *
  */
 
-#include <qfile.h>
-#include <qdatastream.h>
-#include <qregexp.h>
-
 #include "zonemgr.h"
 #include "packet.h"
 #include "main.h"
 #include "everquest.h"
+#include "diagnosticmessages.h"
+
+#include <qfile.h>
+#include <qdatastream.h>
+#include <qregexp.h>
 
 //----------------------------------------------------------------------
 // constants
@@ -107,8 +108,7 @@ void ZoneMgr::restoreZoneState(void)
 
     if (magicTest != *magic)
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad magic string!\n",
+      seqWarn("Failure loading %s: Bad magic string!",
 	      (const char*)fileName);
       return;
     }
@@ -116,14 +116,13 @@ void ZoneMgr::restoreZoneState(void)
     d >> m_longZoneName;
     d >> m_shortZoneName;
 
-    fprintf(stderr, "Restored Zone: %s (%s)!\n",
+    seqInfo("Restored Zone: %s (%s)!",
 	    (const char*)m_shortZoneName,
 	    (const char*)m_longZoneName);
   }
   else
   {
-    fprintf(stderr,
-	    "Failure loading %s: Unable to open!\n", 
+    seqWarn("Failure loading %s: Unable to open!", 
 	    (const char*)fileName);
   }
 }
@@ -197,13 +196,13 @@ void ZoneMgr::zoneNew(const uint8_t* data, size_t len, uint8_t dir)
   m_zoning = false;
 
 #if 1 // ZBTEMP
-  printf("Welcome to lovely downtown '%s' with an experience multiplier of %f\n",
+  seqDebug("Welcome to lovely downtown '%s' with an experience multiplier of %f",
 	 zoneNew->longName, zoneNew->zone_exp_multiplier);
-  printf("Safe Point (%f, %f, %f)\n", 
+  seqDebug("Safe Point (%f, %f, %f)", 
 	 zoneNew->safe_x, zoneNew->safe_y, zoneNew->safe_z);
 #endif // ZBTEMP
   
-  // fprintf(stderr,"zoneNew: m_short(%s) m_long(%s)\n",
+  // seqDebug("zoneNew: m_short(%s) m_long(%s)",
   //    (const char*)m_shortZoneName,
   //    (const char*)m_longZoneName);
   

@@ -19,19 +19,20 @@
  *
  */
 
-#include <stddef.h>
-#ifdef __FreeBSD__
-#include <sys/types.h>
-#endif
-#include <math.h>
-#include <regex.h>
-
 #include "spawnlist.h"
 #include "category.h"
 #include "spawnshell.h"
 #include "filtermgr.h"
 #include "util.h"
 #include "player.h"
+#include "diagnosticmessages.h"
+
+#include <stddef.h>
+#ifdef __FreeBSD__
+#include <sys/types.h>
+#endif
+#include <math.h>
+#include <regex.h>
 
 // ------------------------------------------------------
 SpawnList::SpawnList(Player* player, 
@@ -124,11 +125,11 @@ void SpawnList::setPlayer(int16_t x, int16_t y, int16_t z,
 			   int16_t deltaX, int16_t deltaY, int16_t deltaZ, 
 			   int32_t degrees)
 {
-//   printf ("SpawnList::setPlayer()\n");
+//   seqDebug("SpawnList::setPlayer()");
    char buff[200];  
 
    SpawnListItem *i = (SpawnListItem*)firstChild();
-//   if (i) printf("============= firstChild, name=%s type=%s\n", i->item()->name().data(), i->type());
+//   if (i) seqDebug("============= firstChild, name=%s type=%s", i->item()->name().data(), i->type());
 
    // is this a fast machine?
    if (!showeq_params->fast_machine)
@@ -380,7 +381,7 @@ void SpawnList::addItem(const Item* item)
 	// We have a good category, add spawn as it's child
 	j = new SpawnListItem(catlitem);
 #if 0
-	printf("`-- Adding to %s (%d)\n", 
+	seqDebug("`-- Adding to %s (%d)", 
 	       (const char*)cat->name(), catlitem->childCount());
 #endif
 	j->setShellItem(item);
@@ -410,7 +411,7 @@ void SpawnList::addItem(const Item* item)
 
 void SpawnList::delItem(const Item* item)
 {
-//   printf ("SpawnList::delItem() id=%d\n", id);
+//   seqDebug("SpawnList::delItem() id=%d", id);
   if (item == NULL)
     return;
 
@@ -442,7 +443,7 @@ void SpawnList::delItem(const Item* item)
      // if there was an item, delete it and all it's children
      if (j) 
      {
-       //       printf("  Deleting...\n");
+       //       seqDebug("  Deleting...");
        // delete children
        QListViewItem* child = j->firstChild();
        QListViewItem* next;
@@ -488,7 +489,7 @@ void SpawnList::delItem(const Item* item)
 
 void SpawnList::selectSpawn(const Item *item)
 {
-//    printf("SpawnList::selectSpawn(name=%s)\n", item->name().latin1());
+//    seqDebug("SpawnList::selectSpawn(name=%s)", item->name().latin1());
   if (item == NULL)
     return;
 
@@ -611,7 +612,7 @@ void SpawnList::setSelectedQuiet(QListViewItem* item, bool selected)
 // Select next item of the same type and id as currently selected item
 void SpawnList::selectNext(void)
 {
-//   printf ("SpawnList::selectNext()\n");
+//   seqDebug("SpawnList::selectNext()");
   SpawnListItem *i;
   const Item* item;
 
@@ -628,7 +629,7 @@ void SpawnList::selectNext(void)
   // get the Item from the SpawnListItem
   item = i->item();
 
-  //printf("SelectNext(): Current selection '%s'\n", i->text(0).latin1());
+  //seqDebug("SelectNext(): Current selection '%s'", i->text(0).latin1());
 
   // attempt to find another one
   i = Find(it, item);
@@ -640,7 +641,7 @@ void SpawnList::selectNext(void)
   // if it's found, select it, and make sure it's parents are open
   if (i) 
   {
-    //printf("SelectNext(): Next selection '%s'\n", i->text(0).latin1());
+    //seqDebug("SelectNext(): Next selection '%s'", i->text(0).latin1());
     selectAndOpen(i);
   }
 } // end selectNext
@@ -648,7 +649,7 @@ void SpawnList::selectNext(void)
 
 void SpawnList::selectPrev(void)
 {
-//   printf ("SpawnList::SelectPrev()\n");
+//   seqDebug("SpawnList::SelectPrev()");
   SpawnListItem *i, *last, *cur;
   const Item* item;
 
@@ -668,7 +669,7 @@ void SpawnList::selectPrev(void)
   // no last item found
   last = NULL;
 
-//printf("SelectPrev(): Current selection '%s'\n", i->text(0).ascii());
+//seqDebug("SelectPrev(): Current selection '%s'", i->text(0).ascii());
 
   // search backwards, wrapping around, until we hit the current item
   do 
@@ -692,14 +693,14 @@ void SpawnList::selectPrev(void)
   // if there is a last item, select and open it.
   if (last) 
   {
-    //printf("SelectPrev(): Prev selection '%s'\n", i->text(0).ascii());
+    //seqDebug("SelectPrev(): Prev selection '%s'", i->text(0).ascii());
     selectAndOpen(last);
   }
 } // end SelectPrev
 
 void SpawnList::clear(void)
 {
-//printf("SpawnList::clear()\n");
+//seqDebug("SpawnList::clear()");
   QListView::clear();
   m_categoryListItems.clear();
 
@@ -1072,7 +1073,7 @@ void SpawnList::mouseDoubleClickEvent(QListViewItem* litem)
   const Item* item = ((SpawnListItem*)litem)->item();
   if (item != NULL)
   {
-    printf("%s\n",(const char*)item->filterString());
+    seqInfo("%s",(const char*)item->filterString());
   }
 }
 

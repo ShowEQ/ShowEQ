@@ -27,6 +27,7 @@
 
 #include <qstring.h>
 #include <qcolor.h>
+#include <qfont.h>
 #include <qpixmap.h>
 #include <qptrlist.h>
 #include <qpointarray.h>

@@ -7,6 +7,7 @@
 
 #include "group.h"
 #include "player.h"
+#include "diagnosticmessages.h"
 
 // ZBTEMP: Will re-enable the group manager when someone figures out
 // how to fix it's crashing bug.
@@ -34,14 +35,14 @@ void GroupMgr::handleGroupInfo(const uint8_t* data )
   const Spawn* member;
 
 #ifdef DEBUG  
-  printf("Your Name: %s Name: %s\n", 
-	 gmem->yourname, gmem->membername);
+  seqDebug("Your Name: %s Name: %s", 
+	   gmem->yourname, gmem->membername);
 #endif
 
   // is an empty "memberName" really the signal to clear the group?
   if ( newName.isEmpty() )
   {
-    printf( "Clearing out group.\n" );
+    seqInfo("Clearing out group." );
     emit clrGroup();
     m_group.clear();
   }
@@ -50,7 +51,7 @@ void GroupMgr::handleGroupInfo(const uint8_t* data )
     member = memberByName( newName );
     if ( member )
     {
-      printf ("Removing: '%s' from group.\n", gmem->membername);
+      seqInfo("Removing: '%s' from group.", gmem->membername);
       emit remGroup( member );
       m_group.removeRef( member );
     }
@@ -61,19 +62,19 @@ void GroupMgr::handleGroupInfo(const uint8_t* data )
       
       if ( newMember )
       {
-	printf ("Adding: '%s' to group.\n", gmem->membername);
+	seqInfo("Adding: '%s' to group.", gmem->membername);
 	m_group.append( newMember );
       }
       emit addGroup( newMember );
     }
   }
   
-  printf( "Group Members are (%i):\n", m_group.count() );
+  seqInfo("Group Members are (%i):", m_group.count() );
   int count = 0;
   for ( member = m_group.first(); member != NULL; member = m_group.next() )
   {
     count++;
-    printf( "Mem#%i: %s(%i)\n", 
+    seqInfo("Mem#%i: %s(%i)", 
 	    count, (const char*)member->name(), member->id() );
   }
 }
