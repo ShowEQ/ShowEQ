@@ -134,19 +134,23 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
   for (int l = 0; l < maxNumMessageWindows; l++)
     m_messageWindow[l] = 0;
 
-   QString tempStr;
-   QString section = "Interface";
+  QString tempStr;
+  QString section = "Interface";
 
-   const char* player_classes[] = {"Warrior", "Cleric", "Paladin", "Ranger",
-                                   "Shadow Knight", "Druid", "Monk", "Bard",
-                                   "Rogue", "Shaman", "Necromancer", "Wizard",
-                                   "Magician", "Enchanter", "Beastlord"
-                                  };
-   const char* player_races[] = {"Human", "Barbarian", "Erudite", "Wood elf",
-                                 "High Elf", "Dark Elf", "Half Elf", "Dwarf",
-                                 "Troll", "Ogre", "Halfling", "Gnome", "Iksar",
-                                 "Vah Shir"
-                                };
+  m_selectOnConsider = pSEQPrefs->getPrefBool("SelectOnCon", section, false);
+  m_selectOnTarget = pSEQPrefs->getPrefBool("SelectOnTarget", section, false);
+
+
+  const char* player_classes[] = {"Warrior", "Cleric", "Paladin", "Ranger",
+				  "Shadow Knight", "Druid", "Monk", "Bard",
+				  "Rogue", "Shaman", "Necromancer", "Wizard",
+				  "Magician", "Enchanter", "Beastlord"
+  };
+  const char* player_races[] = {"Human", "Barbarian", "Erudite", "Wood elf",
+				"High Elf", "Dark Elf", "Half Elf", "Dwarf",
+				"Troll", "Ogre", "Halfling", "Gnome", "Iksar",
+				"Vah Shir"
+  };
 
    // set the applications default font
    if (pSEQPrefs->isPreference("Font", section))
@@ -764,9 +768,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    x = pOptMenu->insertItem("Create Unknown Spawns", 
 			    this, SLOT(toggle_opt_CreateUnknownSpawns(int)));
    menuBar()->setItemChecked (x, showeq_params->createUnknownSpawns);
-   x = pOptMenu->insertItem("Show Spell Messages", 
-			    this, SLOT(toggle_opt_ShowSpellMessages(int)));
-   menuBar()->setItemChecked (x, showeq_params->showSpellMsgs);
    x = pOptMenu->insertItem("Use EQ Retarded Coordinates", 
 			    this, SLOT(toggle_opt_RetardedCoords(int)));
    menuBar()->setItemChecked (x, showeq_params->retarded_coords);
@@ -787,8 +788,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 			subMenu);
    
    menuBar()->setItemChecked (m_id_opt_Fast, showeq_params->fast_machine);
-   menuBar()->setItemChecked (m_id_opt_ConSelect, showeq_params->con_select);
-   menuBar()->setItemChecked (m_id_opt_TarSelect, showeq_params->tar_select);
+   menuBar()->setItemChecked (m_id_opt_ConSelect, m_selectOnConsider);
+   menuBar()->setItemChecked (m_id_opt_TarSelect, m_selectOnTarget);
    menuBar()->setItemChecked (m_id_opt_KeepSelectedVisible, showeq_params->keep_selected_visible);
    menuBar()->setItemChecked (m_id_opt_LogSpawns, (m_spawnLogger != 0));
    menuBar()->setItemChecked (m_id_opt_PvPTeams, showeq_params->pvp);
@@ -934,8 +935,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // Character Menu 
    m_charMenu = new QPopupMenu;
    menuBar()->insertItem("&Character", m_charMenu);
-   int yx = m_charMenu->insertItem("Auto Detect Settings", this, SLOT(toggleAutoDetectCharSettings(int)));
-   m_charMenu->setItemChecked(yx, showeq_params->AutoDetectCharSettings);
+   int yx = m_charMenu->insertItem("Use Auto Detected Settings", this, 
+				   SLOT(toggleAutoDetectPlayerSettings(int)));
+   m_charMenu->setItemChecked(yx, m_player->useAutoDetectedSettings());
 
    // Character -> Level
    m_charLevelMenu = new QPopupMenu;
@@ -946,7 +948,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_levelSpinBox->setButtonSymbols(QSpinBox::PlusMinus);
    m_levelSpinBox->setPrefix("Level: ");
    connect(m_levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(SetDefaultCharacterLevel(int)));
-   m_levelSpinBox->setValue(showeq_params->defaultLevel);
+   m_levelSpinBox->setValue(m_player->defaultLevel());
 
    // Character -> Class
    m_charClassMenu = new QPopupMenu;
@@ -955,7 +957,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    {
        char_ClassID[i] = m_charClassMenu->insertItem(player_classes[i]);
        m_charClassMenu->setItemParameter(char_ClassID[i],i+1);
-       if(i+1 == showeq_params->defaultClass)
+       if(i+1 == m_player->defaultClass())
           m_charMenu->setItemChecked(char_ClassID[i], true);
    }
    connect (m_charClassMenu, SIGNAL(activated(int)), this, SLOT(SetDefaultCharacterClass(int)));
@@ -973,7 +975,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
        else if(i == 13)
           m_charRaceMenu->setItemParameter(char_RaceID[i],130);
 
-       if(m_charRaceMenu->itemParameter(char_RaceID[i]) == showeq_params->defaultRace)
+       if(m_charRaceMenu->itemParameter(char_RaceID[i]) == m_player->defaultRace())
           m_charRaceMenu->setItemChecked(char_RaceID[i], true);
    }
    connect (m_charRaceMenu, SIGNAL(activated(int)), this, SLOT(SetDefaultCharacterRace(int)));
@@ -3024,17 +3026,17 @@ EQInterface::launch_editor_zoneFilters(void)
 void
 EQInterface::toggle_opt_ConSelect (void)
 {
-  showeq_params->con_select = !(showeq_params->con_select);
-  menuBar()->setItemChecked (m_id_opt_ConSelect, showeq_params->con_select);
-  pSEQPrefs->setPrefBool("SelectOnCon", "Interface", showeq_params->con_select);
+  m_selectOnConsider = !(m_selectOnConsider);
+  menuBar()->setItemChecked (m_id_opt_ConSelect, m_selectOnConsider);
+  pSEQPrefs->setPrefBool("SelectOnCon", "Interface", m_selectOnConsider);
 }
 
 void
 EQInterface::toggle_opt_TarSelect (void)
 {
-  showeq_params->tar_select = !(showeq_params->tar_select);
-  menuBar()->setItemChecked (m_id_opt_TarSelect, showeq_params->tar_select);
-  pSEQPrefs->setPrefBool("SelectOnTarget", "Interface", showeq_params->tar_select);
+  m_selectOnTarget = !(m_selectOnTarget);
+  menuBar()->setItemChecked (m_id_opt_TarSelect, m_selectOnTarget);
+  pSEQPrefs->setPrefBool("SelectOnTarget", "Interface", m_selectOnTarget);
 }
 
 void
@@ -3658,14 +3660,6 @@ EQInterface::toggle_opt_CreateUnknownSpawns (int id)
 }
 
 void
-EQInterface::toggle_opt_ShowSpellMessages (int id)
-{
-    showeq_params->showSpellMsgs = !showeq_params->showSpellMsgs;
-    menuBar()->setItemChecked(id, showeq_params->showSpellMsgs);
-    pSEQPrefs->setPrefBool("ShowSpellMessages", "Misc", showeq_params->showSpellMsgs);
-}
-
-void
 EQInterface::toggle_opt_WalkPathRecord (int id)
 {
     showeq_params->walkpathrecord = !showeq_params->walkpathrecord;
@@ -3940,7 +3934,7 @@ void EQInterface::zoneChanged(const QString& shortZoneName)
 
 void EQInterface::clientTarget(const uint8_t* data)
 {
-  if (!showeq_params->tar_select)
+  if (!m_selectOnTarget)
     return;
 
   const clientTargetStruct* cts = (const clientTargetStruct*)data;
@@ -3982,7 +3976,7 @@ void EQInterface::spawnConsidered(const Item* item)
   if (item == 0)
     return;
 
-  if (!showeq_params->con_select)
+  if (!m_selectOnConsider)
     return;
 
   // note the new selection
@@ -4409,38 +4403,32 @@ void EQInterface::toggle_net_session_tracking()
   pSEQPrefs->setPrefBool("SessionTracking", "Network", enable);
 }
 
-void EQInterface::toggleAutoDetectCharSettings (int id)
+void EQInterface::toggleAutoDetectPlayerSettings (int id)
 {
-    showeq_params->AutoDetectCharSettings = !showeq_params->AutoDetectCharSettings;
-    menuBar()->setItemChecked (id, showeq_params->AutoDetectCharSettings);
-    pSEQPrefs->setPrefBool("AutoDetectCharSettings", "Defaults", showeq_params->AutoDetectCharSettings);
+  m_player->setUseAutoDetectedSettings(!m_player->useAutoDetectedSettings());
+  menuBar()->setItemChecked (id, m_player->useAutoDetectedSettings());
 }
 
 /* Choose the character's level */
 void EQInterface::SetDefaultCharacterLevel(int level)
 {
-    showeq_params->defaultLevel = level;
-    pSEQPrefs->setPrefInt("DefaultLevel", "Defaults", level);
+  m_player->setDefaultLevel(level);
 }
 
 /* Choose the character's class */
 void EQInterface::SetDefaultCharacterClass(int id)
 {
    for (int i = 0; i < PLAYER_CLASSES; i++)
-       m_charClassMenu->setItemChecked(char_ClassID[i], false );
-   m_charClassMenu->setItemChecked(id, true);
-   showeq_params->defaultClass = m_charClassMenu->itemParameter(id);
-   pSEQPrefs->setPrefInt("DefaultClass", "Defaults", m_charClassMenu->itemParameter(id));
+       m_charClassMenu->setItemChecked(char_ClassID[i], char_ClassID[i] == id);
+   m_player->setDefaultClass(m_charClassMenu->itemParameter(id));
 }
 
 /* Choose the character's race */
 void EQInterface::SetDefaultCharacterRace(int id)
 {   
    for (int i = 0; i < PLAYER_RACES; i++)
-       m_charRaceMenu->setItemChecked(char_RaceID[i], false );
-   m_charRaceMenu->setItemChecked(id, true);
-   showeq_params->defaultRace = m_charRaceMenu->itemParameter(id);
-   pSEQPrefs->setPrefInt("DefaultRace", "Defaults", m_charRaceMenu->itemParameter(id));
+     m_charRaceMenu->setItemChecked(char_RaceID[i], char_RaceID[i] == id);
+   m_player->setDefaultRace(m_charRaceMenu->itemParameter(id));
 }
 
 void EQInterface::toggle_view_menubar()

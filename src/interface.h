@@ -176,7 +176,7 @@ class EQInterface:public QMainWindow
    void dumpSpellBook(void);
    void launch_editor_filters(void);
    void launch_editor_zoneFilters(void);
-   void toggleAutoDetectCharSettings(int id);
+   void toggleAutoDetectPlayerSettings(int id);
    void SetDefaultCharacterClass(int id);
    void SetDefaultCharacterRace(int id);
    void SetDefaultCharacterLevel (int id);
@@ -230,7 +230,6 @@ class EQInterface:public QMainWindow
    void toggle_opt_PvPTeams();
    void toggle_opt_PvPDeity();
    void toggle_opt_CreateUnknownSpawns(int);
-   void toggle_opt_ShowSpellMessages(int);
    void toggle_opt_WalkPathRecord(int);
    void set_opt_WalkPathLength(int);
    void toggle_opt_RetardedCoords(int);
@@ -446,7 +445,8 @@ class EQInterface:public QMainWindow
    bool m_isSpellListDocked;
    bool m_isCompassDocked;
 
-   
+   bool m_selectOnConsider;
+   bool m_selectOnTarget;
 };
 
 #endif // EQINT_H

@@ -52,6 +52,8 @@ dohpaZ (11/?/03)
   being handled.
 + Found zonePoint in doorStruct.  Added zone point destination information 
   to map tooltip for teleport doors.
++ Modifed default player characteristic handling.  Made the code more 
+  responsive to configuration changes.
 
 dohpaZ (10/24/03)
 ---------------------

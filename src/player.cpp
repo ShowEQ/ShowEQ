@@ -54,8 +54,17 @@ Player::Player (QObject* parent,
           this, SLOT(zoneChanged()));
   
   m_NPC = SPAWN_SELF;
+
+  QString section = "Defaults";
+  m_useAutoDetectedSettings = 
+    pSEQPrefs->getPrefBool("useAutoDetectedSettings", section, true);
+  m_defaultName = pSEQPrefs->getPrefString("DefaultName", section, "You");
+  m_defaultLastName = pSEQPrefs->getPrefString("DefaultLastName", section, "");
+  m_defaultLevel = pSEQPrefs->getPrefInt("DefaultLevel", section, 1);
+  m_defaultRace = pSEQPrefs->getPrefInt("DefaultRace", section, 1);
+  m_defaultClass = pSEQPrefs->getPrefInt("DefaultClass", section, 1);
+  m_defaultDeity = pSEQPrefs->getPrefInt("DefaultDeity", section, DEITY_AGNOSTIC);
   
-  setDefaults();
   setUseDefaults(true);
   
   // set the name to the default name
@@ -102,6 +111,121 @@ Player::Player (QObject* parent,
 
 Player::~Player()
 {
+}
+
+void Player::clear()
+{
+  m_plusMana = 0; 
+  m_plusHP = 0;
+  m_maxSTR = 0;
+  m_maxSTA = 0;
+  m_maxCHA = 0;
+  m_maxDEX = 0;
+  m_maxINT = 0;
+  m_maxAGI = 0;
+  m_maxWIS = 0;
+  m_maxMana = 0;
+  m_maxHP = 0;
+  m_curHP = 0;
+  m_food = 0;
+  m_water = 0;
+  m_fatigue = 0;
+
+  m_validStam = false;
+  m_validMana = false;
+  m_validHP = false;
+  m_validAttributes = false;
+
+  m_lastSpawnKilledName = "unknown";
+  m_lastSpawnKilledLevel = 0;
+  m_freshKill = false;
+
+  m_heading = 0;
+  m_headingDegrees = 360 - ((m_heading * 360) >> 11);
+  
+  setID(0);
+  setPoint(0,0,0);
+  m_validPos = false;
+
+  updateLastChanged();
+}
+
+void Player::reset()
+{
+  setUseDefaults(true);
+
+  m_currentAltExp = 0;
+  m_currentExp = 0;
+  m_minExp = calc_exp(level() - 1, race(), classVal());
+  m_maxExp = calc_exp(level(), race(), classVal ());
+  m_tickExp = (m_maxExp - m_minExp) / 330;
+
+  for (int a = 0; a < MAX_KNOWN_SKILLS; a++)
+    m_playerSkills[a] = 255; // indicate an invalid value
+
+  for (int a = 0; a < MAX_KNOWN_LANGS; a++)
+    m_playerLanguages[a] = 255; // indicate an invalid value
+  
+  m_mana = 0;
+  setLevel (1);
+  setRace (1);
+  setClassVal (1);
+
+  emit deleteSkills();
+  emit deleteLanguages();
+
+  m_validExp = false;
+  m_validAttributes = false;
+
+  // update the con table
+  fillConTable();
+
+  updateLastChanged();
+}
+
+void Player::setUseAutoDetectedSettings(bool enable)
+{
+  m_useAutoDetectedSettings = enable;
+  pSEQPrefs->setPrefBool("useAutoDetectedSettings", "Defaults", enable);
+  fillConTable();
+}
+
+void Player::setDefaultName(const QString& name)
+{
+  m_defaultName = name;
+  pSEQPrefs->setPrefString("DefaultName", "Defaults", name);
+}
+
+void Player::setDefaultLastname(const QString& lastName)
+{
+  m_defaultLastName = lastName;
+  pSEQPrefs->setPrefString("DefaultLastName", "Defaults", lastName);
+}
+
+void Player::setDefaultLevel(uint8_t level)
+{
+  m_defaultLevel = level;
+  pSEQPrefs->setPrefInt("DefaultLevel", "Defaults", level);
+  if (!m_useAutoDetectedSettings || m_useDefaults)
+    fillConTable();
+}
+
+void Player::setDefaultRace(uint16_t race)
+{
+  m_defaultRace = race;
+  pSEQPrefs->setPrefInt("DefaultRace", "Defaults", race);
+}
+
+void Player::setDefaultClass(uint8_t classVal)
+{
+  m_defaultClass = classVal;
+  pSEQPrefs->setPrefInt("DefaultClass", "Defaults", classVal);
+}
+
+void Player::setDefaultDeity(uint16_t deity)
+{
+  m_defaultDeity = deity;
+  pSEQPrefs->setPrefInt("DefaultDeity", "Defaults", deity);
 }
 
 void Player::player(const uint8_t* data)
@@ -253,76 +377,6 @@ void Player::player(const uint8_t* data)
       emit buffLoad(buff);
     }
   }
-}
-
-void Player::clear()
-{
-  m_plusMana = 0; 
-  m_plusHP = 0;
-  m_maxSTR = 0;
-  m_maxSTA = 0;
-  m_maxCHA = 0;
-  m_maxDEX = 0;
-  m_maxINT = 0;
-  m_maxAGI = 0;
-  m_maxWIS = 0;
-  m_maxMana = 0;
-  m_maxHP = 0;
-  m_curHP = 0;
-  m_food = 0;
-  m_water = 0;
-  m_fatigue = 0;
-
-  m_validStam = false;
-  m_validMana = false;
-  m_validHP = false;
-  m_validAttributes = false;
-
-  m_lastSpawnKilledName = "unknown";
-  m_lastSpawnKilledLevel = 0;
-  m_freshKill = false;
-
-  m_heading = 0;
-  m_headingDegrees = 360 - ((m_heading * 360) >> 11);
-  
-  setID(0);
-  setPoint(0,0,0);
-  m_validPos = false;
-
-  updateLastChanged();
-}
-
-void Player::reset()
-{
-  setUseDefaults(true);
-
-  m_currentAltExp = 0;
-  m_currentExp = 0;
-  m_minExp = calc_exp(level() - 1, race(), classVal());
-  m_maxExp = calc_exp(level(), race(), classVal ());
-  m_tickExp = (m_maxExp - m_minExp) / 330;
-
-  for (int a = 0; a < MAX_KNOWN_SKILLS; a++)
-    m_playerSkills[a] = 255; // indicate an invalid value
-
-  for (int a = 0; a < MAX_KNOWN_LANGS; a++)
-    m_playerLanguages[a] = 255; // indicate an invalid value
-  
-  m_mana = 0;
-  setLevel (1);
-  setRace (1);
-  setClassVal (1);
-
-  emit deleteSkills();
-  emit deleteLanguages();
-
-  m_validExp = false;
-  m_validAttributes = false;
-
-  // update the con table
-  fillConTable();
-
-  updateLastChanged();
 }
 
 #if 0 // ZBTEMP
@@ -596,7 +650,6 @@ void Player::updateLevel(const uint8_t* data)
   uint32_t prevExp = m_currentExp;
 
   // save the new level information
-  m_defaultLevel = levelup->level;
   m_level  = levelup->level;
 
   // calculate the new experience information
@@ -852,17 +905,6 @@ void Player::setPlayerID(uint16_t playerID)
   }
 }
 
-// Set our internal defaults equal to the showeq_params defaults.
-void Player::setDefaults(void)
-{
-    m_defaultName     = showeq_params->defaultName;
-    m_defaultLastName = showeq_params->defaultLastName;
-    m_defaultLevel    = showeq_params->defaultLevel;
-    m_defaultRace     = showeq_params->defaultRace;
-    m_defaultClass    = showeq_params->defaultClass;
-    m_defaultDeity    = showeq_params->defaultDeity;
-}
-
 bool Player::getStatValue(uint8_t stat,
 			    uint32_t& curValue, 
 			    uint32_t& maxValue)
@@ -986,22 +1028,6 @@ void Player::fillConTable()
 //
 // to make changes here, simply alter greenRange and cyanRange
 //
-// *OLD* This is the info we have to work with
-// Level Range		Green		Red
-// 1-12				-4			+3
-// 13-22			-6			+3
-// 23-24			-7			+3
-// 25-34			-8			+3
-// 35-40			-10			+3
-// 41-42			-11			+3
-// 43-44			-12			+3
-// 45-48			-13			+3
-// 49-51			-14			+3
-// 52-54			-15			+3
-// 55-57			-16			+3
-// 58-60			-17			+3
-
-// *NEW* 
 // Levels	Green	Cyan    Red
 // 1-7		-4      n/a	+3
 // 8-?          -5      -4      +3
@@ -1153,37 +1179,37 @@ void Player::fillConTable()
 
 QString Player::name() const
 {
-  return (!showeq_params->AutoDetectCharSettings || m_useDefaults ?
+  return (!m_useAutoDetectedSettings || m_useDefaults ?
 	m_defaultName : m_name);
 }
 
 QString Player::lastName() const
 {
-  return (!showeq_params->AutoDetectCharSettings || m_useDefaults ?
+  return (!m_useAutoDetectedSettings || m_useDefaults ?
 	m_defaultLastName : m_lastName);
 }
 
 uint16_t Player::deity() const 
 { 
-  return ((!showeq_params->AutoDetectCharSettings || m_useDefaults) ? 
+  return ((!m_useAutoDetectedSettings || m_useDefaults) ? 
 	  m_defaultDeity : m_deity); 
 }
 
 uint8_t Player::level() const 
 { 
-  return (!showeq_params->AutoDetectCharSettings || m_useDefaults ? 
+  return (!m_useAutoDetectedSettings || m_useDefaults ? 
 	  m_defaultLevel : m_level);
 }
 
 uint16_t Player::race() const
 {
-  return ((!showeq_params->AutoDetectCharSettings || m_useDefaults) ? 
+  return ((!m_useAutoDetectedSettings || m_useDefaults) ? 
 	  m_defaultRace : m_race);
 }
 
 uint8_t Player::classVal() const
 {
-  return ((!showeq_params->AutoDetectCharSettings || m_useDefaults) ? 
+  return ((!m_useAutoDetectedSettings || m_useDefaults) ? 
 	  m_defaultClass : m_class);
 }
 

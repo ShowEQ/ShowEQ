@@ -514,9 +514,6 @@ void MessageShell::beginCast(const uint8_t* data)
   const beginCastStruct *bcast = (const beginCastStruct *)data;
   QString tempStr;
 
-  if (!showeq_params->showSpellMsgs)
-    return;
-  
   tempStr = "";
 
   if (bcast->spawnId == m_player->id())
@@ -555,9 +552,6 @@ void MessageShell::spellFaded(const uint8_t* data)
   const spellFadedStruct *sf = (const spellFadedStruct *)data;
   QString tempStr;
 
-  if (!showeq_params->showSpellMsgs)
-    return;
-  
   tempStr.sprintf( "Faded: %s", 
 		   sf->message);
 
