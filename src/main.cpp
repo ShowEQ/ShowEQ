@@ -47,7 +47,7 @@ static const char *id="@(#) $Id$ $Name$";
 /* **********************************
    defines used for option processing
    ********************************** */
-#define OPTION_LIST "i:rf:g::j:::s:aeo:CncFKSVvPNtL:xWX:Y:Z:"
+#define OPTION_LIST "i:rf:g::j:::s:eo:CncFKSVvPNtL:xWX:Y:Z:"
 
 /* For long options without any short (single letter) equivalent, we'll
    assign single char nonprinting character equivalents, as is common
@@ -104,7 +104,6 @@ static struct option option_list[] = {
   {"playback-filename",            optional_argument,  NULL,  'j'},
   {"playback-speed",               required_argument,  NULL,  PLAYBACK_SPEED_OPTION},
   {"record-filename",              optional_argument,  NULL,  'g'},
-  {"enlightenment-audio",          no_argument,        NULL,  'a'},
   {"filter-case-sensitive",        no_argument,        NULL,  'C'},
   {"use-retarded-coords",          no_argument,        NULL,  'c'},
   {"fast-machine",                 no_argument,        NULL,  'F'},
@@ -236,11 +235,6 @@ int main (int argc, char **argv)
    showeq_params->walkpathlength = pSEQPrefs->getPrefInt("WalkPathLength", section, 25);
    /* Tells SEQ whether or not to display casting messages (Turn this off if you're on a big raid) */
 
-   section = "Filters";
-   showeq_params->spawnfilter_audio = pSEQPrefs->getPrefBool("Audio", section, false);
-
-   /* Default Level / Race / Class preferences */
-
    section = "SpawnList";
    showeq_params->showRealName = pSEQPrefs->getPrefBool("ShowRealName", section, false);
 
@@ -335,14 +329,6 @@ int main (int argc, char **argv)
          /* Config file was already taken care of, ignore */
          case 'o':
             break;
-
-
-         /* Enable use of enlightenment audio */
-         case 'a':
-         {
-            showeq_params->spawnfilter_audio = 1;
-            break;
-         }
 
 
          /* Make filter case sensitive */
