@@ -10,7 +10,7 @@ endif
 ITEMDB_SRCS = itemdb.cpp gdbmconv.cpp $(DB3_SRCS)
 nodist_ITEMDB_SRCS =  
 
-bin_PROGRAMS = showeq showeqitemdbtool
+bin_PROGRAMS = showeq showeqitemdbtool patcher
 
 showeq_SOURCES = main.cpp spawn.cpp spawnshell.cpp spawnlist.cpp spellshell.cpp \
 	spelllist.cpp vpacket.cpp editor.cpp filter.cpp packetfragment.cpp packetstream.cpp \
@@ -90,6 +90,15 @@ $(srcdir)/packetinfo.cpp: s_everquest.h
 showeq_LDADD = $(QT_LDFLAGS) $(QTLIB) $(DB3_LIBS) $(LIBPTHREAD) $(MEMORY_LIBS) \
 $(PROFILE_LIBS) $(SHOWEQ_RPATH) $(USER_LDFLAGS)
 
+patcher_SOURCES = testpatcher.cpp patchdialogreceiver.cpp patcher.cpp diagnosticmessageslight.cpp datalocationmgr.cpp
+
+nodist_patcher_SOURCES = patcher.moc patchdialogreceiver.moc
+
+patcher_LDADD =  $(QT_LDFLAGS) -lqui $(QTLIB) $(LIBPTHREAD) $(MEMORY_LIBS) \
+  $(PROFILE_LIBS) $(SHOWEQ_RPATH) $(USER_LDFLAGS)
+
+$(srcdir)/patcher.cpp: patcher.moc
+$(srcdir)/patchdialogreceiver.cpp: patchdialogreceiver.moc
 
 showeqitemdbtool_SOURCES = itemdbtool.cpp util.cpp diagnosticmessageslight.cpp datalocationmgr.cpp $(ITEMDB_SRCS)
 nodist_showeqitemdbtool_SOURCES = $(nodist_ITEMDB_SRCS)
@@ -131,7 +140,9 @@ sortitem_SOURCES = sortitem.cpp util.cpp diagnosticmessageslight.cpp
 nodist_sortitem_SOURCES = 
 sortitem_LDADD = $(QT_LDFLAGS) $(QTLIB) $(LIBPTHREAD) $(SHOWEQ_RPATH) $(USER_LDFLAGS)
 
-EXTRA_DIST = classes.h compass.h everquest.h interface.h main.h map.h filter.h vpacket.h editor.h packet.h packetcapture.h packetcommon.h packetformat.h packetstream.h packetfragment.h packetinfo.h races.h skills.h spells.h util.h experiencelog.h combatlog.h spawn.h spawnshell.h spawnlist.h spellshell.h spelllist.h languages.h weapons.h weapons1.h weapons27.h weapons28.h weapons2b.h decode.h itemdb.h gdbmconv.h cgiconv.h skilllist.h statlist.h db3conv.h dbcommon.h deity.h player.h crctab.h filtermgr.h point.h pointarray.h mapcore.h category.h compassframe.h group.h guild.h fixpt.h netdiag.h zones.h logger.h xmlconv.h xmlpreferences.h seqwindow.h seqlistview.h zonemgr.h spawnmonitor.h spawnpointlist.h typenames.h spawnlistcommon.h spawnlist2.h datetimemgr.h spawnlog.h packetlog.h datalocationmgr.h eqstr.h messages.h messagefilter.h messagewindow.h messageshell.h terminal.h filteredspawnlog.h messagefilterdialog.h diagnosticmessages.h mapicon.h mapicondialog.ui mapicondialog.ui.h filternotifications.h netstream.h guildshell.h guildlist.h bazaarlog.h message.h s_everquest.h staticspells.h h2info.pl
+EXTRA_DIST = h2info.pl
+
+noinst_HEADERS = classes.h compass.h everquest.h interface.h main.h map.h filter.h vpacket.h editor.h packet.h packetcapture.h packetcommon.h packetformat.h packetstream.h packetfragment.h packetinfo.h races.h skills.h spells.h util.h experiencelog.h combatlog.h spawn.h spawnshell.h spawnlist.h spellshell.h spelllist.h languages.h weapons.h weapons1.h weapons27.h weapons28.h weapons2b.h decode.h itemdb.h gdbmconv.h cgiconv.h skilllist.h statlist.h db3conv.h dbcommon.h deity.h player.h crctab.h filtermgr.h point.h pointarray.h mapcore.h category.h compassframe.h group.h guild.h fixpt.h netdiag.h zones.h logger.h xmlconv.h xmlpreferences.h seqwindow.h seqlistview.h zonemgr.h spawnmonitor.h spawnpointlist.h typenames.h spawnlistcommon.h spawnlist2.h datetimemgr.h spawnlog.h packetlog.h datalocationmgr.h eqstr.h messages.h messagefilter.h messagewindow.h messageshell.h terminal.h filteredspawnlog.h messagefilterdialog.h diagnosticmessages.h mapicon.h mapicondialog.ui mapicondialog.ui.h filternotifications.h netstream.h guildshell.h guildlist.h bazaarlog.h message.h s_everquest.h staticspells.h patcher.h patchdialogreceiver.h
 
 CLEANFILES = $(nodist_showeq_SOURCES)
 
@@ -164,4 +175,5 @@ install-exec-local: $(CGI_PROGS)
 		else :; fi; \
 	done
 endif
+
 

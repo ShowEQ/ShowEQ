@@ -1,5 +1,14 @@
 Version: $Id$ $Name$
-
+dohpaZ (11/6/04)
+------------------------
++ Minor 64-bit compatibility cleanup.
++ Cleaned up some minor warnings under gcc 3.4.2.
+	
+dophaZ (10/27/04)
+------------------------
++ Applied patch #1047554 "Oct13 struct patch" created by codepig666 and 
+  submitted to the Patches tracker by tanner (Basic).
+	
 dohpaZ (10/2/04)
 ------------------------
 + Migrate to new (autoconf >2.50) style AC_INIT & AM_INIT_AUTOMAKE

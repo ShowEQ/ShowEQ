@@ -695,7 +695,7 @@ void EQPacketStream::dispatchPacket(const uint8_t* data, size_t len,
     if (!found && !opcodeEntry->isEmpty())
     {
       QString tempStr;
-      tempStr.sprintf("%s  (%#04x) (dataLen: %d) doesn't match:",
+      tempStr.sprintf("%s  (%#04x) (dataLen: %u) doesn't match:",
 		      (const char*)opcodeEntry->name(), opcodeEntry->opcode(), 
 		      len);
       

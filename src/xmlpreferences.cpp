@@ -765,7 +765,7 @@ int64_t XMLPreferences::getPrefInt64(const QString& inName,
     default:
       qWarning("XMLPreferences::getPrefInt64(%s, %s, %lld): preference found,\n"
 	       "\tbut type %s is not convertable to type int64_t!",
-	       (const char*)inName, (const char*)inSection, def,
+	       (const char*)inName, (const char*)inSection, (long long)def,
 	       preference->typeName());
     }
 
@@ -811,9 +811,10 @@ uint64_t XMLPreferences::getPrefUInt64(const QString& inName,
 	break;
       }
     default:
-      qWarning("XMLPreferences::getPrefUInt64(%s, %s, %lld): preference found,\n"
+      qWarning("XMLPreferences::getPrefUInt64(%s, %s, %llu): preference found,\n"
 	       "\tbut type %s is not convertable to type uint64_t!",
-	       (const char*)inName, (const char*)inSection, def,
+	       (const char*)inName, (const char*)inSection, 
+	       (unsigned long long)def,
 	       preference->typeName());
     }
 
