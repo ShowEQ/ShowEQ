@@ -201,7 +201,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    m_packet = new EQPacket(fileInfo.absFilePath(),
 			   fileInfo2.absFilePath(),
-			   pSEQPrefs->getPrefInt("ArqSeqGiveUp", section, 256),
+			   pSEQPrefs->getPrefInt("ArqSeqGiveUp", section, 512),
 			   pSEQPrefs->getPrefString("Device", section, "eth0"),
 			   pSEQPrefs->getPrefString("IP", section,
 						    AUTOMATIC_CLIENT_IP),
@@ -499,7 +499,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    //
    // Create the Net Statistics window as required
    // 
-   if (showeq_params->net_stats)
+   if (pSEQPrefs->getPrefBool("ShowNetStats", section, false))
      showNetDiag();
 
 /////////////////////
