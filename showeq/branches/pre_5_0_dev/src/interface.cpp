@@ -4653,7 +4653,7 @@ void EQInterface::disableAllTypeFilters()
 
 void EQInterface::enableAllTypeFilters()
 {
-  m_terminal->setEnabledTypes(0xFFFFFFFFFFFFFFFF);
+  m_terminal->setEnabledTypes(0xFFFFFFFFFFFFFFFFULL);
 
   // make sure the All menu items are unchecked
   m_terminalTypeFilterMenu->setItemChecked(64, false);
