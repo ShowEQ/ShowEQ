@@ -5905,6 +5905,14 @@ void EQInterface::showNetDiag()
 
     connect(this, SIGNAL(restoreFonts(void)),
 	    m_netDiag, SLOT(restoreFont(void)));
+    connect(this, SIGNAL(saveAllPrefs(void)),
+	    m_netDiag, SLOT(savePrefs(void)));
+
+    m_netDiag->restoreSize();
+    
+    // move window to new position
+    if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
+      m_netDiag->restorePosition(); 
   }
 
   // make sure it's visible

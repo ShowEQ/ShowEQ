@@ -27,6 +27,9 @@ dohpaZ (11/?/03)
 + Migrated SEQWindow to be based off of QDockWindow so that all classes 
   derived from it could take advantage of Qt's native dockable window support.
 + Integrated patch# 832080 "freebsd-stable compile 10/24/03" from jonseq
++ Added Proper seperation of user data from distributed program data.
+ + Support .showeq directory
+ + Moved maps, filters, spawnpoints, and logs to their own subdirectories.
 
 dohpaZ (10/24/03)
 ---------------------

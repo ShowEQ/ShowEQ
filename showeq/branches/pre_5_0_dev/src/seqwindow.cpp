@@ -14,12 +14,17 @@
 
 #include "seqwindow.h"
 #include "main.h"
-
+#if 1 // ZBTEMP
+#include <stdio.h>
+#endif
 SEQWindow::SEQWindow(const QString prefName, const QString caption,
 		     QWidget* parent, const char* name, WFlags f)
   : QDockWindow(parent, name, f),
     m_preferenceName(prefName)
 {
+#if 1 // ZBTEMP
+  fprintf(stderr, "%s WFlags=%08x\n", (const char*)caption, getWFlags());
+#endif
   // set the windows caption
   QDockWindow::setCaption(pSEQPrefs->getPrefString("Caption", preferenceName(),
 					       caption));
@@ -71,27 +76,60 @@ void SEQWindow::restoreFont()
 
 void SEQWindow::restoreSize()
 {
-  // retrieve the saved size information
-  QSize s = pSEQPrefs->getPrefSize("WindowSize", preferenceName(), size());
-
-  resize(s);
+  if (place() == InDock)
+  {
+    QSize s = pSEQPrefs->getPrefSize("DockFixedExtent", preferenceName(), 
+				     fixedExtent());
+    setFixedExtentWidth(s.width());
+    setFixedExtentHeight(s.height());
+    if (pSEQPrefs->getPrefBool("DockVisible", preferenceName(), isHidden()))
+      show();
+    else
+      hide();
+  }
+  else
+  {
+    // retrieve the saved size information
+    QSize s = pSEQPrefs->getPrefSize("WindowSize", preferenceName(), size());
+    
+    resize(s);
+  }
 }
 
 void SEQWindow::restorePosition()
 {
-  // retrieve the saved position information
-  QPoint p = pSEQPrefs->getPrefPoint("WindowPos", preferenceName(), pos());
-
-  // Move window to new position
-  move(p);
+  if (place() == InDock)
+  {
+    setNewLine(pSEQPrefs->getPrefBool("DockNewLine", preferenceName(),
+				      newLine()));
+    setOffset(pSEQPrefs->getPrefInt("DockOffset", preferenceName(), offset()));
+  }
+  else
+  {
+    // retrieve the saved position information
+    QPoint p = pSEQPrefs->getPrefPoint("WindowPos", preferenceName(), pos());
+    
+    // Move window to new position
+    move(p);
+  }
 }
 
 void SEQWindow::savePrefs(void)
 {
   if (pSEQPrefs->getPrefBool("SavePosition", "Interface", true))
   {
-    // save the windows size and position information
-    pSEQPrefs->setPrefSize("WindowSize", preferenceName(), size());
-    pSEQPrefs->setPrefPoint("WindowPos", preferenceName(), pos());
+    if (place() == InDock)
+    {
+      pSEQPrefs->setPrefBool("DockNewLine", preferenceName(), newLine());
+      pSEQPrefs->setPrefInt("DockOffset", preferenceName(), offset());
+      pSEQPrefs->setPrefSize("DockFixedExtent", preferenceName(), fixedExtent());
+      pSEQPrefs->setPrefBool("DockVisible", preferenceName(), !isHidden());
+    }
+    else
+    {
+      // save the windows size and position information
+      pSEQPrefs->setPrefSize("WindowSize", preferenceName(), size());
+      pSEQPrefs->setPrefPoint("WindowPos", preferenceName(), pos());
+    }
   }
 }
