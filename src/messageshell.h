@@ -17,6 +17,8 @@
 
 #include <qobject.h>
 
+//----------------------------------------------------------------------
+// forward declarations
 class QString;
 class QDateTime;
 
@@ -31,6 +33,8 @@ struct ClientZoneEntryStruct;
 struct ServerZoneEntryStruct;
 struct zoneChangeStruct;
 
+//----------------------------------------------------------------------
+// MessageShell
 class MessageShell : public QObject
 {
   Q_OBJECT

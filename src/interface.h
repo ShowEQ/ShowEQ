@@ -52,6 +52,7 @@ class SpellShell;
 class GroupMgr;
 class SpawnMonitor;
 class SpawnLog;
+class FilteredSpawnLog;
 class Item;
 class CompassFrame;
 class MapFrame;
@@ -71,6 +72,7 @@ class EQStr;
 class Messages;
 class MessageShell;
 class MessageWindow;
+class Terminal;
 
 //--------------------------------------------------
 // typedefs
@@ -274,7 +276,6 @@ class EQInterface:public QMainWindow
    int setTheme(int id);
    void loadFormatStrings();
    void resizeEvent (QResizeEvent *);
-   void logFilteredSpawn(const Item* item, uint32_t flag);
    void makeNoise( const Item* item, char* szAudioCmd, char* szSoundType);
    void doAlertCommand(const Item* item, 
 		       const QString& command,
@@ -288,6 +289,7 @@ class EQInterface:public QMainWindow
    void showSpellList(void);
    void showCompass(void);
    void showNetDiag(void);
+   void createFilteredSpawnLog(void);
    void createSpawnLog(void);
    void createGlobalLog(void);
    void createWorldLog(void);
@@ -324,6 +326,8 @@ class EQInterface:public QMainWindow
    Messages* m_messages;
    MessageShell* m_messageShell;
    MessageWindow* m_messageWindow;
+   Terminal* m_terminal;
+   FilteredSpawnLog* m_filteredSpawnLog;
    SpawnLog *m_spawnLogger;
 
    PacketLog* m_globalLog;

@@ -220,10 +220,6 @@ int main (int argc, char **argv)
 
    section = "Filters";
    showeq_params->spawnfilter_audio = pSEQPrefs->getPrefBool("Audio", section, false);
-   showeq_params->spawnfilter_loglocates = pSEQPrefs->getPrefBool("LogLocates", section, 0);
-   showeq_params->spawnfilter_logcautions = pSEQPrefs->getPrefBool("LogCautions", section, 0);
-   showeq_params->spawnfilter_loghunts = pSEQPrefs->getPrefBool("LogHunts", section, 0);
-   showeq_params->spawnfilter_logdangers = pSEQPrefs->getPrefBool("LogDangers", section, 0);
 
    /* Default Level / Race / Class preferences */
    section = "Defaults";

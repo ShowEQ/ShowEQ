@@ -15,13 +15,15 @@
 #include "logger.h"
 #include "everquest.h"
 
-////////////////////////
+//----------------------------------------------------------------------
 // forward declarations
 class QDateTime;
 class QTime;
 class DateTimeMgr;
 class Item;
 
+//----------------------------------------------------------------------
+// SpawnLog
 class SpawnLog: public SEQLogger 
 {
    Q_OBJECT
@@ -37,7 +39,7 @@ public slots:
     void logKilledSpawn(const Item* item, const Item* kitem, uint16_t kid);
     void logDeleteSpawn(const Item *spawn);
 
-private:
+protected:
     void logSpawnInfo(const char *type, const char *name, int id, int level, 
                       int x, int y, int z, 
                       const char *killer, int kid, int guildid);

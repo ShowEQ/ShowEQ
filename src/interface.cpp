@@ -49,6 +49,8 @@
 #include "messages.h"
 #include "messageshell.h"
 #include "messagewindow.h"
+#include "terminal.h"
+#include "filteredspawnlog.h"
 
 #include <qfont.h>
 #include <qapplication.h>
@@ -105,6 +107,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_messages(NULL),
     m_messageShell(NULL),
     m_messageWindow(NULL),
+    m_terminal(NULL),
+    m_filteredSpawnLog(0),
     m_spawnLogger(NULL),
     m_globalLog(0),
     m_worldLog(0),
@@ -205,6 +209,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Create Messages storage
    m_messages = new Messages(m_dateTimeMgr, this, "messages");
+
+   // Create the terminal object
+   m_terminal = new Terminal(m_messages, this, "terminal");
 
 #if 1 // ZBTEMP
    // just create the message window
@@ -311,6 +318,17 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    section = "OpCodeMonitoring";
    if (pSEQPrefs->getPrefBool("Enable", section, false))
      createOPCodeMonitorLog(pSEQPrefs->getPrefString("OpCodeList", section, ""));
+
+   // create the filtered spawn log object if any filters are to be logged
+   uint32_t filters = pSEQPrefs->getPrefInt("Log", "Filters", 0);
+   if (filters)
+   {
+     // create the filtered spawn log object
+     createFilteredSpawnLog();
+
+     // set the filters to log
+     m_filteredSpawnLog->setFilters(filters);
+   }
 
    // if the user wants spawns logged, create the spawn logger
    if (pSEQPrefs->getPrefBool("LogSpawns", "Misc", false))
@@ -958,18 +976,21 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    QPopupMenu* filterLogMenu = new QPopupMenu;
    filterLogMenu->setCheckable(true);
    filterMenu->insertItem("&Log", filterLogMenu);
+   x = filterLogMenu->insertItem( "Alerts");
+   filterLogMenu->setItemParameter(x, FILTER_FLAG_ALERT);
+   filterLogMenu->setItemChecked(x, ((filters & FILTER_FLAG_ALERT) != 0));
    x = filterLogMenu->insertItem( "Locates");
-   filterLogMenu->setItemParameter(x, 1);
-   filterLogMenu->setItemChecked(x, showeq_params->spawnfilter_loglocates);
+   filterLogMenu->setItemParameter(x, FILTER_FLAG_LOCATE);
+   filterLogMenu->setItemChecked(x, ((filters & FILTER_FLAG_LOCATE) != 0));
    x = filterLogMenu->insertItem( "Hunts");
-   filterLogMenu->setItemParameter(x, 2);
-   filterLogMenu->setItemChecked(x, showeq_params->spawnfilter_loghunts);
+   filterLogMenu->setItemParameter(x, FILTER_FLAG_HUNT);
+   filterLogMenu->setItemChecked(x, ((filters & FILTER_FLAG_HUNT) != 0));
    x = filterLogMenu->insertItem( "Cautions");
-   filterLogMenu->setItemParameter(x, 3);
-   filterLogMenu->setItemChecked(x, showeq_params->spawnfilter_logcautions);
+   filterLogMenu->setItemParameter(x, FILTER_FLAG_CAUTION);
+   filterLogMenu->setItemChecked(x, ((filters & FILTER_FLAG_CAUTION) != 0));
    x = filterLogMenu->insertItem( "Dangers");
-   filterLogMenu->setItemParameter(x, 4);
-   filterLogMenu->setItemChecked(x, showeq_params->spawnfilter_logdangers);
+   filterLogMenu->setItemParameter(x, FILTER_FLAG_DANGER);
+   filterLogMenu->setItemChecked(x, ((filters & FILTER_FLAG_DANGER) != 0));
    connect(filterLogMenu, SIGNAL(activated(int)),
 	   this, SLOT(toggle_filter_Log(int)));
 
@@ -1383,6 +1404,16 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      m_packet->connect2("OP_SendZonePoints", SP_Zone, DIR_Server,
 			"zonePointsStruct", SZC_None,
 			m_zoneMgr, SLOT(zonePoints(const uint8_t*, size_t, uint8_t)));
+   }
+
+   if (m_filterMgr)
+   {
+     connect(m_zoneMgr, SIGNAL(zoneBegin(const QString&)),
+	     m_filterMgr, SLOT(loadZone(const QString&)));
+     connect(m_zoneMgr, SIGNAL(zoneEnd(const QString&, const QString&)),
+	     m_filterMgr, SLOT(loadZone(const QString&)));
+     connect(m_zoneMgr, SIGNAL(zoneChanged(const QString&)),
+	     m_filterMgr, SLOT(loadZone(const QString&)));
    }
 
    if (m_guildmgr)
@@ -2673,41 +2704,24 @@ void EQInterface::toggle_filter_Audio(int id)
 
 void EQInterface::toggle_filter_Log(int id)
 {
-  bool value;
-  QString logName;
-  switch (menuBar()->itemParameter(id))
-  {
-  case 1:
-    value = showeq_params->spawnfilter_loglocates = 
-      !showeq_params->spawnfilter_loglocates;
+  if (!m_filteredSpawnLog)
+    createFilteredSpawnLog();
 
-    logName = "LogLocates";
-    break;
-  case 2:
-    value = showeq_params->spawnfilter_loghunts = 
-      !showeq_params->spawnfilter_loghunts;
+  uint32_t filters = m_filteredSpawnLog->filters();
+  uint32_t filter = menuBar()->itemParameter(id);
+  
+  if (filters & filter)
+    filters &= ~filter;
+  else
+    filters |= filter;
 
-    logName = "LogHunts";
-    break;
-  case 3:
-    value = showeq_params->spawnfilter_logcautions = 
-      !showeq_params->spawnfilter_logcautions;
+  fprintf(stderr, "toggle_filter_Log(%u): filter(%08x) filters(%08x)\n",
+	  id, filter, filters);
 
-    logName = "LogCautions";
-    break;
-  case 4:
-    value = showeq_params->spawnfilter_logdangers = 
-      !showeq_params->spawnfilter_logdangers;
+  m_filteredSpawnLog->setFilters(filters);
 
-    logName = "LogDangers";
-    break;
-  default:
-    return;
-  }
-
-  menuBar()->setItemChecked(id, value);
-  pSEQPrefs->setPrefBool(logName, "Filters", 
-			 value);
+  menuBar()->setItemChecked(id, ((filters & filter) != 0));
+  pSEQPrefs->setPrefBool("Log", "Filters", filters);
 }
 
 void EQInterface::set_filter_AudioCommand(int id)
@@ -4006,8 +4020,6 @@ void EQInterface::systemMessage(const uint8_t* data)
 void EQInterface::zoneBegin(const QString& shortZoneName)
 {
   emit newZoneName(shortZoneName);
-
-  m_filterMgr->loadZone(shortZoneName);
 }
 
 void EQInterface::zoneEnd(const QString& shortZoneName, 
@@ -4015,8 +4027,6 @@ void EQInterface::zoneEnd(const QString& shortZoneName,
 {
   emit newZoneName(longZoneName);
   stsMessage("");
-
-  m_filterMgr->loadZone(shortZoneName);
 }
 
 void EQInterface::zoneChanged(const QString& shortZoneName)
@@ -4024,8 +4034,6 @@ void EQInterface::zoneChanged(const QString& shortZoneName)
   QString tempStr;
   stsMessage("- Busy Zoning -");
   emit newZoneName(shortZoneName);
-  
-  m_filterMgr->loadZone(shortZoneName);
 }
 
 void EQInterface::clientTarget(const uint8_t* data)
@@ -4091,9 +4099,6 @@ void EQInterface::addItem(const Item* item)
 
   if (filterFlags & FILTER_FLAG_LOCATE)
   {
-    if (showeq_params->spawnfilter_loglocates)
-      logFilteredSpawn(item, FILTER_FLAG_LOCATE);
-
     // Deside how to handle audio alerts
     //
     makeNoise(item, "LocateSpawnAudioCommand", "Locate Spawned");
@@ -4110,9 +4115,6 @@ void EQInterface::addItem(const Item* item)
   
   if (filterFlags & FILTER_FLAG_CAUTION)
   {
-    if (showeq_params->spawnfilter_logcautions)
-      logFilteredSpawn(item, FILTER_FLAG_CAUTION);
-
     // Deside how to handle audio alerts
     //
     makeNoise(item, "CautionSpawnAudioCommand", "Caution Spawned");
@@ -4121,9 +4123,6 @@ void EQInterface::addItem(const Item* item)
   
   if (filterFlags & FILTER_FLAG_HUNT)
   {
-    if (showeq_params->spawnfilter_loghunts)
-      logFilteredSpawn(item, FILTER_FLAG_HUNT);
-
     // Deside how to handle audio alerts
     //
     makeNoise(item, "HuntSpawnAudioCommand", "Hunt Spawned");
@@ -4132,9 +4131,6 @@ void EQInterface::addItem(const Item* item)
   
   if (filterFlags & FILTER_FLAG_DANGER)
   {
-    if (showeq_params->spawnfilter_logdangers)
-      logFilteredSpawn(item, FILTER_FLAG_DANGER);
-
     // Deside how to handle audio alerts
     //
     makeNoise(item, "DangerSpawnAudioCommand", "Danger Spawned");
@@ -4156,9 +4152,6 @@ void EQInterface::delItem(const Item* item)
 
 void EQInterface::killSpawn(const Item* item)
 {
-  if (item == NULL)
-    return;
-
   if (m_selectedSpawn != item)
     return;
 
@@ -4253,25 +4246,6 @@ void EQInterface::doAlertCommand(const Item* item,
   
   // fire off the command
   system ((const char*)command);
-}
-
-void EQInterface::logFilteredSpawn(const Item* item, uint32_t flag)
-{
-  FILE *rar;
-
-  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs",
-							   "filtered.spawns");
-  
-  rar = fopen((const char*)logFileInfo.absFilePath(),"at");
-  if (rar) 
-  {
-    fprintf (rar, "%s %s spawned LOC %dy, %dx, %dz at %s\n", 
-	     (const char*)m_filterMgr->filterString(flag),
-	     (const char*)item->name(), 
-	     item->y(), item->x(), item->z(),
-	     (const char*)item->spawnTimeStr());
-    fclose(rar);
-  }
 }
 
 void EQInterface::updateSelectedSpawnStatus(const Item* item)
@@ -5161,6 +5135,25 @@ void EQInterface::showNetDiag()
 
   // make sure it's visible
   m_netDiag->show();
+}
+
+void EQInterface::createFilteredSpawnLog(void)
+{
+  if (m_filteredSpawnLog)
+    return;
+
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs",
+							   "filtered_spawns.log");
+  
+  m_filteredSpawnLog = new FilteredSpawnLog(m_dateTimeMgr, m_filterMgr,
+					    logFileInfo.absFilePath());
+
+  connect(m_spawnShell, SIGNAL(addItem(const Item*)),
+	  m_filteredSpawnLog, SLOT(addItem(const Item*)));
+  connect(m_spawnShell, SIGNAL(delItem(const Item*)),
+	  m_filteredSpawnLog, SLOT(delItem(const Item*)));
+  connect(m_spawnShell, SIGNAL(killSpawn(const Item*, const Item*, uint16_t)),
+	  m_filteredSpawnLog, SLOT(killSpawn(const Item*)));
 }
 
 void EQInterface::createSpawnLog(void)
