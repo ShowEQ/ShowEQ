@@ -8,9 +8,34 @@
 #include "messagewindow.h"
 #include "messages.h"
 
-#include <qtextedit.h>
 #include <qpopupmenu.h>
 
+//---------------------------------------------------------------------- 
+// MessageBrowser
+MessageBrowser::MessageBrowser(QWidget* parent, const char* name)
+  : QTextEdit(parent, name)
+{
+}
+
+bool MessageBrowser::eventFilter(QObject *o, QEvent *e)
+{
+  if (e->type() != QEvent::MouseButtonPress)
+    return QTextEdit::eventFilter(o, e);
+
+  QMouseEvent* m = (QMouseEvent*)e;
+
+  if (m->button() == RightButton)
+  {
+    emit rightClickedMouse(m);
+
+    return true;
+  }
+
+  return QTextEdit::eventFilter(o, e);
+}
+
+//----------------------------------------------------------------------
+// MessageWindow
 MessageWindow::MessageWindow(Messages* messages, 
 			     const QString& prefName,
 			     const QString& caption,
@@ -22,14 +47,14 @@ MessageWindow::MessageWindow(Messages* messages,
     m_enabledTypes(0xFFFFFFFF),
     m_defaultColor(black),
     m_dateTimeFormat("hh:mm"),
-    m_eqDateTimeFormat("ddd m/d/yyyy h:mm"),
+    m_eqDateTimeFormat("ddd M/d/yyyy h:mm"),
     m_displayType(true),
     m_displayDateTime(false),
     m_displayEQDateTime(false),
     m_useColor(false)
 {
   // create the window for text display
-  m_messageWindow = new QTextEdit(this, "messageText");
+  m_messageWindow = new MessageBrowser(this, "messageText");
 
   // make the message window the main widget of the SEQWindow
   setWidget(m_messageWindow);
@@ -40,6 +65,9 @@ MessageWindow::MessageWindow(Messages* messages,
   // connect to the Messages signal(s)
   connect(m_messages, SIGNAL(newMessage(const MessageEntry&)),
 	  this, SLOT(newMessage(const MessageEntry&)));
+
+  connect(m_messageWindow, SIGNAL(rightClickedMouse(QMouseEvent*)),
+	  this, SLOT(mousePressEvent(QMouseEvent*)));
 
   m_menu = new QPopupMenu;
   m_typeFilterMenu = new QPopupMenu;
