@@ -50,6 +50,14 @@ enum EQStreamID
   MAXSTREAMS = 4,
 };
 
+// direction the data is coming from
+enum EQDir
+{
+  DIR_Client = 0x01,
+  DIR_Server = 0x02,
+};
+
+
 //----------------------------------------------------------------------
 // Useful inline functions
 #if (defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN))
