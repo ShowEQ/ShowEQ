@@ -90,6 +90,9 @@ const int mapDockBase = 7;
 // Window caption menu
 const int mapCaptionBase = 11; 
 
+// maximum number of message windows
+const int maxNumMessageWindows = 10;
+
 //--------------------------------------------------
 // EQInterface
 class EQInterface:public QMainWindow
@@ -216,7 +219,7 @@ class EQInterface:public QMainWindow
  private slots:
    void toggle_opt_Fast();
    void toggle_view_UnknownData();
-   void toggle_view_ChannelMsgs();
+   void toggle_view_ChannelMsgs(int id);
    void toggle_view_ExpWindow();
    void toggle_view_CombatWindow();
    void toggle_opt_ConSelect();
@@ -242,7 +245,6 @@ class EQInterface:public QMainWindow
    void toggle_view_Map(int id);
    void toggle_view_NetDiag();
    void resetMaxMana();
-   void createMessageBox();
    void select_filter_file();
    void save_as_filter_file();
    void toggle_filter_Case(int id);
@@ -280,6 +282,7 @@ class EQInterface:public QMainWindow
 		       const QString& command,
 		       const QString& audioCue);
    void showMap(int mapNum);
+   void showMessageWindow(int winNum);
    void showSpawnList(void);
    void showSpawnList2(void);
    void showSpawnPointList(void);
@@ -324,7 +327,6 @@ class EQInterface:public QMainWindow
    EQStr* m_eqStrings;
    Messages* m_messages;
    MessageShell* m_messageShell;
-   MessageWindow* m_messageWindow;
    Terminal* m_terminal;
    FilteredSpawnLog* m_filteredSpawnLog;
    SpawnLog *m_spawnLogger;
@@ -351,10 +353,8 @@ class EQInterface:public QMainWindow
    QPopupMenu* m_charRaceMenu;
 
    CompassFrame* m_compass;
+   MessageWindow* m_messageWindow[maxNumMessageWindows];
    MapFrame*  m_map[maxNumMaps];
-   QSplitter* m_splitV;
-   QSplitter* m_splitH;
-   QSplitter* m_splitT;
    ExperienceWindow* m_expWindow;
    CombatWindow* m_combatWindow;
    NetDiag* m_netDiag;
@@ -367,8 +367,6 @@ class EQInterface:public QMainWindow
    QLabel* m_stsbarPkt;
    QLabel* m_stsbarEQTime;
    QLabel* m_stsbarSpeed;
-
-   QPtrList<MessageWindow>  m_messageWindowList;   
 
    QIntDict<QString> m_formattedMessageStrings;
 
@@ -385,7 +383,6 @@ class EQInterface:public QMainWindow
    int  m_id_opt_Fast;
    int  m_id_opt_ResetMana;
    int  m_id_view_UnknownData;
-   int  m_id_view_ChannelMsgs;
    int  m_id_view_ExpWindow;
    int  m_id_view_CombatWindow;
    int  m_id_view_SpawnList;
@@ -395,6 +392,7 @@ class EQInterface:public QMainWindow
    int  m_id_view_PlayerSkills;
    int  m_id_view_Compass;
    int  m_id_view_Map[maxNumMaps];
+   int  m_id_view_MessageWindow[maxNumMessageWindows];
    int  m_id_view_NetDiag;
    int  m_id_view_SpellList;
    int  m_id_view_PlayerStats_Options;
@@ -418,11 +416,10 @@ class EQInterface:public QMainWindow
    QStringList m_StringList;
    QDialog *dialogbox;
 
-   bool m_viewChannelMsgs;
-
    bool m_isSkillListDocked;
    bool m_isStatListDocked;
    bool m_isMapDocked[maxNumMaps];
+   bool m_isMessageWindowDocked[maxNumMessageWindows];
    bool m_isSpawnListDocked;
    bool m_isSpawnList2Docked;
    bool m_isSpawnPointListDocked;

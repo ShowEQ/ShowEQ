@@ -251,8 +251,6 @@ MessageWindow::MessageWindow(Messages* messages,
   // connect up our own signals
   connect(m_messageWindow, SIGNAL(rightClickedMouse(QMouseEvent*)),
 	  this, SLOT(mousePressEvent(QMouseEvent*)));
-  connect(m_messageWindow, SIGNAL(clicked(int, int)),
-	  this, SLOT(clicked(int, int)));
   connect(m_messageWindow, SIGNAL(refreshRequest()),
 	  this, SLOT(refreshMessages()));
   connect(m_messageWindow, SIGNAL(findRequest()),
@@ -342,16 +340,20 @@ MessageWindow::~MessageWindow()
   delete m_typeBGColors;
 }
 
+QPopupMenu* MessageWindow::menu()
+{
+  return m_menu;
+}
+
+#if 0 // ZBTEMP
 void MessageWindow::mousePressEvent(QMouseEvent* e)
 {
   if (e->button() == RightButton)
     m_menu->popup(mapToGlobal(e->pos()));
+  else
+    SEQWindow::mousePressEvent(e);
 }
-
-void MessageWindow::clicked(int para, int pos)
-{
-  //printf("MessageWindow::clicked(%d, %d)\n", para, pos);
-}
+#endif
 
 void MessageWindow::addMessage(const MessageEntry& message)
 {
@@ -471,10 +473,6 @@ void MessageWindow::refreshMessages(void)
     for (i = 0, it = messages.begin(); it != messages.end(); ++it, ++i)
       addMessage(*it); // append the message plain
     
-
-  // move the cursor to the end of the document
-  m_messageWindow->scrollToBottom();
-
   // turn updates back on 
   m_messageWindow->setUpdatesEnabled(true);
   setUpdatesEnabled(true);
@@ -485,6 +483,12 @@ void MessageWindow::refreshMessages(void)
   // set the IBeam Cursor for easier text selection
   unsetCursor();
   m_messageWindow->unsetCursor();
+
+  // move the cursor to the end of the document
+  m_messageWindow->moveCursor(QTextEdit::MoveEnd, false);
+
+  // move the cursor to the end of the document
+  m_messageWindow->ensureCursorVisible();
 }
 
 void MessageWindow::findDialog(void)

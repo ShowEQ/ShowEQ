@@ -1152,6 +1152,19 @@ SpawnListWindow::~SpawnListWindow()
   delete m_spawnList;
 }
 
+QPopupMenu* SpawnListWindow::menu()
+{
+  // retrieve the menu
+  SpawnListMenu* spawnMenu = m_spawnList->menu();
+
+  // set it up with safe values (since the user didn't click on anything
+  spawnMenu->setCurrentItem(0);
+  spawnMenu->setCurrentCategory(0);
+
+  // return the menu
+  return spawnMenu;
+}
+
 void SpawnListWindow::savePrefs(void)
 {
   // save SEQWindow prefs

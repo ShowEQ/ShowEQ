@@ -4,7 +4,7 @@
  * ShowEQ Distributed under GPL
  * http://seq.sourceforge.net/
  *
- * Copyright 2001 Zaphod (dohpaz@users.sourceforge.net). All Rights Reserved.
+ * Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). All Rights Reserved.
  *
  * Contributed to ShowEQ by Zaphod (dohpaz@users.sourceforge.net) 
  * for use under the terms of the GNU General Public License, 
@@ -19,6 +19,8 @@
 #include <qstring.h>
 #include <qdockwindow.h>
 
+class QPopupMenu;
+
 class SEQWindow : public QDockWindow
 {
    Q_OBJECT
@@ -28,18 +30,23 @@ class SEQWindow : public QDockWindow
 	    QWidget* parent = 0, const char* name = 0, WFlags f = 0);
   ~SEQWindow();
 
+  virtual QPopupMenu* menu();
+
   const QString& preferenceName() const { return m_preferenceName; }
 
  public slots:
    virtual void setCaption(const QString&);
-   void setWindowFont(const QFont&);
-   void restoreSize();
-   void restorePosition();
+   virtual void setWindowFont(const QFont&);
+   virtual void restoreSize();
+   virtual void restorePosition();
    virtual void restoreFont();
    virtual void savePrefs(void);
   
+   virtual void mousePressEvent(QMouseEvent* e);
+
  private:
   QString m_preferenceName;
 };
 
 #endif // SEQWINDOW_H
+

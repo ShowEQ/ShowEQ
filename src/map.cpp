@@ -4835,6 +4835,11 @@ MapFrame::~MapFrame()
 {
 }
 
+QPopupMenu* MapFrame::menu()
+{
+  return m_map->menu();
+}
+
 void MapFrame::filterConfirmed()
 {
   setregexp(m_filter->text());

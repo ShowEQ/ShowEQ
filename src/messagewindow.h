@@ -82,6 +82,8 @@ class MessageWindow : public SEQWindow
 		const QString& caption = "Message Window",
 		QWidget* parent = 0, const char* name = 0);
   ~MessageWindow();
+
+  virtual QPopupMenu* menu();
   
  public slots:
   void newMessage(const MessageEntry& message);
@@ -104,8 +106,7 @@ class MessageWindow : public SEQWindow
   void setCaption();
   virtual void restoreFont();
 
-  void mousePressEvent(QMouseEvent* e);
-  void clicked(int para, int pos);
+  //void mousePressEvent(QMouseEvent* e);
 
  protected:
   void addMessage(const MessageEntry& message);

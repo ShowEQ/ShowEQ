@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header$ $Name$
+dnl $Id$ $Name$
 AC_INIT(src/main.cpp)
 AC_CANONICAL_SYSTEM
 AM_CONFIG_HEADER(conf.h)

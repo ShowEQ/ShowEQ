@@ -141,6 +141,7 @@ class SpawnListWindow : public SEQWindow
 		  CategoryMgr* categoryMgr,
 		  QWidget* parent = 0, const char* name = 0);
   ~SpawnListWindow();
+  virtual QPopupMenu* menu();
   SpawnList* spawnList() { return m_spawnList; }
 
  public slots:
