@@ -12,6 +12,11 @@
  *
  */
 
+#include "xmlconv.h"
+
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+
 #include <qcolor.h>
 #include <qfont.h>
 #include <qpoint.h>
@@ -22,8 +27,12 @@
 #include <qcursor.h>
 #include <qstringlist.h>
 
-#include "xmlconv.h"
-
+// borrowed with mods from Qt 3.2
+static bool ok_in_hex( QChar c)
+{
+  return c.isDigit() || (c >= 'a' && c < char('a'+6))
+                     || (c >= 'A' && c < char('A'+6));
+}
 
 DomConvenience::DomConvenience(QDomDocument& doc)
   : m_doc(doc)
@@ -231,6 +240,56 @@ bool DomConvenience::elementToVariant(const QDomElement& e,
 
     ok = true;
   }
+  else if (e.tagName() == "uint64")
+  {
+    QString value = e.attribute("value");
+
+    // borrowed more or less from Qt 3.2 (since we have to support older)
+    uint64_t val = 0;
+    const QChar* p = value.unicode();
+    int l = value.length();
+    const uint64_t max_mult = UINT64_MAX / 16;
+
+    if (!p)
+    {
+      qWarning("Invalid value for tag: %s", (const char*)e.tagName());
+      return false;
+    }
+
+    while ( l && p->isSpace() )                 // skip leading space
+      l--,p++;
+    if ( !l )
+      return false;
+    if ( *p == '+' )
+      l--,p++;
+    
+    if ( !l || !ok_in_hex(*p) )
+        return false;
+    while ( l && ok_in_hex(*p) ) 
+    {
+      l--;
+      uint dv;
+      if ( p->isDigit() ) 
+	dv = p->digitValue();
+      else 
+      {
+	if ( *p >= 'a' && *p <= 'f' )
+	  dv = *p - 'a' + 10;
+	else
+	  dv = *p - 'A' + 10;
+      }
+      if ( val > max_mult || (val == max_mult && dv > UINT64_MAX % 16) )
+	return false;
+      val = 16 * val + dv;
+      p++;
+    }
+
+    QByteArray ba;
+    ba.duplicate((const char*)&val, sizeof(uint64_t));
+
+    v = ba;
+    ok = true;
+  }
   else if (e.tagName() == "list")
   {
     qWarning("Unimplemented tag: %s", (const char*)e.tagName());
@@ -400,6 +459,45 @@ bool DomConvenience::variantToElement(const QVariant& v, QDomElement& e)
     e.setAttribute("sequence", (QString)v.toKeySequence());
     break;
 #endif
+
+  case QVariant::ByteArray: // this is only for [u]int64_t
+    {
+      e.setTagName("uint64");
+      QByteArray ba = v.toByteArray();
+
+      // make sure this only handles [u]int64_t's
+      if (ba.size() != sizeof(uint64_t))
+      {
+	qWarning("Don't know how to persist variant of type: %s (%d) (size=%d)!",
+		 v.typeName(), v.type(), ba.size());
+	ok = false;
+	break;
+      }
+
+      // convert the data back into a uint64_t
+      uint64_t num = *(uint64_t*)ba.data();
+      
+      QChar buff[33];
+      QChar* p = &buff[32];
+      const char* digitSet = "0123456789abcdef";
+      int len = 0;
+
+      // construct the string
+      do 
+      {
+        *--p = digitSet[((int)(num%16))];
+        num = num >> 4; // divide by 16
+        len++;
+      } while ( num );
+
+      // store it in a QString
+      QString storage;
+      storage.setUnicode(p, len);
+      
+      // set the value
+      e.setAttribute("value", storage);
+    }
+    break;
 
 #if 0
   case QVariant::List:
