@@ -43,6 +43,7 @@
 #include "messagewindow.h"
 #include "terminal.h"
 #include "filteredspawnlog.h"
+#include "messagefilterdialog.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>

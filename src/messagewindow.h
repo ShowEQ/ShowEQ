@@ -22,6 +22,7 @@ class MessageEntry;
 class MessageFilter;
 class MessageFilters;
 class Messages;
+class MessageFilterDialog;
 
 class QPopupMenu;
 class QLineEdit;
@@ -54,7 +55,7 @@ class MessageFindDialog : public QDialog
   Q_OBJECT
  public:
   MessageFindDialog(MessageBrowser*, const QString& caption,
-		    QWidget* parent=0, const char* name = 0);
+		    QWidget* parent = 0, const char* name = 0);
 
  public slots:
   void find();
@@ -153,6 +154,7 @@ class MessageWindow : public SEQWindow
   void newMessage(const MessageEntry& message);
   void refreshMessages(void);
   void findDialog(void);
+  void messageFilterDialog(void);
 
  protected slots:
   void toggleTypeFilter(int);
@@ -194,6 +196,7 @@ class MessageWindow : public SEQWindow
   QPopupMenu* m_hideUserFilterMenu;
   int m_id_lockText;
   MessageFindDialog* m_findDialog;
+  MessageFilterDialog* m_filterDialog;
   uint64_t m_enabledTypes;
   uint32_t m_enabledShowUserFilters;
   uint32_t m_enabledHideUserFilters;

@@ -5,6 +5,7 @@
  * http://seq.sf.net/
  */
 
+#include "messagefilterdialog.h"
 #include "messagewindow.h"
 #include "messagefilter.h"
 #include "messages.h"
@@ -391,6 +392,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
     m_menu(0),
     m_typeFilterMenu(0),
     m_findDialog(0),
+    m_filterDialog(0),
     m_enabledTypes(0xFFFFFFFFFFFFFFFF),
     m_enabledShowUserFilters(0),
     m_enabledHideUserFilters(0),
@@ -501,7 +503,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   QPopupMenu* typeStyleMenu = new QPopupMenu;
 
   m_typeFilterMenu = new QPopupMenu;
-  m_menu->insertItem("Message Type Filter - Show", m_typeFilterMenu);
+  m_menu->insertItem("Message &Type Filter - Show", m_typeFilterMenu);
 
   m_typeFilterMenu->insertItem("&Enable All", 
 			       this, SLOT(enableAllTypeFilters()), 0, 64);
@@ -515,7 +517,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   // font color preferences
   for (int i = MT_Guild; i <= MT_Max; i++)
   {
-    typeName = messages->messageTypeString((MessageType)i);
+    typeName = MessageEntry::messageTypeString((MessageType)i);
     if (!typeName.isEmpty())
     {
       m_typeFilterMenu->insertItem(typeName, i);
@@ -532,7 +534,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
 	  this, SLOT(setTypeStyle(int)));
 
   m_showUserFilterMenu = new QPopupMenu;
-  m_menu->insertItem("User Message Filter - Show", m_showUserFilterMenu);
+  m_menu->insertItem("User Message Filter - &Show", m_showUserFilterMenu);
 
   m_showUserFilterMenu->insertItem("&Enable All", 
 			       this, SLOT(enableAllShowUserFilters()), 0, 66);
@@ -541,7 +543,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   m_showUserFilterMenu->insertSeparator(-1);
 
   m_hideUserFilterMenu = new QPopupMenu;
-  m_menu->insertItem("User Message Filter - Hide", m_hideUserFilterMenu);
+  m_menu->insertItem("User Message Filter - &Hide", m_hideUserFilterMenu);
 
   m_hideUserFilterMenu->insertItem("&Enable All", 
 			       this, SLOT(enableAllHideUserFilters()), 0, 66);
@@ -567,6 +569,8 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
 	  this, SLOT(toggleShowUserFilter(int)));
   connect(m_hideUserFilterMenu, SIGNAL(activated(int)),
 	  this, SLOT(toggleHideUserFilter(int)));
+  m_menu->insertItem("Edit User &Message Filters...", 
+		     this, SLOT(messageFilterDialog()));
 
   m_menu->insertSeparator(-1);
   m_menu->insertItem("&Find...", this, SLOT(findDialog()), 
@@ -580,9 +584,9 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   m_menu->insertSeparator(-1);
   m_menu->setItemChecked(x, m_lockedText);
   m_menu->insertSeparator(-1);
-  x = m_menu->insertItem("Display &Type", this, SLOT(toggleDisplayType(int)));
+  x = m_menu->insertItem("&Display Type", this, SLOT(toggleDisplayType(int)));
   m_menu->setItemChecked(x, m_displayType);
-  x = m_menu->insertItem("Display Time/&Date", this,
+  x = m_menu->insertItem("Display T&ime/Date", this,
 			 SLOT(toggleDisplayTime(int)));
   m_menu->setItemChecked(x, m_displayDateTime);
   x = m_menu->insertItem("Display &EQ Date/Time", this,
@@ -597,7 +601,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   m_menu->insertItem("&Caption...", this, SLOT(setCaption()));
   m_menu->insertItem("Text Colo&r...", this, SLOT(setColor()));
   m_menu->insertItem("Text Back&ground Color...", this, SLOT(setBGColor()));
-  m_menu->insertItem("Type &Styles", typeStyleMenu);
+  m_menu->insertItem("Type St&yles", typeStyleMenu);
 
   refreshMessages();
 }
@@ -636,7 +640,7 @@ void MessageWindow::addMessage(const MessageEntry& message)
 
   // if displaying the type, add it
   if (m_displayType)
-    text = m_messages->messageTypeString(message.type()) + ": ";
+    text = MessageEntry::messageTypeString(message.type()) + ": ";
     
   // if displaying the message date/time append it
   if (m_displayDateTime)
@@ -682,7 +686,7 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
 
   // if displaying the type, add it
   if (m_displayType)
-    text = m_messages->messageTypeString(type) + ": ";
+    text = MessageEntry::messageTypeString(type) + ": ";
     
   // if displaying the message date/time append it
   if (m_displayDateTime)
@@ -783,6 +787,18 @@ void MessageWindow::findDialog(void)
   m_findDialog->show();
 }
 
+void MessageWindow::messageFilterDialog(void)
+{
+  // create the filter dialog, if necessary
+  if (!m_filterDialog)
+    m_filterDialog = new MessageFilterDialog(m_messageFilters, 
+					     caption() + " Message Filters",
+					     this, "messagefilterdialog");
+
+  // show the message filter dialog
+  m_filterDialog->show();
+}
+
 void MessageWindow::toggleTypeFilter(int id)
 {
   // toggle whether the message type is shown or not
@@ -812,7 +828,7 @@ void MessageWindow::disableAllTypeFilters()
   QString typeName;
   for (int i = MT_Guild; i <= MT_Max; i++)
   {
-    typeName = m_messages->messageTypeString((MessageType)i);
+    typeName = MessageEntry::messageTypeString((MessageType)i);
     if (!typeName.isEmpty())
       m_typeFilterMenu->setItemChecked(i, false);
   }
@@ -832,7 +848,7 @@ void MessageWindow::enableAllTypeFilters()
   QString typeName;
   for (int i = MT_Guild; i <= MT_Max; i++)
   {
-    typeName = m_messages->messageTypeString((MessageType)i);
+    typeName = MessageEntry::messageTypeString((MessageType)i);
     if (!typeName.isEmpty())
       m_typeFilterMenu->setItemChecked(i, true);
   }
@@ -1008,7 +1024,7 @@ void MessageWindow::toggleWrapText(int id)
 void MessageWindow::setTypeStyle(int id)
 {
   // Create the dialog object
-  QString typeName = m_messages->messageTypeString((MessageType)id);
+  QString typeName = MessageEntry::messageTypeString((MessageType)id);
   QString styleCaption = caption() + " - " + typeName + " Style";
   MessageTypeStyleDialog dialog(m_typeStyles[id],
 				m_defaultColor, m_defaultBGColor,
