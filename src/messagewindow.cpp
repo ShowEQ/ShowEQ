@@ -62,7 +62,7 @@ MessageWindow::MessageWindow(Messages* messages,
     m_wrapText(true),
     m_typeColors(0),
     m_typeBGColors(0),
-    m_itemPattern("\022(\\d+)-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)[\022]")
+    m_itemPattern("\022(\\d{5,7})\\w*-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)\022")
 {
   m_enabledTypes = pSEQPrefs->getPrefInt("EnabledTypes", preferenceName(), 
 					 m_enabledTypes);
