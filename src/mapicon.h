@@ -68,7 +68,7 @@ enum MapIconStyle
 
 enum MapIconType
 {
-  tIconTypeUnknown,
+  tIconTypeUnknown = 0,
   tIconTypeDrop,
   tIconTypeDoor, 
   tIconTypeSpawnNPC,
@@ -194,7 +194,12 @@ class MapIcon
   void paintIconImage(MapIconStyle style, QPainter&p, const QPoint& point, 
 		      int size, int sizeWH) const;
 
+  // static convenience methods
+  static const QString& iconSizeName(MapIconSize size);
+  static const QString& iconStyleName(MapIconStyle style);
+
  protected:
+  // static paint methods
   typedef void (*IconImageFunction)(QPainter&p, const QPoint& point,
 				    int size, int size);
   static void paintNone(QPainter&p, const QPoint& point, 
@@ -275,8 +280,9 @@ class MapIcons : public QObject
   bool showSpawnNames() const { return m_showSpawnNames; }
   uint16_t fovDistance() const { return m_fovDistance; }
 
-  const MapIcon& mapIcon(MapIconType iconType);
-  const MapIcon& operator[](int iconType);
+  const MapIcon& icon(int iconType);
+
+  static const QString& iconTypeName(MapIconType type);
 
  public slots:
   // set accessors
@@ -284,6 +290,7 @@ class MapIcons : public QObject
   void setShowNPCWalkPaths(bool val);
   void setShowSpawnNames(bool val);
   void setFOVDistance(int val);
+  void setIcon(int iconType, const MapIcon& icon);
 
   // dump debug info
   void dumpInfo(QTextStream& out);
@@ -305,6 +312,9 @@ class MapIcons : public QObject
 			   const MapIcon& mapIcon,
 			   const SpawnPoint* spawnpoint, 
 			   const QPoint& point);
+
+ signals:
+  void changed(void);
 
  protected slots:
   void flashTick();
@@ -339,7 +349,7 @@ class MapIcons : public QObject
   bool m_showSpawnNames;
 };
 
-inline const MapIcon& MapIcons::mapIcon(MapIconType iconType)
+inline const MapIcon& MapIcons::icon(int iconType)
 {
   // if a valid map icon was passed in, use it
   if ((iconType <= tIconTypeMax) && (iconType > tIconTypeUnknown))
@@ -347,11 +357,6 @@ inline const MapIcon& MapIcons::mapIcon(MapIconType iconType)
 
   // otherwise return the unknown icon type
   return m_mapIcons[tIconTypeUnknown];
-}
-
-inline const MapIcon& MapIcons::operator[](int iconType) 
-{ 
-  return mapIcon((MapIconType)iconType); 
 }
 
 #endif // _EQMAPICON_H_

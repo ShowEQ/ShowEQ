@@ -5,8 +5,8 @@
  *  http://seq.sourceforge.net/
  */
 
-#ifndef EQMAP_H
-#define EQMAP_H
+#ifndef _EQMAP_H_
+#define _EQMAP_H_
 
 #ifdef __FreeBSD__
 #include <limits.h>
@@ -65,6 +65,7 @@ class MapMgr;
 class Map;
 class MapFilterLineEdit;
 class MapFrame;
+class MapIconDialog;
 class DataLocationMgr;
 
 //----------------------------------------------------------------------
@@ -378,8 +379,8 @@ class Map :public QWidget
   const Item* selectedItem() { return m_selectedItem; }
   FollowMode followMode() const { return m_followMode; }
   int frameRate() const { return m_frameRate; }
-  int drawSize() const { return m_mapIcons.drawSize(); }
-  uint16_t fovDistance() const { return m_mapIcons.fovDistance(); }
+  int drawSize() const { return m_mapIcons->drawSize(); }
+  uint16_t fovDistance() const { return m_mapIcons->fovDistance(); }
   int fovStyle() const { return m_fovStyle; }
   const QColor& fovColor() const { return m_fovColor; }
   FOVMode fovMode() const { return m_fovMode; }
@@ -392,7 +393,7 @@ class Map :public QWidget
   bool showUnknownSpawns() const { return m_showUnknownSpawns; }
   bool showDrops() const { return m_showDrops; }
   bool showDoors() const { return m_showDoors; }
-  bool showSpawnNames() const { return m_mapIcons.showSpawnNames(); }
+  bool showSpawnNames() const { return m_mapIcons->showSpawnNames(); }
   bool showFiltered() const { return m_showFiltered; }
   bool showVelocityLines() const { return m_showVelocityLines; }
   bool showLineToSelectedSpawnPoint() const { return m_showLineToSelectedSpawnPoint; }
@@ -405,7 +406,7 @@ class Map :public QWidget
   bool highlightConsideredSpawns() const { return m_highlightConsideredSpawns; }
   bool showTooltips() const { return m_showTooltips; }
   bool walkPathShowSelect() const { return m_walkpathshowselect; }
-  bool showNPCWalkPaths() const { return m_mapIcons.showNPCWalkPaths(); }
+  bool showNPCWalkPaths() const { return m_mapIcons->showNPCWalkPaths(); }
   bool deityPvP() const { return m_deityPvP; }
   bool racePvP() const { return m_racePvP; }
   
@@ -531,7 +532,9 @@ class Map :public QWidget
 
   // dump debug info
   void dumpInfo(QTextStream& out);
-  
+
+  void showMapIconDialog();
+
  signals: 
   void mouseLocation(int16_t x, int16_t y);
   void spawnSelected(const Item* item);
@@ -582,7 +585,8 @@ private:
    MapMgr* m_mapMgr;
    MapCache m_mapCache;
    MapMenu* m_menu;
-   MapIcons m_mapIcons;
+   MapIcons* m_mapIcons;
+   MapIconDialog* m_mapIconDialog;
    uint8_t m_filterCheckOrdering[SIZEOF_FILTERS];
    uint32_t m_runtimeFilterFlagMask;
    QTimer* m_timer;
@@ -683,12 +687,12 @@ class MapFrame : public SEQWindow
    const QString& mapPreferenceName() { return m_mapPreferenceName; }
 
  public slots:
-   void regexpok     (int ok);
-   void setregexp    (const QString&);
+   void regexpok(int ok);
+   void setregexp(const QString&);
    void filterConfirmed();
    void mouseLocation(int16_t x, int16_t y);
-   void setPlayer (int16_t x, int16_t y, int16_t z, 
-		   int16_t Dx, int16_t Dy, int16_t Dz, int32_t degrees);
+   void setPlayer(int16_t x, int16_t y, int16_t z, 
+		  int16_t Dx, int16_t Dy, int16_t Dz, int32_t degrees);
    virtual void savePrefs(void);
 
   // dump debug info
@@ -755,5 +759,5 @@ class MapFrame : public SEQWindow
    int m_id_bottomControl_Options;
 };
 
-#endif // EQMAP_H
+#endif // _EQMAP_H_
 

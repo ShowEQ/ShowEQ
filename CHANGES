@@ -8,9 +8,9 @@ dohpaZ (12/5/03)
 + Added zone safepoint support to ZoneMgr
 + Some dependency cleanups.
 + Fix to support people running EQ under winex.
-+ Support multiple user configurable icons (for spawns, pc's, items, etc...)
-+ Support rescaling the Z for a whole map to allow migration of old/borked 
-  maps.
++ Added support for user configurable map icons (spawns, pc's, items, etc...)
++ Added support for rescaling the Z for a whole map to allow migration of 
+  old/borked maps.
 + Added minimal support for importing maps (warning, this imports everything,
   so if not importing other SOE layers you will probably end up with duplicate
   lines, points, etc...).
