@@ -93,14 +93,15 @@ sub migrate
 	{
 	    print DEST_FILE "    </section>\n" if ($insection);
 	    $insection = 1;
-	    $line =~ s/^\[([^\]]+)\]$/    <section name="$1">/;
-	    print DEST_FILE $line;
+	    $line =~ s/^\[([^\]]+)\]\s*$/    <section name="$1">/;
+	    print DEST_FILE $line, "\n";
 	}
 	else 
 	{
 	    $min = 0;
 	    $max = 0;
-	    chop($line);
+	    # fix line termination and errant trailing spaces
+	    $line =~ s/^(.*?)\s*$/$1/;
 	    @line = split(m/;/, $line);
 	    if ($#line > 0)
 	    {
