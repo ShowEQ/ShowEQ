@@ -9,6 +9,7 @@
 #include "messages.h"
 
 #include <qtextedit.h>
+#include <qpopupmenu.h>
 
 MessageWindow::MessageWindow(Messages* messages, 
 			     const QString& prefName,
@@ -16,6 +17,7 @@ MessageWindow::MessageWindow(Messages* messages,
 			     QWidget* parent, const char* name)
   : SEQWindow(prefName, caption, parent, name),
     m_messages(messages),
+    m_menu(0),
     m_messageWindow(0),
     m_enabledTypes(0xFFFFFFFF),
     m_defaultColor(black),
@@ -38,10 +40,53 @@ MessageWindow::MessageWindow(Messages* messages,
   // connect to the Messages signal(s)
   connect(m_messages, SIGNAL(newMessage(const MessageEntry&)),
 	  this, SLOT(newMessage(const MessageEntry&)));
+
+  m_menu = new QPopupMenu;
+  m_typeFilterMenu = new QPopupMenu;
+  m_menu->insertItem("Show Message Type", m_typeFilterMenu);
+
+  QString typeName;
+  for (int i = MT_Guild; i <= MT_Max; i++)
+  {
+    typeName = messages->messageTypeString((MessageType)i);
+    if (!typeName.isEmpty())
+    {
+      m_typeFilterMenu->insertItem(typeName, i);
+      m_typeFilterMenu->setItemChecked(i, (((1 << i) & m_enabledTypes) != 0));
+    }
+  }
+  
+  connect(m_typeFilterMenu, SIGNAL(activated(int)),
+	  this, SLOT(toggleTypeFilter(int)));
+
+  QPopupMenu* userFilterMenu = new QPopupMenu;
+  m_menu->insertItem("User Message Filters", userFilterMenu);
+
+  m_menu->insertSeparator(-1);
+  int x;
+  x = m_menu->insertItem("Display Type", this, SLOT(toggleDisplayType(int)));
+  m_menu->setItemChecked(x, m_displayType);
+  x = m_menu->insertItem("Display Time/Date", this, SLOT(toggleDisplayTime(int)));
+  m_menu->setItemChecked(x, m_displayDateTime);
+  x = m_menu->insertItem("Display EQ Date/Time", this, SLOT(toggleEQDisplayTime(int)));
+  m_menu->setItemChecked(x, m_displayEQDateTime);
+  x = m_menu->insertItem("Use Color", this, SLOT(toggleUseColor(int)));
+  m_menu->setItemChecked(x, m_useColor);
+  m_menu->insertSeparator(-1);
+  x = m_menu->insertItem("Refresh Messages...", this, SLOT(refreshMessages()));
+
+
+  refreshMessages();
 }
 
 MessageWindow::~MessageWindow()
 {
+}
+
+void MessageWindow::mousePressEvent(QMouseEvent* e)
+{
+  if (e->button() == RightButton)
+    m_menu->popup(mapToGlobal(e->pos()));
 }
 
 void MessageWindow::newMessage(const MessageEntry& message)
@@ -70,9 +115,9 @@ void MessageWindow::newMessage(const MessageEntry& message)
   if (m_displayDateTime)
     text += message.dateTime().toString(m_dateTimeFormat) + " - ";
 
-  // if displayint the messages eq date/time, append it
-  if (m_displayEQDateTime)
-    text += message.eqDateTime().toString(m_eqDateTimeFormat);
+  // if displaying the messages eq date/time, append it
+  if (m_displayEQDateTime && (message.eqDateTime().isValid()))
+    text += message.eqDateTime().toString(m_eqDateTimeFormat) + " - ";
 
   // append the actual message text
   text += message.text();
@@ -81,4 +126,58 @@ void MessageWindow::newMessage(const MessageEntry& message)
   m_messageWindow->append(text);
 }
 
+void MessageWindow::toggleTypeFilter(int id)
+{
+  printf("toggleTypeFilter(%d)\n", id);
+  if (((1 << id) & m_enabledTypes) != 0)
+    m_enabledTypes &= ~(1 << id);
+  else
+    m_enabledTypes |= (1 << id);
+ 
+  m_typeFilterMenu->setItemChecked(id, ((m_enabledTypes & (1 << id)) != 0));
+}
+
+void MessageWindow::toggleDisplayType(int id)
+{
+  m_displayType = !m_displayType;
+  m_menu->setItemChecked(id, m_displayType);
+}
+
+void MessageWindow::toggleDisplayTime(int id)
+{
+  m_displayDateTime = !m_displayDateTime;
+  m_menu->setItemChecked(id, m_displayDateTime);
+}
+
+void MessageWindow::toggleEQDisplayTime(int id)
+{
+  m_displayEQDateTime = ! m_displayEQDateTime;
+  m_menu->setItemChecked(id, m_displayEQDateTime);
+}
+
+void MessageWindow::toggleUseColor(int id)
+{
+  m_useColor = !m_useColor;
+  m_menu->setItemChecked(id, m_useColor);
+}
+
+void MessageWindow::refreshMessages()
+{
+  // clear the document
+  m_messageWindow->clear();
+
+  // move the cursor to the end of the document
+  m_messageWindow->moveCursor(QTextEdit::MoveEnd, false);
+
+  // get the list of messages
+  const MessageList& messages = m_messages->messageList();
+ 
+  // iterate over the message list and add the messages
+  MessageList::const_iterator it;
+  for (it = messages.begin(); it != messages.end(); ++it)
+    newMessage(*it);
+
+  // move the cursor to the end of the document
+  m_messageWindow->moveCursor(QTextEdit::MoveEnd, false);
+}
 

@@ -45,6 +45,9 @@
     <opcode id="0034" name="OP_TradeRequestAck" updated="11/05/03">
         <comment>Trade request recipient is acknowledging they are able to trade</comment>
     </opcode>
+    <opcode id=0039" name="OP_GuildPublicNote" updated="11/05/03">
+        <comment></comment>
+    </opcode>
     <opcode id="003b" name="OP_MobUpdate" implicitlen="12" updated="11/05/03">
         <comment>old MobUpdateCode</comment>
         <payload dir="both" typename="spawnPositionUpdate" sizechecktype="match"/>
@@ -71,7 +74,7 @@
     <opcode id="0065" name="OP_Petition" updated="11/05/03">
         <comment></comment>
     </opcode>
-    <opcode id="0066" name="OP_PetitionUpdate" updated="11/05/03?">
+    <opcode id="0066" name="OP_PetitionUpdate" updated="11/05/03">
         <comment>Updates the Petitions in the Que</comment>
     </opcode>
     <opcode id="0067" name="OP_ShopPlayerSell" updated="11/05/03">
@@ -88,13 +91,10 @@
     <opcode id="006b" name="OP_TraderItemUpdate" updated="09/09/03">
         <comment></comment>
     </opcode>
-    <opcode id="0070" name="OP_PetitionCheckIn" updated="09/09/03">
-        <comment>Petition Checkin</comment>
-    </opcode>
     <opcode id="0071" name="OP_GMBecomeNPC" updated="11/05/03">
         <comment>GM /becomenpc - Become an NPC</comment>
     </opcode>
-    <opcode id="0072" name="OP_PetitionCheckout" updated="11/05/03?">
+    <opcode id="0073" name="OP_PetitionCheckout" updated="11/05/03">
         <comment>Petition Checkout</comment>
     </opcode>
     <opcode id="0075" name="OP_LevelUpdate" updated="11/05/03">
@@ -108,8 +108,14 @@
     <opcode id="0077" name="OP_Split" updated="11/05/03">
         <comment></comment>
     </opcode>
+    <opcode id="007b" name="OP_PetitionCheckIn" updated="11/05/03">
+        <comment>Petition Checkin</comment>
+    </opcode>
     <opcode id="0082" name="OP_ClientReady" updated="11/05/03">
         <comment></comment>
+    </opcode>
+    <opcode id="0083" name="OP_PetitionQue" updated="11/05/03">
+        <comment>GM looking at petitions</comment>
     </opcode>
     <opcode id="0084" name="OP_RandomReply" updated="11/05/03">
         <comment>old RandomCode</comment>
@@ -118,7 +124,10 @@
     <opcode id="0089" name="OP_SetRunMode" updated="11/05/03">
         <comment>old cRunToggleCode</comment>
     </opcode>
-    <opcode id="008d" name="OP_PetitionDelete" updated="11/05/03?">
+    <opcode id="008d" name="OP_PetitionUnCheckout" updated="11/05/03">
+        <comment></comment>
+    </opcode>
+    <opcode id="008e" name="OP_PetitionDelete" updated="11/05/03">
         <comment>Client Petition Delete Request</comment>
     </opcode>
     <opcode id="0094" name="OP_GMSearchCorpse" updated="11/05/03">
@@ -139,7 +148,7 @@
     <opcode id="00a1" name="OP_GMLastName" updated="11/05/03?">
         <comment>GM /lastname - Change user lastname</comment>
     </opcode>
-    <opcode id="00a5" name="OP_GuildLeader" updated="09/09/03">
+    <opcode id="00a4" name="OP_GuildLeader" updated="11/05/03">
         <comment>/guildleader</comment>
     </opcode>
     <opcode id="00b7" name="OP_ApplyPoison" updated="11/05/03">
@@ -301,7 +310,7 @@
     <opcode id="013b" name="OP_LootItem" updated="11/05/03">
         <comment></comment>
     </opcode>
-    <opcode id="013f" name="OP_GuildRemove" updated="09/09/03">
+    <opcode id="013d" name="OP_GuildRemove" updated="11/05/03">
         <comment>/guildremove</comment>
     </opcode>
     <opcode id="0145" name="OP_Begging" updated="11/05/03">
@@ -588,6 +597,9 @@
     <opcode id="025e" name="OP_LFPGetMatchesResponse" updated="11/05/03">
         <comment></comment>
     </opcode>
+    <opcode id="0260" name="OP_GuildDemote" updated="11/05/03">
+        <comment></comment>
+    </opcode>
     <opcode id="0265" name="OP_CrashDump" updated="11/05/03">
         <comment></comment>
     </opcode>
@@ -604,7 +616,7 @@
     <opcode id="0286" name="OP_OpenObject" updated="11/05/03">
         <comment></comment>
     </opcode>
-    <opcode id="0291" name="OP_PetitionResolve" updated="11/05/03?">
+    <opcode id="029b" name="OP_PetitionResolve" updated="11/05/03">
         <comment>Client Petition Resolve Request</comment>
     </opcode>
     <opcode id="029c" name="OP_SummonCorpse" updated="11/05/03?">

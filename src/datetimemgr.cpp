@@ -63,6 +63,9 @@ void DateTimeMgr::timeOfDay(const uint8_t* data)
 
 void DateTimeMgr::update()
 {
+  if (!m_eqDateTime.isValid())
+    return;
+
 #if (QT_VERSION > 0x030100)
   const QDateTime& current = QDateTime::currentDateTime(Qt::UTC);
 #else
