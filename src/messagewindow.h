@@ -181,8 +181,6 @@ class MessageWindow : public SEQWindow
   void removedFilter(uint32_t mask, uint8_t filter);
   void addedFilter(uint32_t mask, uint8_t filter, const MessageFilter& filter);
 
-  //void mousePressEvent(QMouseEvent* e);
-
  protected:
   void addMessage(const MessageEntry& message);
   void addColorMessage(const MessageEntry& message);

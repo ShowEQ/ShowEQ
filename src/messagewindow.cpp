@@ -616,16 +616,6 @@ QPopupMenu* MessageWindow::menu()
   return m_menu;
 }
 
-#if 0 // ZBTEMP
-void MessageWindow::mousePressEvent(QMouseEvent* e)
-{
-  if (e->button() == RightButton)
-    m_menu->popup(mapToGlobal(e->pos()));
-  else
-    SEQWindow::mousePressEvent(e);
-}
-#endif
-
 void MessageWindow::addMessage(const MessageEntry& message)
 {
   MessageType type = message.type();

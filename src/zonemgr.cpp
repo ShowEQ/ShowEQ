@@ -80,6 +80,18 @@ QString ZoneMgr::zoneNameFromID(uint16_t zoneId)
    return tmpStr;
 }
 
+const zonePointStruct* ZoneMgr::zonePoint(uint32_t zoneTrigger)
+{
+  if (!m_zonePoints)
+    return 0;
+
+  for (size_t i = 0; i < m_zonePointCount; i++)
+    if (m_zonePoints[i].zoneTrigger == zoneTrigger)
+      return &m_zonePoints[i];
+
+  return 0;
+}
+
 void ZoneMgr::saveZoneState(void)
 {
   QFile keyFile(showeq_params->saveRestoreBaseFilename + "Zone.dat");

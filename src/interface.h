@@ -200,6 +200,7 @@ class EQInterface:public QMainWindow
    void set_net_arq_giveup(int giveup);
    virtual void setCaption(const QString&);
    void restoreStatusFont();
+   void showMessageFilterDialog(void);
 
  signals:
    void guildList2text(QString);
@@ -263,7 +264,6 @@ class EQInterface:public QMainWindow
    void set_main_statusbar_Font(int id);
    void toggle_main_SavePosition(int id);
    void toggle_main_UseWindowPos(int id);
-   void toggle_main_UseStdout(int id);
    void toggle_opt_save_PlayerState(int id);
    void toggle_opt_save_ZoneState(int id);
    void toggle_opt_save_Spawns(int id);
@@ -271,6 +271,20 @@ class EQInterface:public QMainWindow
    void set_opt_save_BaseFilename();
    void opt_clearChannelMsgs(int id);
    void init_view_menu();
+
+   void toggleTypeFilter(int);
+   void disableAllTypeFilters();
+   void enableAllTypeFilters();
+   void toggleShowUserFilter(int);
+   void disableAllShowUserFilters();
+   void enableAllShowUserFilters();
+   void toggleHideUserFilter(int);
+   void disableAllHideUserFilters();
+   void enableAllHideUserFilters();
+   void toggleDisplayType(int);
+   void toggleDisplayTime(int);
+   void toggleEQDisplayTime(int);
+   void toggleUseColor(int);
 
  protected:
    bool getMonitorOpCodeList(const QString& title, QString& opcodeList);
@@ -351,6 +365,10 @@ class EQInterface:public QMainWindow
    QSpinBox* m_levelSpinBox;
    QPopupMenu* m_charClassMenu;
    QPopupMenu* m_charRaceMenu;
+   QPopupMenu* m_terminalMenu;
+   QPopupMenu* m_terminalTypeFilterMenu;
+   QPopupMenu* m_terminalShowUserFilterMenu;
+   QPopupMenu* m_terminalHideUserFilterMenu;
 
    CompassFrame* m_compass;
    MessageWindow* m_messageWindow[maxNumMessageWindows];
@@ -358,7 +376,7 @@ class EQInterface:public QMainWindow
    ExperienceWindow* m_expWindow;
    CombatWindow* m_combatWindow;
    NetDiag* m_netDiag;
-   MessageFilterDialog* m_messageFilterDiag;
+   MessageFilterDialog* m_messageFilterDialog;
 
    QLabel* m_stsbarSpawns;
    QLabel* m_stsbarStatus;

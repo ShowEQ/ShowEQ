@@ -34,6 +34,8 @@ class Terminal : public QObject
 
   // accessors
   uint64_t enabledTypes() const { return m_enabledTypes; }
+  uint32_t enabledShowUserFilters() const { return m_enabledShowUserFilters; }
+  uint32_t enabledHideUserFilters() const { return m_enabledHideUserFilters; }
   const QString& dateTimeFormat() const { return m_dateTimeFormat; }
   const QString& eqDateTimeFormat() const { return m_eqDateTimeFormat; }
   bool displayType() const { return m_displayType; }
@@ -43,6 +45,8 @@ class Terminal : public QObject
   
  public slots:
   void setEnabledTypes(uint64_t types);
+  void setEnabledShowUserFilters(uint32_t filters);
+  void setEnabledHideUserFilters(uint32_t filters);
   void setDateTimeForamt(const QString& dateTime);
   void setEQDateTimeFormat(const QString& dateTime);
   void setDisplayType(bool enable);
@@ -56,6 +60,8 @@ class Terminal : public QObject
  protected:
   Messages* m_messages;
   uint64_t m_enabledTypes;
+  uint32_t m_enabledShowUserFilters;
+  uint32_t m_enabledHideUserFilters;
   QRegExp m_itemPattern;
   QString m_dateTimeFormat;
   QString m_eqDateTimeFormat;

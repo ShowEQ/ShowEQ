@@ -4261,9 +4261,12 @@ void Map::mouseMoveEvent( QMouseEvent* event )
   {
     QString string;
 
-    const Spawn* spawn = NULL;
+    const Spawn* spawn = 0;
+    const Door* door = 0;
     if ((item->type() == tSpawn) || (item->type() == tPlayer))
       spawn = (const Spawn*)item;
+    else if (item->type() == tDoors)
+      door = (const Door*)item;
 
     if (spawn)
     {
@@ -4321,6 +4324,7 @@ void Map::mouseMoveEvent( QMouseEvent* event )
       string += "\nEquipment: " + spawn->info();
     }
     else
+    {
       string.sprintf("%s\n"
 		     "%.3s/Z: %5d/%5d/%5d\n"
 		     "Race: %s\t Class: %s", 
@@ -4331,6 +4335,22 @@ void Map::mouseMoveEvent( QMouseEvent* event )
 		     item->z(),
 		     (const char*)item->raceString(), 
 		     (const char*)item->classString());
+
+      if ((door) && (door->zonePoint() != 0xFFFFFFFF))
+      {
+	const zonePointStruct* zp = m_zoneMgr->zonePoint(door->zonePoint());
+	if (zp)
+	{
+	  QString doorInfo("\nDestination Zone: %1 (%2/%3/%4 - %5)");
+	  if (showeq_params->retarded_coords)
+	    string += doorInfo.arg(m_zoneMgr->zoneNameFromID(zp->zoneId))
+	      .arg(zp->y).arg(zp->x).arg(zp->z).arg(zp->heading);
+	  else
+	    string += doorInfo.arg(m_zoneMgr->zoneNameFromID(zp->zoneId))
+	      .arg(zp->x).arg(zp->y).arg(zp->z).arg(zp->heading);
+	}
+      }
+    }
 
     m_mapTip->setText( string  );
     QPoint popPoint = mapToGlobal(event->pos());
