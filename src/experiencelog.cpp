@@ -79,7 +79,7 @@ long ExperienceRecord::getExpValue() const
 long ExperienceRecord::getExpValueZEM() const 
 {
   int ZEM = int(m_zem * 100);
-   return m_mob_level*m_mob_level*ZEM;
+  return m_mob_level*m_mob_level*ZEM;
 }
  
 long ExperienceRecord::getExpValuep() const 

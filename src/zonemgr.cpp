@@ -28,7 +28,7 @@
 // constants
 static const char magicStr[5] = "zon2"; // magic is the size of uint32_t + a null
 static const uint32_t* magic = (uint32_t*)magicStr;
-
+const float defaultZoneExperienceMultiplier = 0.75;
 
 // Sequence of signals on initial entry into eq from character select screen
 // EQPacket                              ZoneMgr                       isZoning
@@ -49,7 +49,7 @@ static const uint32_t* magic = (uint32_t*)magicStr;
 ZoneMgr::ZoneMgr(QObject* parent, const char* name)
   : QObject(parent, name),
     m_zoning(false),
-    m_zone_exp_multiplier(0.75),
+    m_zone_exp_multiplier(defaultZoneExperienceMultiplier),
     m_zonePointCount(0),
     m_zonePoints(0)
 {
@@ -145,7 +145,7 @@ void ZoneMgr::zoneEntryClient(const uint8_t* data, size_t len, uint8_t dir)
 
   m_shortZoneName = "unknown";
   m_longZoneName = "unknown";
-
+  m_zone_exp_multiplier = defaultZoneExperienceMultiplier;
   m_zoning = false;
 
   emit zoneBegin();
@@ -159,7 +159,7 @@ void ZoneMgr::zoneEntryServer(const uint8_t* data, size_t len, uint8_t dir)
 {
   const ServerZoneEntryStruct* zsentry = (const ServerZoneEntryStruct*)data;
   m_shortZoneName = zoneNameFromID(zsentry->zoneId);
-
+  m_zone_exp_multiplier = defaultZoneExperienceMultiplier;
   m_zoning = false;
   emit zoneBegin(m_shortZoneName);
   emit zoneBegin(zsentry, len, dir);
@@ -172,6 +172,7 @@ void ZoneMgr::zoneChange(const uint8_t* data, size_t len, uint8_t dir)
 {
   const zoneChangeStruct* zoneChange = (const zoneChangeStruct*)data;
   m_shortZoneName = zoneNameFromID(zoneChange->zoneId);
+  m_zone_exp_multiplier = defaultZoneExperienceMultiplier;
   m_zoning = true;
 
   if (dir == DIR_Server)

@@ -1238,6 +1238,11 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    statusBarMenu->setItemParameter(x, 8);
    statusBarMenu->setItemChecked(x, pSEQPrefs->getPrefBool("ShowSpeed",
 							   "Interface_StatusBar", false));
+   // ZEM code
+   x = statusBarMenu->insertItem( "ZEM");
+   statusBarMenu->setItemParameter(x, 9);
+   statusBarMenu->setItemChecked(x, pSEQPrefs->getPrefBool("ShowZEM",
+							   "Interface_StatusBar", false));
     
    connect (statusBarMenu, SIGNAL(activated(int)), 
 	    this, SLOT(toggle_main_statusbar_Window(int)));
@@ -1408,6 +1413,12 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      m_stsbarSpeed->setText("Run Speed:");
      statusBar()->addWidget(m_stsbarSpeed, 1);
 
+   // ZEM code
+   // Zone Exp Mult widget
+     m_stsbarZEM = new QLabel(statusBar(), "ZEM");
+     m_stsbarZEM->setText("ZEM: [unknown]");
+     statusBar()->addWidget(m_stsbarZEM, 1);
+
      // setup the status fonts correctly
      restoreStatusFont();
 
@@ -1448,6 +1459,12 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    if (!pSEQPrefs->getPrefBool("ShowSpeed", statusBarSection, false))
      m_stsbarSpeed->hide();
+   else
+     sts_widget_count++;
+
+   // ZEM code
+   if (!pSEQPrefs->getPrefBool("ShowZEM", statusBarSection, false))
+     m_stsbarZEM->hide();
    else
      sts_widget_count++;
 
@@ -2066,6 +2083,9 @@ void EQInterface::restoreStatusFont()
    m_stsbarEQTime->setFixedHeight(statusFixedHeight);
    m_stsbarSpeed->setFont(statusFont);
    m_stsbarSpeed->setFixedHeight(statusFixedHeight);
+   // ZEM code
+   m_stsbarZEM->setFont(statusFont);
+   m_stsbarZEM->setFixedHeight(statusFixedHeight);
 }
 
 void EQInterface::toggle_view_StatWin( int id )
@@ -2570,6 +2590,12 @@ void EQInterface::toggle_main_statusbar_Window(int id)
     window = m_stsbarSpeed;
 
     preference = "ShowSpeed";
+    break;
+  // ZEM code
+  case 9:
+    window = m_stsbarZEM;
+
+    preference = "ShowZEM";
     break;
 
   default:
@@ -3944,6 +3970,11 @@ void EQInterface::syncDateTime(const QDateTime& dt)
 void EQInterface::zoneBegin(const QString& shortZoneName)
 {
   emit newZoneName(shortZoneName);
+  float percentZEM = ((float)(m_zoneMgr->zoneExpMultiplier()-0.75)/0.75)*100;
+  QString tempStr;
+  tempStr.sprintf("ZEM: %3.2f%%", percentZEM);
+  if (m_stsbarZEM)
+    m_stsbarZEM->setText(tempStr);
 }
 
 void EQInterface::zoneEnd(const QString& shortZoneName, 
@@ -3951,6 +3982,11 @@ void EQInterface::zoneEnd(const QString& shortZoneName,
 {
   emit newZoneName(longZoneName);
   stsMessage("");
+  float percentZEM = ((float)(m_zoneMgr->zoneExpMultiplier()-0.75)/0.75)*100;
+  QString tempStr;
+  tempStr.sprintf("ZEM: %3.2f%%", percentZEM);
+  if (m_stsbarZEM)
+    m_stsbarZEM->setText(tempStr);
 }
 
 void EQInterface::zoneChanged(const QString& shortZoneName)
@@ -3958,6 +3994,10 @@ void EQInterface::zoneChanged(const QString& shortZoneName)
   QString tempStr;
   stsMessage("- Busy Zoning -");
   emit newZoneName(shortZoneName);
+  float percentZEM = ((float)(m_zoneMgr->zoneExpMultiplier()-0.75)/0.75)*100;
+  tempStr.sprintf("ZEM: %3.2f%%", percentZEM);
+  if (m_stsbarZEM)
+    m_stsbarZEM->setText(tempStr);
 }
 
 void EQInterface::clientTarget(const uint8_t* data)
