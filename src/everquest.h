@@ -317,7 +317,7 @@ struct spellBuff
 {
 /*0000*/  int8_t      slotid;             //
 /*0001*/  int8_t      level;              // Level of person who casted buff
-/*0002*/  int8_t      effect;             //
+/*0002*/  uint16_t    effect;             //
 /*0004*/  uint16_t    spellid;            // Spell
 /*0006*/  int8_t      packing0006[2];     // Purely packing
 /*0008*/  int32_t     duration;           // Duration in ticks
