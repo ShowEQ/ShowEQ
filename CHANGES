@@ -30,6 +30,9 @@ dohpaZ (11/?/03)
 + Added Proper seperation of user data from distributed program data.
  + Support .showeq directory
  + Moved maps, filters, spawnpoints, and logs to their own subdirectories.
++ zones.h, changed 162 to be ssratemple and 182 to be nedaria, thanks to 
+  darkgrue and uRit1u2CBBA= respectively.
++ Initial support for direct loading of SOE txt format map files.
 
 dohpaZ (10/24/03)
 ---------------------

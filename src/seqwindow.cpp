@@ -22,9 +22,6 @@ SEQWindow::SEQWindow(const QString prefName, const QString caption,
   : QDockWindow(parent, name, f),
     m_preferenceName(prefName)
 {
-#if 1 // ZBTEMP
-  fprintf(stderr, "%s WFlags=%08x\n", (const char*)caption, getWFlags());
-#endif
   // set the windows caption
   QDockWindow::setCaption(pSEQPrefs->getPrefString("Caption", preferenceName(),
 					       caption));
@@ -82,10 +79,6 @@ void SEQWindow::restoreSize()
 				     fixedExtent());
     setFixedExtentWidth(s.width());
     setFixedExtentHeight(s.height());
-    if (pSEQPrefs->getPrefBool("DockVisible", preferenceName(), isHidden()))
-      show();
-    else
-      hide();
   }
   else
   {
@@ -94,6 +87,11 @@ void SEQWindow::restoreSize()
     
     resize(s);
   }
+
+  if (pSEQPrefs->getPrefBool("DockVisible", preferenceName(), !isHidden()))
+    show();
+  else
+    hide();
 }
 
 void SEQWindow::restorePosition()
@@ -123,7 +121,6 @@ void SEQWindow::savePrefs(void)
       pSEQPrefs->setPrefBool("DockNewLine", preferenceName(), newLine());
       pSEQPrefs->setPrefInt("DockOffset", preferenceName(), offset());
       pSEQPrefs->setPrefSize("DockFixedExtent", preferenceName(), fixedExtent());
-      pSEQPrefs->setPrefBool("DockVisible", preferenceName(), !isHidden());
     }
     else
     {
@@ -131,5 +128,7 @@ void SEQWindow::savePrefs(void)
       pSEQPrefs->setPrefSize("WindowSize", preferenceName(), size());
       pSEQPrefs->setPrefPoint("WindowPos", preferenceName(), pos());
     }
+
+    pSEQPrefs->setPrefBool("DockVisible", preferenceName(), !isHidden());
   }
 }
