@@ -1,5 +1,10 @@
 Version: $Id$ $Name$
 
+dohpaZ (09/29/04)
+------------------------
++ More kdevelop project related tweaks.
++ Added Doxyfile for DOxygen related configuration.
+	
 dophaZ (09/27/04)
 ------------------------
 + Added kdevelop project.
