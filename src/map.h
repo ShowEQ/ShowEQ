@@ -136,13 +136,6 @@ class MapMgr : public QObject
   void setZEM(uint8_t newZEM) { m_mapData.setZoneZEM(newZEM); }
 
  public slots:
-  // Map Conversion
-  void convertSEQ(void);
-  void convertSOE(void);
-  void convertMap( bool direction );
-  bool convertSEQMap(const QString& inFileName, const QString& outFileName);
-  bool convertSOEMap(const QString& inFileName, const QString& outFileName);
-
   // Zone Handling
   void zoneBegin(const QString& shortZoneName);
   void zoneChanged(const QString& shortZoneName);
@@ -152,6 +145,7 @@ class MapMgr : public QObject
   void loadMap(void);
   void loadFileMap(const QString& fileName);
   void saveMap(void);
+  void saveSOEMap(void);
 
   // Spawn Handling
   void addItem(const Item* item);

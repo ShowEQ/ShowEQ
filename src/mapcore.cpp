@@ -347,7 +347,17 @@ MapLocation::MapLocation(const QString& name,
 			 const QString& color, 
 			 const QPoint& point)
   : MapCommon(name, color),
-    QPoint(point)
+    MapPoint(point),
+    m_heightSet(false)
+{
+}
+
+MapLocation::MapLocation(const QString& name, 
+			 const QString& color, 
+			 const MapPoint& point)
+  : MapCommon(name, color),
+    MapPoint(point),
+    m_heightSet(true)
 {
 }
 
@@ -356,16 +366,30 @@ MapLocation::MapLocation(const QString& name,
 			 int16_t x, 
 			 int16_t y)
   : MapCommon(name, color),
-    QPoint(x, y)
+    MapPoint(x, y, 0),
+    m_heightSet(false)
+{
+}
+
+MapLocation::MapLocation(const QString& name, 
+			 const QString& color, 
+			 int16_t x, 
+			 int16_t y, 
+			 int16_t z)
+  : MapCommon(name, color),
+    MapPoint(x, y, z),
+    m_heightSet(true)
 {
 }
 
 MapLocation::MapLocation(const QString& name, 
 			 const QColor& color, 
 			 int16_t x, 
-			 int16_t y)
+			 int16_t y,
+			 int16_t z)
   : MapCommon(name, color),
-    QPoint(x, y)
+    MapPoint(x, y, z),
+    m_heightSet(true)
 {
 }
 
@@ -423,9 +447,9 @@ void MapData::clear()
 
 void MapData::loadMap(const QString& fileName)
 {
-  uint16_t mx, my, mz;
+  int16_t mx, my, mz;
   uint numPoints;
-  int globHeight=0;
+  int16_t globHeight=0;
   bool globHeightSet = false;
   int filelines = 1;  // number of lines in map file
   QString name;
@@ -730,14 +754,34 @@ void MapData::loadMap(const QString& fileName)
 	fprintf(stderr, "P record [%d] [%d fields]: %s\n", 
 		filelines, count, (const char*)*lit);
 #endif
-	
+
+	if (count < 4)
+        {
+	  fprintf(stderr, 
+		  "Error reading P line %d on map '%s'! %d is too few fields\n",
+		  filelines, filename, count);
+	  continue;
+	}
+
 	name = (*fit++); // Location name
 	color = (*fit++); // Location color
 	mx = (*fit++).toShort();
 	my = (*fit++).toShort();
-	
-	// add it to the list of locations
-	m_locations.append(new MapLocation(name, color, mx, my));
+
+	if (count == 5)
+	{
+	  mz = (*fit++).toShort();
+	  
+	  // add the appropriate style Location depending on if the global height is set
+	  m_locations.append(new MapLocation(name, color, mx, my, mz));
+	}
+	  
+	// add the appropriate style Location depending on if the global 
+	// height has been set
+	if (globHeightSet)
+	  m_locations.append(new MapLocation(name, color, mx, my, globHeight));
+	else
+	  m_locations.append(new MapLocation(name, color, mx, my));
 	
 	// adjust map boundaries
 	quickCheckPos(mx, my);
@@ -914,10 +958,6 @@ void MapData::loadSOEMap(const QString& fileName)
 
   filelines = 1;
 
-#ifdef DEBUGMAPLOAD
-  fprintf(stderr, "Zone info line: %s\n", (const char*)(*lit));
-#endif
-
   QRegExp fieldSep(",\\s*");
 
   // split the line into fields
@@ -933,7 +973,7 @@ void MapData::loadSOEMap(const QString& fileName)
   m_zoneShortName = m_zoneLongName;
 
   // start looping at the next map line
-  for (++lit; lit != lines.end(); ++lit)
+  for (; lit != lines.end(); ++lit)
   {
     // increment line count
     filelines++;
@@ -980,10 +1020,10 @@ void MapData::loadSOEMap(const QString& fileName)
 
 	x1 = -int16_t((*fit++).toFloat());
 	y1 = -int16_t((*fit++).toFloat());
-	z1 = -int16_t((*fit++).toFloat());
+	z1 = int16_t((*fit++).toFloat());
 	x2 = -int16_t((*fit++).toFloat());
 	y2 = -int16_t((*fit++).toFloat());
-	z2 = -int16_t((*fit++).toFloat());
+	z2 = int16_t((*fit++).toFloat());
 	r = (*fit++).toUShort();
 	g = (*fit++).toUShort();
 	b = (*fit).toUShort();
@@ -1045,19 +1085,23 @@ void MapData::loadSOEMap(const QString& fileName)
 		  filelines, filename, count);
 	  continue;
 	}
-	
+
+	// get all the fields
 	x1 = -int16_t((*fit++).toFloat());
 	y1 = -int16_t((*fit++).toFloat());
-	z1 = -int16_t((*fit++).toFloat());
+	z1 = int16_t((*fit++).toFloat());
 	r = (*fit++).toUShort();
 	g = (*fit++).toUShort();
 	b = (*fit++).toUShort();
 	fit++; // skip unknown
-	name = (*fit); // Location name
+	name = (*fit); // Location name, conver
 	
+	// convert underscores to spaces.
+	name.replace("_", " ");
+
 	// add it to the list of locations
 	m_locations.append(new MapLocation(name, QColor(r, g, b), 
-					   int16_t(x1), int16_t(y1)));
+					   x1, y1, z1));
 	
 	// adjust map boundaries
 	quickCheckPos(x1, y1);
@@ -1119,7 +1163,7 @@ void MapData::saveMap(const QString& fileName) const
   bool heightSet = false;
   int16_t lastHeightSet = 0;
   MapLineL* currentLineL;
-  QListIterator<MapLineL> mlit(m_lLines);
+  QPtrListIterator<MapLineL> mlit(m_lLines);
   for (currentLineL = mlit.toFirst(); 
        currentLineL != NULL; 
        currentLineL = ++mlit)
@@ -1159,7 +1203,7 @@ void MapData::saveMap(const QString& fileName) const
 
   // write out the M (3D) lines
   MapLineM* currentLineM;
-  QListIterator<MapLineM> mmit(m_mLines);
+  QPtrListIterator<MapLineM> mmit(m_mLines);
   for (currentLineM = mmit.toFirst(); 
        currentLineM; 
        currentLineM = ++mmit)
@@ -1183,20 +1227,28 @@ void MapData::saveMap(const QString& fileName) const
   }
 
   // write out location information
-  QListIterator<MapLocation> lit(m_locations);
+  QPtrListIterator<MapLocation> lit(m_locations);
   for(; lit.current(); ++lit)
   {
     MapLocation* currentLoc = lit.current();
 
-    fprintf (fh, "P,%s,%s,%d,%d\n", 
-	     (const char*)currentLoc->name(), 
-	     (const char*)currentLoc->colorName(), 
-	     currentLoc->x(),
-	     currentLoc->y());
+    if (!currentLoc->heightSet())
+      fprintf (fh, "P,%s,%s,%d,%d\n", 
+	       (const char*)currentLoc->name(), 
+	       (const char*)currentLoc->colorName(), 
+	       currentLoc->x(),
+	       currentLoc->y());
+    else
+      fprintf (fh, "P,%s,%s,%d,%d,%d\n", 
+	       (const char*)currentLoc->name(), 
+	       (const char*)currentLoc->colorName(), 
+	       currentLoc->x(),
+	       currentLoc->y(),
+	       currentLoc->z());
   }
 
   // write out aggro information
-  QListIterator<MapAggro> ait(m_aggros);
+  QPtrListIterator<MapAggro> ait(m_aggros);
   for (; ait.current(); ++ait)
   {
     MapAggro* currentAggro = ait.current();
@@ -1215,10 +1267,125 @@ void MapData::saveMap(const QString& fileName) const
   printf("Saved map: '%s'\n", filename);
 }
 
+void MapData::saveSOEMap(const QString& fileName) const
+{
+#ifdef DEBUG
+  debug ("saveMap()");
+#endif /* DEBUG */
+  FILE * fh;
+  uint i;
+
+  const char* filename;
+  if (!fileName.isEmpty())
+    filename = (const char*)fileName;
+  else 
+    filename = (const char*)m_fileName;
+
+  if ((fh = fopen(filename, "w")) == NULL) 
+  {
+    printf("Error saving map '%s'!\n", filename);
+    return;
+  }
+  
+  // write out the L (2D) lines with possible fixed Z
+  uint8_t r, g, b;
+  float z1;
+  QString name;
+  MapLineL* currentLineL;
+  QPtrListIterator<MapLineL> mlit(m_lLines);
+  for (currentLineL = mlit.toFirst(); 
+       currentLineL != NULL; 
+       currentLineL = ++mlit)
+  {
+    z1 = float(currentLineL->z());
+
+    const QColor& color = currentLineL->color();
+    r = color.red();
+    g = color.green();
+    b = color.blue();
+
+    QPoint lastQPoint = currentLineL->point(0);
+    
+    // write out all the 2D points in the line
+    for(i = 1; i < currentLineL->size(); ++i)
+    {
+      const QPoint& curQPoint = currentLineL->point(i);
+
+      // write out the line info
+      fprintf (fh, "L %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %d, %d, %d\n", 
+	       -float(curQPoint.x()), -float(curQPoint.y()), z1,
+	       -float(lastQPoint.x()), -float(lastQPoint.y()), z1, 
+	       r, g, b);
+      
+      lastQPoint = curQPoint;
+    }
+
+    // terminate the line
+    fprintf (fh, "\n");
+  }
+
+  // write out the M (3D) lines
+  MapLineM* currentLineM;
+  QPtrListIterator<MapLineM> mmit(m_mLines);
+  for (currentLineM = mmit.toFirst(); 
+       currentLineM; 
+       currentLineM = ++mmit)
+  {
+    const QColor& color = currentLineM->color();
+    r = color.red();
+    g = color.green();
+    b = color.blue();
+
+    MapPoint lastMPoint = currentLineM->point(0);
+
+    // write out all the 3D points in the line
+    for(i = 1; i < currentLineM->size() ; ++i)
+    {
+      const MapPoint& curMPoint = currentLineM->point(i);
+
+      // write out the line info
+      fprintf (fh, "L %.1f, %.1f, %.1f, %.1f, %.1f, %.1f, %d, %d, %d\n", 
+	       -float(curMPoint.x()), -float(curMPoint.y()), float(curMPoint.z()),
+	       -float(lastMPoint.x()), -float(lastMPoint.y()), float(lastMPoint.z()), 
+	       r, g, b);
+      
+      lastMPoint = curMPoint;
+    }
+  }
+
+  // write out location information
+  QPtrListIterator<MapLocation> lit(m_locations);
+  MapLocation* currentLoc;
+  for(currentLoc = lit.toFirst(); 
+      currentLoc; 
+      currentLoc = ++lit)
+  {
+    const QColor& color = currentLoc->color();
+
+    // convert spaces to underscores
+    name = currentLoc->name();
+    name.replace(" ", "_");
+
+    fprintf(fh, "P %.1f, %.1f, %.1f, %d, %d, %d, 3,  %s\n",
+	    -float(currentLoc->x()), -float(currentLoc->y()), 
+	    float(currentLoc->z()),
+	    color.red(), color.green(), color.blue(),
+	    (const char*)name);
+  }
+#ifdef DEBUGMAP
+  printf("saveMap() - map '%s' saved with %d L lines, %d M lines, %d locations\n", filename,
+	 m_lLines.count(), m_mLines.count(), m_locations.count());
+#endif
+  
+  fclose (fh);
+
+  printf("Saved map: '%s'\n", filename);
+}
+
 bool MapData::isAggro(const QString& name, uint16_t* range) const
 {
   MapAggro* aggro;
-  QListIterator<MapAggro> ait(m_aggros);
+  QPtrListIterator<MapAggro> ait(m_aggros);
   for (aggro = ait.toFirst();
        aggro != NULL;
        aggro = ++ait)
@@ -1466,7 +1633,7 @@ void MapData::paintLines(MapParameters& param, QPainter& p) const
   MapPoint* mData;
   
   // first paint the L lines
-  QListIterator<MapLineL> mlit(m_lLines);
+  QPtrListIterator<MapLineL> mlit(m_lLines);
   for (currentLineL = mlit.toFirst(); 
        currentLineL != NULL; 
        currentLineL = ++mlit)
@@ -1520,7 +1687,7 @@ void MapData::paintLines(MapParameters& param, QPainter& p) const
   }
   
   // then paint the M lines
-  QListIterator<MapLineM> mmit(m_mLines);
+  QPtrListIterator<MapLineM> mmit(m_mLines);
   for (currentLineM = mmit.toFirst(); 
        currentLineM; 
        currentLineM = ++mmit)
@@ -1606,7 +1773,7 @@ void MapData::paintDepthFilteredLines(MapParameters& param, QPainter& p) const
   MapPoint playerPos = param.player();
 
   // first paint the L lines
-  QListIterator<MapLineL> mlit(m_lLines);
+  QPtrListIterator<MapLineL> mlit(m_lLines);
   for (currentLineL = mlit.toFirst(); 
        currentLineL != NULL; 
        currentLineL = ++mlit)
@@ -1667,7 +1834,7 @@ void MapData::paintDepthFilteredLines(MapParameters& param, QPainter& p) const
   }
   
   // then paint the M lines
-  QListIterator<MapLineM> mmit(m_mLines);
+  QPtrListIterator<MapLineM> mmit(m_mLines);
   for (currentLineM = mmit.toFirst(); 
        currentLineM; 
        currentLineM = ++mmit)
@@ -1771,7 +1938,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
   double botb = 255 - (botm * playerPos.z());
   
   // first paint the L lines
-  QListIterator<MapLineL> mlit(m_lLines);
+  QPtrListIterator<MapLineL> mlit(m_lLines);
   for (currentLineL = mlit.toFirst(); 
        currentLineL != NULL; 
        currentLineL = ++mlit)
@@ -1849,7 +2016,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
   }
   
   // then paint the M lines
-  QListIterator<MapLineM> mmit(m_mLines);
+  QPtrListIterator<MapLineM> mmit(m_mLines);
   for (currentLineM = mmit.toFirst(); 
        currentLineM; 
        currentLineM = ++mmit)
@@ -1948,7 +2115,7 @@ void MapData::paintLocations(MapParameters& param, QPainter& p) const
   p.setFont(param.font());
 
   // iterate over all the map locations
-  QListIterator<MapLocation> lit(m_locations);
+  QPtrListIterator<MapLocation> lit(m_locations);
   for(; lit.current(); ++lit)
   {
     MapLocation* currentLoc = lit.current();

@@ -38,6 +38,7 @@ class Point3D
   Point3D();
   Point3D(_T x, _T y, _T z);
   Point3D(const Point3D& point);
+  Point3D(const QPoint& point);
 
   // virtual destructor
   virtual ~Point3D();
@@ -121,6 +122,13 @@ template <class _T> inline
 Point3D<_T>::Point3D<_T>(const Point3D<_T>& point)
 {
   setPoint(point.x(), point.y(), point.z());
+}
+
+// copy constructor
+template <class _T> inline
+Point3D<_T>::Point3D<_T>(const QPoint& point)
+{
+  setPoint(point.x(), point.y(), 0);
 }
 
 // convenience constructor
