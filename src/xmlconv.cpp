@@ -18,6 +18,8 @@
 #include <stdint.h>
 
 #include <qcolor.h>
+#include <qpen.h>
+#include <qbrush.h>
 #include <qfont.h>
 #include <qpoint.h>
 #include <qrect.h>
@@ -100,6 +102,44 @@ bool DomConvenience::elementToVariant(const QDomElement& e,
     ok = color.isValid();
 
     v = color;
+
+    if (!ok)
+      qWarning("%s element without valid value!", (const char*)e.tagName());
+  }
+  else if (e.tagName() == "pen")
+  {
+    int base = getBase(e);
+    uint w = 0; 
+    Qt::PenStyle s = Qt::SolidLine;
+    Qt::PenCapStyle c = Qt::SquareCap;
+    Qt::PenJoinStyle j = Qt::BevelJoin;
+    QColor color = getColor(e);
+
+    if (e.hasAttribute("style"))
+      s = (Qt::PenStyle)e.attribute("style").toInt(0, base);
+    if (e.hasAttribute("cap"))
+      c = (Qt::PenCapStyle)e.attribute("cap").toInt(0, base);
+    if (e.hasAttribute("join"))
+      j = (Qt::PenJoinStyle)e.attribute("join").toInt(0, base);
+    
+    ok = color.isValid();
+
+    v = QPen(color, w, s, c, j);
+
+    if (!ok)
+      qWarning("%s element without valid value!", (const char*)e.tagName());
+  }
+  else if (e.tagName() == "brush")
+  {
+    int base = getBase(e);
+    QColor color = getColor(e);
+    Qt::BrushStyle s = Qt::SolidPattern;
+    if (e.hasAttribute("style"))
+      s = (Qt::BrushStyle)e.attribute("style").toInt(0, base);
+    
+    ok = color.isValid();
+    
+    v = QBrush(color, s);
 
     if (!ok)
       qWarning("%s element without valid value!", (const char*)e.tagName());
@@ -345,6 +385,28 @@ bool DomConvenience::variantToElement(const QVariant& v, QDomElement& e)
       e.setAttribute("red", color.red());
       e.setAttribute("green", color.green());
       e.setAttribute("blue", color.blue());
+    }
+    break;
+  case QVariant::Pen:
+    {
+      e.setTagName("pen");
+      QPen pen = v.toPen();
+      e.setAttribute("red", pen.color().red());
+      e.setAttribute("green", pen.color().green());
+      e.setAttribute("blue", pen.color().blue());
+      e.setAttribute("style", pen.style());
+      e.setAttribute("cap", pen.capStyle());
+      e.setAttribute("join", pen.joinStyle());
+    }
+    break;
+  case QVariant::Brush:
+    {
+      e.setTagName("brush");
+      QBrush brush = v.toBrush();
+      e.setAttribute("red", brush.color().red());
+      e.setAttribute("green", brush.color().green());
+      e.setAttribute("blue", brush.color().blue());
+      e.setAttribute("style", brush.style());
     }
     break;
   case QVariant::Point:

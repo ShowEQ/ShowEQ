@@ -2629,10 +2629,11 @@ EQInterface::toggle_main_UseWindowPos (int id)
 void
 EQInterface::savePrefs(void)
 {
-  seqInfo("==> EQInterface::savePrefs()");
+  seqDebug("==> EQInterface::savePrefs()");
    
    if( isVisible() ) 
    {
+     seqDebug("\tisVisible()");
      QString section;
      QString interfaceSection = "Interface";
      QString tempStr;
@@ -4934,7 +4935,7 @@ void EQInterface::showMap(int i)
       m_map[i]->undock();
 
     connect(this, SIGNAL(saveAllPrefs(void)),
-	    m_map[i], SLOT(savePrefs(void)));
+	    m_map[i], SLOT(savePrefs()));
     connect(this, SIGNAL(restoreFonts(void)),
 	    m_map[i], SLOT(restoreFont(void)));
     

@@ -27,6 +27,8 @@
 #include <qdict.h>
 #include <qdom.h>
 #include <qcolor.h>
+#include <qpen.h>
+#include <qbrush.h>
 #include <qfont.h>
 #include <qsizepolicy.h>
 #include <qcursor.h>
@@ -105,6 +107,10 @@ class XMLPreferences
 		   bool def = false, Persistence pers = Any);
   QColor getPrefColor(const QString& inName, const QString& inSection, 
 		      const QColor& def = QColor(), Persistence pers = Any);
+  QPen getPrefPen(const QString& inName, const QString& inSection, 
+		  const QPen& def = QPen(), Persistence pers = Any);
+  QBrush getPrefBrush(const QString& inName, const QString& inSection, 
+		      const QBrush& def = QBrush(), Persistence pers = Any);
   QPoint getPrefPoint(const QString& inName, const QString& inSection, 
 		      const QPoint& def = QPoint(), Persistence pers = Any);
   QRect getPrefRect(const QString& inName, const QString& inSection, 
@@ -150,6 +156,10 @@ class XMLPreferences
 		   bool inValue, Persistence pers = User);
   void setPrefColor(const QString& inName, const QString& inSection, 
 		    const QColor& inValue, Persistence pers = User);
+  void setPrefPen(const QString& inName, const QString& inSection, 
+		    const QPen& inValue, Persistence pers = User);
+  void setPrefBrush(const QString& inName, const QString& inSection, 
+		    const QBrush& inValue, Persistence pers = User);
   void setPrefPoint(const QString& inName, const QString& inSection, 
 		    const QPoint& inValue, Persistence pers = User);
   void setPrefRect(const QString& inName, const QString& inSection, 

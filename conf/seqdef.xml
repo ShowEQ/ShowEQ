@@ -2832,7 +2832,7 @@ If any argument is left blank, it is filled in with its default...
    <comment>Window caption</comment>
   </property>
   <property name="Create" >
-   <bool value="ue" />
+   <bool value="true" />
    <comment>Causes this window to be created</comment>
   </property>
   <property name="DefaultColor">
