@@ -71,12 +71,12 @@ Terminal::Terminal(Messages* messages,
     m_useColor(true)
 {
   const QString preferenceName = "Terminal";
-  m_enabledTypes = pSEQPrefs->getPrefInt("EnabledTypes", preferenceName, 
-					 m_enabledTypes);
+  m_enabledTypes = pSEQPrefs->getPrefUInt64("EnabledTypes", preferenceName, 
+					    m_enabledTypes);
   m_dateTimeFormat = pSEQPrefs->getPrefString("DateTimeFormat",
 					      preferenceName, 
 					      m_dateTimeFormat);
-  m_eqDateTimeFormat = pSEQPrefs->getPrefString("EQDateTimeForamt",
+  m_eqDateTimeFormat = pSEQPrefs->getPrefString("EQDateTimeFormat",
 						preferenceName,
 						m_eqDateTimeFormat);
   m_displayType = pSEQPrefs->getPrefBool("DisplayType", preferenceName,
@@ -102,36 +102,59 @@ Terminal::~Terminal()
 void Terminal::setEnabledTypes(uint64_t types) 
 { 
   m_enabledTypes = types; 
+  pSEQPrefs->setPrefUInt64("EnabledTypes", "Terminal", m_enabledTypes);
+}
+
+void Terminal::setEnabledShowUserFilters(uint32_t filters)
+{
+  m_enabledShowUserFilters = filters;
+  // save the new setting
+  pSEQPrefs->setPrefUInt("EnabledShowUserFilters", "Terminal", 
+			 m_enabledShowUserFilters);
+}
+
+void Terminal::setEnabledHideUserFilters(uint32_t filters)
+{
+  m_enabledHideUserFilters = filters;
+  // save the new setting
+  pSEQPrefs->setPrefUInt("EnabledHideUserFilters", "Terminal", 
+			 m_enabledHideUserFilters);
 }
 
 void Terminal::setDateTimeForamt(const QString& dateTime)
 {
   m_dateTimeFormat = dateTime;
+  pSEQPrefs->setPrefString("DateTimeFormat", "Terminal", m_dateTimeFormat);
 }
 
 void Terminal::setEQDateTimeFormat(const QString& dateTime)
 {
   m_eqDateTimeFormat = dateTime;
+  pSEQPrefs->setPrefString("EQDateTimeFormat", "Terminal", m_eqDateTimeFormat);
 }
 
 void Terminal::setDisplayType(bool enable) 
 {
   m_displayType = enable; 
+  pSEQPrefs->setPrefBool("DisplayType", "Terminal", m_displayType);
 }
 
 void Terminal::setDisplayDateTime(bool enable) 
 {
   m_displayDateTime = enable; 
+  pSEQPrefs->setPrefBool("DisplayDateTime", "Terminal", m_displayDateTime);
 }
 
 void Terminal::setDisplayEQDateTime(bool enable) 
 {
   m_displayEQDateTime = enable; 
+  pSEQPrefs->setPrefBool("DisplayEQDateTime", "Terminal", m_displayEQDateTime);
 }
 
 void Terminal::setUseColor(bool enable)
 { 
   m_useColor = enable; 
+  pSEQPrefs->setPrefBool("UseColor", "Terminal", m_useColor);
 }
 
 void Terminal::newMessage(const MessageEntry& message)
@@ -139,7 +162,9 @@ void Terminal::newMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if ((m_enabledTypes & ( 1 << type)) == 0)
+  if ((((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
+       ((m_enabledShowUserFilters & message.filterFlags()) == 0)) ||
+      ((m_enabledHideUserFilters & message.filterFlags()) != 0))
     return;
 
   const char* setColor = 0;

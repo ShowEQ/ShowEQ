@@ -42,6 +42,7 @@ class ZoneMgr : public QObject
   const QString& longZoneName() const { return m_longZoneName; }
   const Point3D<int16_t>& safePoint() const { return m_safePoint; }
   float zoneExpMultiplier() { return m_zone_exp_multiplier; }
+  const zonePointStruct* zonePoint(uint32_t zoneTrigger);
 
  public slots:
   void saveZoneState(void);

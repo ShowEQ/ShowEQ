@@ -50,6 +50,8 @@ dohpaZ (11/?/03)
 + Added support for storing 64 bit integers to the XML preference system.
 + Added diagnostic message functions to unify how certain messages were 
   being handled.
++ Found zonePoint in doorStruct.  Added zone point destination information 
+  to map tooltip for teleport doors.
 
 dohpaZ (10/24/03)
 ---------------------

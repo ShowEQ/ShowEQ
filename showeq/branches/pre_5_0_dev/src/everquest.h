@@ -833,12 +833,13 @@ struct doorStruct
 /*0032*/ uint8_t  unknown0028[7]; // ***Placeholder
 /*0039*/ int8_t   auto_return;
 /*0040*/ uint8_t  initialState;
-/*0043*/ uint8_t  unknown041[3];
+/*0041*/ uint8_t  unknown041[3];
 /*0044*/ uint8_t  doorId;          // door's id #
 /*0045*/ uint8_t  opentype;       
 /*0046*/ uint8_t  size;           // size of door
-/*0047*/ uint16_t holdstateforever;
-/*0048*/ uint8_t  unknown040[7]; // ***Placeholder
+/*0047*/ uint8_t holdstateforever;
+/*0048*/ uint32_t zonePoint;
+/*0052*/ uint8_t  unknown052[4]; // ***Placeholder
 /*0056*/
 }; 
 

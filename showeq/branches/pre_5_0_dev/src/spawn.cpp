@@ -959,6 +959,7 @@ void Door::update(const doorStruct* d)
 	 (int16_t)(d->z * 10.0));
   setHeading((int8_t)lrintf(d->heading));
   m_name.sprintf("Door: %s (%d) ", d->name, d->doorId);
+  setZonePoint(d->zonePoint);
   updateLast();
 }
 
