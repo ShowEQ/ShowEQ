@@ -2163,21 +2163,9 @@
    <string value="global.xml" />
    <comment>Name of default filter file</comment>
   </property>
-  <property name="LogLocates" >
-   <bool value="false" />
-   <comment>Log spawns that match Locate filter</comment>
-  </property>
-  <property name="LogHunts" >
-   <bool value="false" />
-   <comment>Log spawns that match Hunt filter</comment>
-  </property>
-  <property name="LogCautions" >
-   <bool value="false" />
-   <comment>Log spawns that match Caution filter</comment>
-  </property>
-  <property name="LogDangers" >
-   <bool value="false" />
-   <comment>Log spawns that match Danger filter</comment>
+  <property name="Log" >
+   <int value="0" />
+   <comment>Log spawns that match the specified logable filters</comment>
   </property>
   <property name="IsCaseSensitive" >
    <bool value="false" />

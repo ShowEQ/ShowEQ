@@ -15,6 +15,8 @@
 #include "packetinfo.h"
 #include "decode.h"
 
+//----------------------------------------------------------------------
+// PacketLog
 PacketLog::PacketLog(EQPacket& packet, const QString& fname, 
 		     QObject* parent, const char* name)
   : SEQLogger(fname, parent, name),
@@ -306,7 +308,7 @@ void PacketLog::printData(const uint8_t* data, size_t len, uint8_t dir,
     ::putchar('\n');
 }
 
-/////////////////////////////////////
+//----------------------------------------------------------------------
 // PacketStreamLog
 PacketStreamLog::PacketStreamLog(EQPacket& packet, const QString& fname, 
 				 QObject* parent, const char* name)
@@ -329,7 +331,7 @@ void PacketStreamLog::decodedStreamPacket(const uint8_t* data, size_t len,
   logData(data, len, dir, opcode, opcodeEntry, "[Decoded]");
 }
 
-/////////////////////////////////////
+//----------------------------------------------------------------------
 // UnknownPacketLog
 UnknownPacketLog::UnknownPacketLog(EQPacket& packet, const QString& fname, 
 				   QObject* parent, const char* name)
@@ -351,7 +353,7 @@ void UnknownPacketLog::packet(const uint8_t* data, size_t len, uint8_t dir,
   }
 }
 
-/////////////////////////////////////
+//----------------------------------------------------------------------
 // OpCodeMonitorPacketLog
 OPCodeMonitorPacketLog::OPCodeMonitorPacketLog(EQPacket& packet, 
 					       const QString& fname, 

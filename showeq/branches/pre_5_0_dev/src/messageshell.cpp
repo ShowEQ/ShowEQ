@@ -20,6 +20,8 @@
 #include "filtermgr.h"
 #include "util.h"
 
+//----------------------------------------------------------------------
+// MessageShell
 MessageShell::MessageShell(Messages* messages, EQStr* eqStrings,
 			   Spells* spells, ZoneMgr* zoneMgr, 
 			   SpawnShell* spawnShell, Player* player,

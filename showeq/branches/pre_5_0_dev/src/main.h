@@ -40,10 +40,6 @@ struct ShowEQParams
   bool           walkpathrecord;
   uint32_t       walkpathlength;
   bool           spawnfilter_audio;
-  bool           spawnfilter_loglocates;
-  bool           spawnfilter_logcautions;
-  bool           spawnfilter_logdangers;
-  bool           spawnfilter_loghunts;
   bool           systime_spawntime;
   bool           showRealName;
   

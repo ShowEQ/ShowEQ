@@ -42,6 +42,8 @@ dohpaZ (11/?/03)
   maps.
 + Assorted changes/fixes to experience handling in the Player object.
 + Improved behaviour when swapping players.
++ New message storage, filtering, and UI.
++ Move terminal UI to its own class
 
 dohpaZ (10/24/03)
 ---------------------

@@ -57,7 +57,7 @@ class PacketLog : public SEQLogger
   EQPacket& m_packet;
 };
 
-/////////////////////////////////////
+//----------------------------------------------------------------------
 // PacketStreamLog
 class PacketStreamLog : public PacketLog
 {
@@ -89,7 +89,7 @@ inline void PacketStreamLog::setRaw(bool val)
   m_raw = val;
 }
 
-/////////////////////////////////////
+//----------------------------------------------------------------------
 // UnknownPacketLog
 class UnknownPacketLog : public PacketLog
 {
@@ -120,7 +120,7 @@ inline void UnknownPacketLog::setView(bool val)
   m_view = val;
 }
 
-/////////////////////////////////////
+//----------------------------------------------------------------------
 // OPCodeMonitorPacketLog
 class OPCodeMonitorPacketLog : public PacketLog
 {

@@ -166,7 +166,7 @@ MessageWindow::MessageWindow(Messages* messages,
     m_menu(0),
     m_typeFilterMenu(0),
     m_findDialog(0),
-    m_enabledTypes(0xFFFFFFFF),
+    m_enabledTypes(0xFFFFFFFFFFFFFFFF),
     m_defaultColor(black),
     m_defaultBGColor(white),
     m_dateTimeFormat("hh:mm"),
@@ -246,6 +246,7 @@ MessageWindow::MessageWindow(Messages* messages,
   connect(m_messages, SIGNAL(newMessage(const MessageEntry&)),
 	  this, SLOT(newMessage(const MessageEntry&)));
 
+  // connect up our own signals
   connect(m_messageWindow, SIGNAL(rightClickedMouse(QMouseEvent*)),
 	  this, SLOT(mousePressEvent(QMouseEvent*)));
   connect(m_messageWindow, SIGNAL(clicked(int, int)),
@@ -401,7 +402,7 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
 
   // if displaying the type, add it
   if (m_displayType)
-    text = m_messages->messageTypeString(message.type()) + ": ";
+    text = m_messages->messageTypeString(type) + ": ";
     
   // if displaying the message date/time append it
   if (m_displayDateTime)
