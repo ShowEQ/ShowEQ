@@ -152,19 +152,18 @@ Spell::Spell(const QString& spells_enLine)
   : m_spell(0)
 {
   // split the ^ delimited spell entry into a QStringList
-  QChar sep('^');
-  int flags = QString::SectionCaseInsensitiveSeps;
+  m_spellInfo = QStringList::split("^", spells_enLine, true);
 
   // I'll add support for the rest of the fields later
-  m_spell = spells_enLine.section(sep, 0, 0, flags).toUShort();
-  m_name = spells_enLine.section(sep, 1, 1, flags);
-  m_buffDurationFormula = spells_enLine.section(sep, 16, 16, flags).toUShort();
-  m_buffDurationArgument = spells_enLine.section(sep, 17, 17, flags).toUShort();
-  m_targetType = uint8_t(spells_enLine.section(sep, 86, 86, flags).toUShort());
+  m_spell = m_spellInfo[0].toUShort();
+  m_name = m_spellInfo[1];
+  m_buffDurationFormula = m_spellInfo[16].toUShort();
+  m_buffDurationArgument = m_spellInfo[17].toUShort();
+  m_targetType = uint8_t(m_spellInfo[86].toUShort());
 
 #if 0 // ZBTEMP
   fprintf(stderr, "Spell: %d  Fields: %d\n", m_spell, 
-	  QStringList::split(QChar('^'), spells_enLine).count());
+	  m_spellInfo.count());
 #endif 
 }
 
