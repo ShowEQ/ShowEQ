@@ -40,6 +40,8 @@ dohpaZ (11/?/03)
 + Integrated patch# 844078 "Fix to class displays" by belith (UnGod).
 + Support rescaling the Z for a whole map to allow migration of old/borked 
   maps.
++ Assorted changes/fixes to experience handling in the Player object.
++ Improved behaviour when swapping players.
 
 dohpaZ (10/24/03)
 ---------------------

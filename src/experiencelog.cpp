@@ -618,19 +618,19 @@ void ExperienceWindow::viewZEMpercent()
 
 void ExperienceWindow::viewClear() 
 {
-   switch( QMessageBox::information( this, "ShowEQ",
+   if (QMessageBox::information( this, "ShowEQ",
       "This function will clear all data listed in the experience "
       "log.  Do you want to continue?",
-      "&OK", "&Cancel", QString::null, 1, 1 ) ) {
+      "&OK", "&Cancel", QString::null, 1, 1) == 0) 
+   {
+     clear();
+   }
+}
 
-      case 0:
-        m_exp_list.clear();
-        m_exp_listview->clear();
-        break;
-
-      default:
-        break;
-    }
+void ExperienceWindow::clear(void)
+{
+  m_exp_list.clear();
+  m_exp_listview->clear();
 }
 
 void ExperienceWindow::logexp(long xp_gained, int mob_level) 

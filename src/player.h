@@ -116,7 +116,7 @@ public:
    void setDefaults(void);
 
  signals:
-
+   void newPlayer(void);
    void buffLoad(const spellBuff*); 
    void newSpeed               (int speed);
    void msgReceived            (const QString &);
@@ -214,7 +214,9 @@ public:
    uint32_t m_currentAltExp;
    uint16_t m_currentAApts;
    uint32_t m_currentExp;
+   uint32_t m_minExp;
    uint32_t m_maxExp;
+   uint32_t m_tickExp;
 
    uint32_t m_spellBookSlots[MAX_SPELLBOOK_SLOTS];
 

@@ -163,7 +163,6 @@ class SpellShell : public QObject
  public:
   SpellShell(Player* player, SpawnShell* spawnshell, Spells* spells);
   void DeleteSpell(const SpellItem*);
-  void clear();
   
  signals:
   void addSpell(const SpellItem *); // done
@@ -172,6 +171,8 @@ class SpellShell : public QObject
   void clearSpells(); // done
   
  public slots:
+  void clear();
+
   // slots received from EQPacket...
   void selfStartSpellCast(const uint8_t*);
   void buffLoad(const spellBuff*);

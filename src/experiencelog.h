@@ -88,6 +88,7 @@ public slots:
    void viewZEMraw();
    void viewZEMpercent();
    void viewZEMcalculated();
+   void clear(void);
 
 private:
 

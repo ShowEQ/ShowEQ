@@ -101,8 +101,6 @@ signals:
    void numSpawns(int);
    void handleAlert(const Item* item, alertType type);
 
-   void msgReceived(const QString& msg);
-
 public slots: 
    void clear();
 

@@ -108,6 +108,9 @@ void Player::player(const uint8_t* data)
   const charProfileStruct* player = (const charProfileStruct*)data;
   QString messag;
 
+  if (m_name != player->name)
+    emit newPlayer();
+  
   // fill in base Spawn class
   // set the characteristics that probably haven't changed.
   setNPC(SPAWN_SELF);
@@ -121,11 +124,12 @@ void Player::player(const uint8_t* data)
   setTypeflag(1);
 
   Spawn::setName(player->name);
-  setLastName(player->lastName);
 
   // if it's got a last name add it
-  if (level() < player->level)
-    setLevel(player->level);
+  setLastName(player->lastName);
+
+  // set the player level
+  setLevel(player->level);
 
   // Stats hanling
   setUseDefaults(false);
@@ -188,9 +192,7 @@ void Player::player(const uint8_t* data)
   // Merge in our new skills...
   for (int a = 0; a < MAX_KNOWN_SKILLS; a++)
   {
-    if ((m_playerSkills[a] == 255) || // not valid
-	(player->skills[a] > m_playerSkills[a])) // or a higher value
-      m_playerSkills[a] = player->skills[a];
+    m_playerSkills[a] = player->skills[a];
 
     emit addSkill (a, m_playerSkills[a]);
   }
@@ -198,9 +200,7 @@ void Player::player(const uint8_t* data)
   // Merge in our new languages...
   for (int a = 0; a < MAX_KNOWN_LANGS; a++)
   {
-    if ((m_playerLanguages[a] == 255) ||
-	(player->languages[a] > m_playerLanguages[a]))
-      m_playerLanguages[a] = player->languages[a];
+    m_playerLanguages[a] = player->languages[a];
     
     emit addLanguage (a, m_playerLanguages[a]);
   }
@@ -217,28 +217,24 @@ void Player::player(const uint8_t* data)
   fillConTable();
 
   // Exp handling
-  uint32_t minexp;
-
+  m_minExp = calc_exp(m_level-1, m_race, m_class);
   m_maxExp = calc_exp(m_level, m_race, m_class);
-  minexp  = calc_exp(m_level-1, m_race, m_class);
+  m_tickExp = (m_maxExp - m_minExp) / 330;
 
-  if(m_currentExp < player->exp);
-  {
-     m_currentExp = player->exp;
-     m_currentAltExp = player->altexp;
-     m_currentAApts = player->aapoints;
+  m_currentExp = player->exp;
+  m_currentAltExp = player->altexp;
+  m_currentAApts = player->aapoints;
+  
+  emit expChangedInt (m_currentExp, m_minExp, m_maxExp);
+  
+  messag = "Player: Exp: " + Commanate(player->exp);
+  emit expChangedStr(messag);
+  emit msgReceived(messag);
 
-     emit expChangedInt (m_currentExp, minexp, m_maxExp);
-
-     messag = "Exp: " + Commanate(player->exp);
-     emit expChangedStr(messag);
-
-     emit expAltChangedInt(m_currentAltExp, 0, 15000000);
-
-     messag = "ExpAA: " + Commanate(player->altexp);
-     emit expAltChangedStr(messag);
-
-  }
+  emit expAltChangedInt(m_currentAltExp, 0, 15000000);
+  
+  messag = "ExpAA: " + Commanate(player->altexp);
+  emit expAltChangedStr(messag);
 
   if (showeq_params->savePlayerState)
     savePlayerState();
@@ -307,7 +303,9 @@ void Player::reset()
 
   m_currentAltExp = 0;
   m_currentExp = 0;
-  m_maxExp = calc_exp(level(), race(), classVal());
+  m_minExp = calc_exp(level() - 1, race(), classVal());
+  m_maxExp = calc_exp(level(), race(), classVal ());
+  m_tickExp = (m_maxExp - m_minExp) / 330;
 
   for (int a = 0; a < MAX_KNOWN_SKILLS; a++)
     m_playerSkills[a] = 255; // indicate an invalid value
@@ -557,35 +555,51 @@ void Player::updateAltExp(const uint8_t* data)
 void Player::updateExp(const uint8_t* data)
 {
   const expUpdateStruct* exp = (const expUpdateStruct*)data;
+
+  // if this is just setting the percentage, then do nothing (use info from
+  //   player packet).
+  if (exp->type == 0) 
+  {
+    uint32_t realExp = (m_tickExp * exp->exp) + m_minExp;
+    uint32_t expIncrement;
+    // deal with fractional experience
+    if (realExp > m_currentExp)
+      expIncrement = realExp - m_currentExp;
+    else 
+      expIncrement = 0;
+
+    QString tempStr;
+    tempStr.sprintf("Set: Exp: exp=%d realExp=%d currentExp=%d expInc=%d",
+		    exp->exp, realExp, m_currentExp, expIncrement);
+    emit msgReceived(tempStr);
+    return;
+  }
+
   QString totalExp;
   QString incrementExp;
   QString leftExp;
   QString needKills;
   QString tempStr;
   QString tempStr2;
-  uint32_t realexp;
-  uint32_t minexp;
-  uint32_t maxexp;
-  uint32_t diffexp;
-  uint16_t fractexp;
 
-  fractexp =  exp->exp;
-  minexp = calc_exp(level() - 1, race(), classVal());
-  maxexp = calc_exp(level(), race(), classVal());
-  diffexp = maxexp - minexp;
-  realexp = (diffexp / 330) * fractexp + minexp;
-  incrementExp = Commanate(diffexp/330);
+  uint32_t realExp = (m_tickExp * exp->exp) + m_minExp;
+  uint32_t expIncrement;
+  if (realExp > m_currentExp)
+    expIncrement = realExp - m_currentExp;
+  else 
+    expIncrement = 0;
+  
+  incrementExp = Commanate(m_tickExp);
 
+  totalExp  = Commanate(realExp - m_minExp);
+  leftExp = Commanate(m_maxExp - realExp);
+  needKills = Commanate(((m_maxExp - realExp) / (realExp > m_currentExp ? realExp - m_currentExp : 1)) + 1 );
 
-  totalExp  = Commanate(realexp - minexp);
-  leftExp = Commanate(maxexp - realexp);
-  needKills = Commanate(((maxexp - realexp) / (realexp > m_currentExp ? realexp - m_currentExp : 1)) + 1 );
-
-  tempStr = QString("Exp: %1 (%2/330) [%3]").arg(totalExp).arg(tempStr2.sprintf("%u",fractexp)).arg(needKills);
+  tempStr = QString("Exp: %1 (%2/330) [%3]").arg(totalExp).arg(tempStr2.sprintf("%u",exp->exp)).arg(needKills);
   emit expChangedStr(tempStr);
-  emit expChangedInt (realexp, minexp, maxexp);
+  emit expChangedInt (realExp, m_minExp, m_maxExp);
     
-  tempStr = QString("Exp: %1 (%2/330) left %3 - 1/330 = %4").arg(totalExp).arg(tempStr2.sprintf("%u",fractexp)).arg(leftExp).arg(incrementExp);
+  tempStr = QString("Exp: %1 (%2/330) left %3 - 1/330 = %4").arg(totalExp).arg(tempStr2.sprintf("%u",exp->exp)).arg(leftExp).arg(incrementExp);
   emit msgReceived(tempStr);
   emit stsMessage(tempStr);
 
@@ -593,7 +607,7 @@ void Player::updateExp(const uint8_t* data)
   {
      emit expGained( m_lastSpawnKilledName,
                      m_lastSpawnKilledLevel,
-                     realexp - m_currentExp,
+                     expIncrement,
                      m_zoneMgr->longZoneName());
       
      // have gained experience for the kill, it's no longer fresh
@@ -609,17 +623,16 @@ void Player::updateExp(const uint8_t* data)
   {
      emit expGained( spell_name(m_lastSpellOnId),
                      0, // level of caster would only confuse things further
-                     realexp - m_currentExp,
+                     expIncrement,
                      m_zoneMgr->longZoneName());
   }
   else if (m_currentExp != 0) 
      emit expGained( "Unknown", // Randomly blessed with xp?
                      0, // don't know what gave it so, level 0
-		     realexp - m_currentExp,
-		     m_zoneMgr->longZoneName()
-		   );
+		     expIncrement,
+		     m_zoneMgr->longZoneName());
   
-  m_currentExp = realexp;
+  m_currentExp = realExp;
   m_validExp = true;
 
   if (showeq_params->savePlayerState)
@@ -635,49 +648,72 @@ void Player::updateLevel(const uint8_t* data)
   QString needKills;
   QString tempStr;
 
-  tempStr.sprintf("Player: NewLevel: %d\n", levelup->level);
-  emit stsMessage(tempStr);
-  
-  totalExp = Commanate(levelup->exp);
-  gainedExp = Commanate((uint32_t) (levelup->exp - m_currentExp));
-  
-  needKills = Commanate(((calc_exp( levelup->level,
-				    race  (),
-				    classVal ()
-				    ) - levelup->exp
-			  )          /  ( levelup->exp > m_currentExp    ?
-					  levelup->exp - m_currentExp :
-					  1
-					  )
-			 )
-			);
-  
-  tempStr = QString("Exp: %1 (%2) [%3]").arg(totalExp).arg(gainedExp).arg(needKills);
-  
-  emit expChangedStr (tempStr);
+  uint32_t prevExp = m_currentExp;
 
   m_defaultLevel = levelup->level;
   m_level  = levelup->level;
-
-  m_maxExp = calc_exp( level (),
-		     race  (),
-		     classVal ()
-		     );
-  
-  emit expChangedInt( levelup->exp,
-		      calc_exp( level () - 1,
-				race  (),
-				classVal ()
-				),
-		      calc_exp( level (),
-				race  (),
-				classVal ()
-				)
-		      );
-  
-  m_currentExp = levelup->exp;
-
+  m_minExp = calc_exp(level() - 1, race(), classVal());
+  m_maxExp = calc_exp(level(), race(), classVal ());
+  m_tickExp = (m_maxExp - m_minExp) / 330;
+  m_currentExp = (m_tickExp * levelup->exp) + m_minExp;
   m_validExp = true;
+
+  uint32_t expIncrement =  m_currentExp - prevExp;
+
+  fprintf(stderr, 
+	  "\e[1;42mLevelUP prevExp=%d currentExp=%d expInc=%d\n",
+	  prevExp, m_currentExp, expIncrement);
+  fprintf(stderr,
+	  "\tminExp=%d maxExp=%d tickExp=%d\n",
+	  m_minExp, m_maxExp, m_tickExp);
+  fprintf(stderr,
+	  "\tfreshKill=%d lastKill='%s' \e[0;0m\n", 
+	  m_freshKill, (const char*)m_lastSpawnKilledName);
+  if(m_freshKill)
+  {
+     emit expGained( m_lastSpawnKilledName,
+                     m_lastSpawnKilledLevel,
+                     expIncrement,
+                     m_zoneMgr->longZoneName());
+      
+     // have gained experience for the kill, it's no longer fresh
+     m_freshKill = false;
+  }
+  else if ((m_lastSpellOnId == 0x0184) || // Resuscitate
+	   (m_lastSpellOnId == 0x0187) || // Revive (does it or don't it?)
+	   (m_lastSpellOnId == 0x0188) || // Resurrection
+	   (m_lastSpellOnId == 0x02f4) || // Resurrection Effects
+	   (m_lastSpellOnId == 0x02f5) || // Resurrection Effect
+	   (m_lastSpellOnId == 0x03e2) || // Customer Service Resurrection
+	   (m_lastSpellOnId == 0x05f4)) // Reviviscence
+  {
+     emit expGained( spell_name(m_lastSpellOnId),
+                     0, // level of caster would only confuse things further
+                     expIncrement,
+                     m_zoneMgr->longZoneName());
+  }
+  else if (m_currentExp != 0) 
+     emit expGained( "Unknown", // Randomly blessed with xp?
+                     0, // don't know what gave it so, level 0
+		     expIncrement,
+		     m_zoneMgr->longZoneName());
+
+  tempStr.sprintf("Player: NewLevel: %d\n", levelup->level);
+  emit stsMessage(tempStr);
+  
+  totalExp = Commanate(m_currentExp);
+  gainedExp = Commanate((uint32_t) (m_currentExp - prevExp));
+  
+  needKills = Commanate(((m_maxExp - m_currentExp) /
+			 (m_currentExp > prevExp   ?
+			  m_currentExp - prevExp : 1)));
+  
+  tempStr = QString("Level: Exp: %1 (%2) [%3]").arg(totalExp).arg(gainedExp).arg(needKills);
+  
+  emit expChangedStr (tempStr);
+  emit msgReceived(tempStr);
+
+  emit expChangedInt( m_currentExp, m_minExp, m_maxExp);
 
   // update the con table
   fillConTable();

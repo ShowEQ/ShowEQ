@@ -1601,7 +1601,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 		      m_spawnShell, SLOT(zoneSpawns(const uint8_t*, size_t)));
 
   // connect the SpellShell slot to Player Signal
-   connect(m_player, SIGNAL(buffLoad(const spellBuff *)), m_spellShell, SLOT(buffLoad(const spellBuff *)));
+   connect(m_player, SIGNAL(newPlayer(void)),
+	   m_spellShell, SLOT(clear()));
+   connect(m_player, SIGNAL(buffLoad(const spellBuff *)), 
+	   m_spellShell, SLOT(buffLoad(const spellBuff *)));
 
    // connect the SpellShell slots to EQPacket signals
    m_packet->connect2("OP_CastSpell", SP_Zone, DIR_Server|DIR_Client,
@@ -1683,8 +1686,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    if (m_expWindow != NULL)
    {
      // connect ExperienceWindow slots to Player signals
-     connect (m_player, SIGNAL(expGained(const QString &, int, long, QString )),
-	      m_expWindow, SLOT(addExpRecord(const QString &, int, long,QString )));
+     connect(m_player, SIGNAL(newPlayer(void)),
+	     m_expWindow, SLOT(clear(void)));
+     connect(m_player, SIGNAL(expGained(const QString &, int, long, QString )),
+	     m_expWindow, SLOT(addExpRecord(const QString &, int, long,QString )));
      
      // connect ExperienceWindow slots to EQInterface signals
      connect(this, SIGNAL(restoreFonts(void)),
@@ -1696,6 +1701,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    if (m_combatWindow != NULL)
    {
      // connect CombatWindow slots to the signals
+     connect(m_player, SIGNAL(newPlayer(void)),
+	     m_combatWindow, SLOT(clear(void)));
      connect (this, SIGNAL(combatSignal(int, int, int, int, int, QString, QString)),
 	      m_combatWindow, SLOT(addCombatRecord(int, int, int, int, int, QString, QString)));
      connect (m_spawnShell, SIGNAL(spawnConsidered(const Item*)),
@@ -1755,8 +1762,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // connect signals for receiving string messages
    connect (m_player, SIGNAL (msgReceived(const QString &)),
-            this, SLOT (msgReceived(const QString &)));
-   connect (m_spawnShell, SIGNAL (msgReceived(const QString &)),
             this, SLOT (msgReceived(const QString &)));
 
    //

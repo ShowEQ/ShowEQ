@@ -61,21 +61,24 @@ void CombatOffenseRecord::addHit(int iDamage)
 //  CombatDefenseRecord implementation
 ////////////////////////////////////////////
 CombatDefenseRecord::CombatDefenseRecord(Player* p) :
-	m_player(p),
-	m_iHits(0),
-	m_iMisses(0),
-	m_iBlocks(0),
-	m_iParries(0),
-	m_iRipostes(0),
-	m_iDodges(0),
-	m_iMinDamage(65536),
-	m_iMaxDamage(0),
-	m_iTotalDamage(0),
-	m_iTotalAttacks(0)
+	m_player(p)
 {
-
+  clear();
 }
 
+void CombatDefenseRecord::clear(void)
+{
+  m_iHits = 0;
+  m_iMisses = 0;
+  m_iBlocks = 0;
+  m_iParries = 0;
+  m_iRipostes = 0;
+  m_iDodges = 0;
+  m_iMinDamage = 65536;
+  m_iMaxDamage = 0;
+  m_iTotalDamage = 0;
+  m_iTotalAttacks = 0;
+}
 
 void CombatDefenseRecord::addHit(int iDamage)
 {
@@ -730,7 +733,10 @@ void CombatWindow::updateMob()
 		dDPSSum += dDPS;
 	}
 
-	dAvgDPS = dDPSSum / (double)iTotalMobs;
+	if (iTotalMobs)
+	  dAvgDPS = dDPSSum / (double)iTotalMobs;
+	else
+	  dAvgDPS = 0;
 
 	m_label_mob_totalmobs->setText(QString::number(iTotalMobs));
 	m_label_mob_avgdps->setText(QString::number(dAvgDPS));
@@ -946,7 +952,7 @@ void CombatWindow::clearMob()
 	{
 		case 0:
 			m_combat_mob_list.clear();
-			m_listview_mob->clear();
+			updateMob();
 			break;
 		default:
 			break;
@@ -962,9 +968,21 @@ void CombatWindow::clearOffense()
 	{
 		case 0:
 			m_combat_offense_list.clear();
-			m_listview_offense->clear();
+			updateOffense();
 			break;
 		default:
 			break;
 	}
 }
+
+void CombatWindow::clear(void)
+{
+  m_combat_mob_list.clear();
+  updateMob();
+  m_combat_offense_list.clear();
+  updateOffense();
+  m_combat_defense_record->clear();
+  updateDefense();
+  resetDPS();
+}
+
