@@ -34,7 +34,7 @@ class GroupMgr: public QObject
   unsigned long totalLevels();
   
  public slots:
-  void handleGroupInfo(const uint8_t* data);
+  void handleGroupUpdate(const uint8_t* data);
   void delItem(const Item* item);
 
  signals:

@@ -21,18 +21,22 @@ dohpaZ (12/?/03)
     bugs and usability issues.
   + Added support for handling spell failure messages so that failed spells 
     will be removed from the list.
-+ Buf fixes:
-  + Fixed parsing of the spells_us.txt for the targettype field. This fixed
-    numerous problems with the handling of self-only spells.
-  + Added code to configure.in to force the use of autoconf 2.5 or higher and 
-    updated the documentation to reflect the new version requirement.
-  + Added stdlib.h inclusion to xmlpreferences.cpp to fix the build on some
-    Linux distributions.
++ Fixed parsing of the spells_us.txt for the targettype field. This fixed
+  numerous problems with the handling of self-only spells.
++ Added code to configure.in to force the use of autoconf 2.5 or higher and 
+  updated the documentation to reflect the new version requirement.
++ Added stdlib.h inclusion to xmlpreferences.cpp to fix the build on some
+  Linux distributions.
++ Fixed addition/update of the user message filter list when no or only
+  one item is present.
 + Integrated patches # 855993 "Map: potimea", # 855994 "Map: potime-b", 
   # 855995 "Map: poearth-a", # 855996 "Map: poearth-b" submitted by curioseq
 + Integrated patch "showeq-5.0.0-gcc-3.3.x.patch.gz" that fixes the gcc 3.3 
   compatibility problem caused by a noxious bug introduced in gcc 3.3.
-
++ Updated several structures in everquest.h to be more inline with EQEmu's
+  latest updates.
++ Added Group opcodes to zoneopcodes.xml.  Updated group structures, and 
+  updated group notification support in MessageShell.
 
 dohpaZ (12/7/03)
 ---------------------
