@@ -3,6 +3,9 @@
  *
  * ShowEQ Distributed under GPL
  * http://sourceforge.net/projects/seq/
+ * 
+ * Portions Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 /*
@@ -50,14 +53,6 @@ const int MAX_DEAD_SPAWNIDS = 50;
 //----------------------------------------------------------------------
 // enumerated types
 
-// type of action that triggered alert
-enum alertType
-{
-  tNewSpawn,
-  tKillSpawn,
-  tDelSpawn,
-};
-
 //----------------------------------------------------------------------
 // type definitions
 typedef QIntDict<Item> ItemMap;
@@ -98,7 +93,6 @@ signals:
    void spawnConsidered(const Item* item);
    void clearItems();
    void numSpawns(int);
-   void handleAlert(const Item* item, alertType type);
 
 public slots: 
    void clear();

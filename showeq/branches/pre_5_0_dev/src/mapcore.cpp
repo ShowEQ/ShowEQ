@@ -3,6 +3,9 @@
  *
  *  ShowEQ Distributed under GPL
  *  http://seq.sf.net/
+ * 
+ * Portions Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 // Author: Zaphod (dohpaz@users.sourceforge.net)
@@ -617,7 +620,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 	  continue;
 	}
 	
-	if (specifiedLinePoints != linePoints)
+	if ((specifiedLinePoints != linePoints) && (specifiedLinePoints != 0))
 	{
 	  seqWarn("M Line %d in map '%s' has %d points as opposed to the %d points it specified!", 
 		  filelines, filename, linePoints, specifiedLinePoints);
@@ -698,7 +701,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 	  continue;
 	}
 	
-	if (specifiedLinePoints != linePoints)
+	if ((specifiedLinePoints != linePoints) && (specifiedLinePoints != 0))
 	{
 	   seqWarn("L Line %d in map '%s' has %d points as opposed to the %d points it specified!", 
 		  filelines, filename, linePoints, specifiedLinePoints);

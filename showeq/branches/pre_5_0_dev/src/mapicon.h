@@ -3,6 +3,9 @@
  *
  *  ShowEQ Distributed under GPL
  *  http://seq.sourceforge.net/
+ * 
+ * Copyright 2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 #ifndef _EQMAPICON_H_

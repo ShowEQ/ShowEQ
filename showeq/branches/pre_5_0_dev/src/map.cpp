@@ -3,6 +3,9 @@
  *
  *  ShowEQ Distributed under GPL
  *  http://seq.sourceforge.net/
+ * 
+ * Portions Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 #define __STDC_LIMIT_MACROS

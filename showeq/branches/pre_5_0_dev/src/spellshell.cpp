@@ -6,7 +6,9 @@
  *
  * Crazy Joe Divola (cjd1@users.sourceforge.net)
  * September 5, 2001
- *
+ * 
+ * Portions Copyright 2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 #include "spellshell.h"

@@ -3,6 +3,9 @@
  *
  *  ShowEQ Distributed under GPL
  *  http://seq.sourceforge.net/
+ * 
+ * Portions Copyright 2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 #include "mapicon.h"
