@@ -37,6 +37,7 @@ dohpaZ (11/?/03)
   so if not importing other SOE layers you will probably end up with duplicate
   lines, points, etc...).
 + Move eqstr_{}.txt handling to its own class.
++ Integrated patch# 844078 "Fix to class displays" by belith (UnGod).
 
 dohpaZ (10/24/03)
 ---------------------
