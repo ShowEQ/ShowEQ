@@ -73,3 +73,5 @@ void DateTimeMgr::update()
   }
 }
 
+#include "datetimemgr.moc"
+

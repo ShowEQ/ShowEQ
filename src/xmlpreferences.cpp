@@ -912,3 +912,4 @@ void XMLPreferences::setPrefVariant(const QString& inName,
   setPref(inName, inSection, inValue, pers);
 }
 
+#include "xmlpreferences.moc"

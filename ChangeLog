@@ -8,6 +8,8 @@ dohpaZ (10/2/04)
 + Exclude MOC output files m_*.cpp from Doxygen processing.
 + Removed QT_VERSION checks that for versions of Qt that we no longer 
   support (Qt 2.x, 3.0.x) to improve code readability/maintainability.
++ Improved MOC file handling.
++ Miscellaneous cleanup.
 
 dohpaZ (10/1/04)
 ------------------------
@@ -38,6 +40,7 @@ dophaZ (09/25/04)
 	
 dophaZ (09/24/04)
 ------------------------
++ Updated version to 5.0.0.15
 + Migrated the dominant distribution method of ShowEQ to tarballs and 
   packages.  Support for direct building off of CVS by non-developers, 
   although still supported, is deprecated and strongly discouraged.

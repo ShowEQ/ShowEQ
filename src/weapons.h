@@ -5,7 +5,8 @@
  * http://seq.sourceforge.net/
  */
  
-#ifndef DOXYGEN_SHOULD_SKIP_THIS    "Generic",              // 0x00
+#ifndef DOXYGEN_SHOULD_SKIP_THIS 
+    "Generic",              // 0x00
     "1HSword",              // 0x01
     "2HSword",              // 0x02
     "Axe",                  // 0x03

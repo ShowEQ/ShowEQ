@@ -143,4 +143,4 @@ SpawnLog::logNewZone(const QString& zonename)
   zoneShortName = zonename;
 }
 
-
+#include "spawnlog.moc"
