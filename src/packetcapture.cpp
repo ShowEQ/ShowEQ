@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "packetcapture.h"
+#include "diagnosticmessages.h"
   
 //----------------------------------------------------------------------
 // PacketCaptureThread
@@ -25,6 +26,25 @@ PacketCaptureThread::PacketCaptureThread()
 
 PacketCaptureThread::~PacketCaptureThread()
 {
+  // Drop the packets we have lying around
+  pthread_mutex_lock (&m_pcache_mutex);
+
+  struct packetCache *pc = m_pcache_first;
+  struct packetCache* freeMe = NULL;
+
+  while (pc)
+  {
+    freeMe = pc;
+    pc = pc->next;
+
+    free(freeMe);
+  }
+
+  m_pcache_first = NULL;
+  m_pcache_last = NULL;
+  m_pcache_closed = true;
+
+  pthread_mutex_unlock (&m_pcache_mutex);
 }
 
 void PacketCaptureThread::start(const char *device, const char *host, bool realtime, uint8_t address_type)
@@ -35,33 +55,34 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
     struct bpf_program bpp;
     struct sched_param sp;
 
-   printf ("Initializing Packet Capture Thread: \n");
+    seqInfo("Initializing Packet Capture Thread: ");
+    m_pcache_closed = false;
 
    // create pcap style filter expressions
    if (address_type == IP_ADDRESS_TYPE)
    {
       if (strcmp(host, AUTOMATIC_CLIENT_IP) == 0)
       {
-          printf ("Filtering packets on device %s, searching for EQ client...\n", device);
-          sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
+	seqInfo("Filtering packets on device %s, searching for EQ client...", device);
+	sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
       }
       else
       {
-          printf ("Filtering packets on device %s, IP host %s\n", device, host);
-          sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and host %s and ether proto 0x0800", host);
+	seqInfo("Filtering packets on device %s, IP host %s", device, host);
+	sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and host %s and ether proto 0x0800", host);
       }
    }
 
    else if (address_type == MAC_ADDRESS_TYPE)
    {
-      printf ("Filtering packets on device %s, MAC host %s\n", device, host);
-      sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether host %s and ether proto 0x0800", host);
+     seqInfo("Filtering packets on device %s, MAC host %s", device, host);
+     sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether host %s and ether proto 0x0800", host);
    }
 
    else
    {
-      fprintf (stderr, "pcap_error:filter_string: unknown address_type (%d)\n", address_type);
-      exit(0);
+     seqFatal("pcap_error:filter_string: unknown address_type (%d)", address_type);
+     exit(0);
    }
 
    /* A word about pcap_open_live() from the docs
@@ -94,17 +115,15 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
    int fd = *((int*)m_pcache_pcap);
    int temp = 1;
    if ( ioctl( fd, BIOCIMMEDIATE, &temp ) < 0 )
-     fprintf( stderr, "PCAP couldn't set immediate mode on BSD\n" );
+     seqWarn("PCAP couldn't set immediate mode on BSD" );
 #endif
    if (!m_pcache_pcap)
    {
-     fprintf(stderr, "pcap_error:pcap_open_live(%s): %s\n", device, ebuf);
+     seqWarn("pcap_error:pcap_open_live(%s): %s", device, ebuf);
      if ((getuid() != 0) && (geteuid() != 0))
-       fprintf(stderr, "Make sure you are running ShowEQ as root.\n");
+       seqWarn("Make sure you are running ShowEQ as root.");
      exit(0);
    }
-
-   setuid(getuid()); // give up root access if running suid root
 
    if (pcap_compile(m_pcache_pcap, &bpp, filter_buf, 1, 0) == -1)
    {
@@ -128,7 +147,7 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
       memset (&sp, 0, sizeof (sp));
       sp.sched_priority = 1;
       if (pthread_setschedparam (m_tid, SCHED_RR, &sp) != 0)
-         fprintf (stderr, "Failed to set capture thread realtime.");
+         seqWarn("Failed to set capture thread realtime.");
    }
 }
 
@@ -157,14 +176,21 @@ void PacketCaptureThread::packetCallBack(u_char * param,
     pc->next = NULL;
 
     pthread_mutex_lock (&myThis->m_pcache_mutex);
-
-    if (myThis->m_pcache_last)
+   
+    if (! myThis->m_pcache_closed)
+    {
+      if (myThis->m_pcache_last)
        myThis->m_pcache_last->next = pc;
 
-    myThis->m_pcache_last = pc;
+      myThis->m_pcache_last = pc;
 
-    if (!myThis->m_pcache_first)
+      if (!myThis->m_pcache_first)
        myThis->m_pcache_first = pc;
+    }
+    else
+    {
+      free(pc);
+    }
 
     pthread_mutex_unlock (&myThis->m_pcache_mutex);
 }
@@ -225,15 +251,15 @@ void PacketCaptureThread::setFilter (const char *device,
          sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800 and host %s", hostname);
     else
     {
-         printf ("Filtering packets on device %s, searching for EQ client...\n", device);
-         sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
+      seqInfo("Filtering packets on device %s, searching for EQ client...", device);
+      sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
     }
 
     if (pcap_compile (m_pcache_pcap, &bpp, filter_buf, 1, 0) == -1)
     {
-        printf("%s\n",filter_buf);
-	pcap_perror(m_pcache_pcap, "pcap_error:pcap_compile_error");
-        exit (0);
+      seqWarn("%s",filter_buf);
+      pcap_perror(m_pcache_pcap, "pcap_error:pcap_compile_error");
+      exit (0);
     }
 
     if (pcap_setfilter (m_pcache_pcap, &bpp) == -1)
@@ -247,7 +273,7 @@ void PacketCaptureThread::setFilter (const char *device,
        memset (&sp, 0, sizeof (sp));
        sp.sched_priority = 1;
        if (pthread_setschedparam (m_tid, SCHED_RR, &sp) != 0)
-           fprintf (stderr, "Failed to set capture thread realtime.");
+	 seqWarn("Failed to set capture thread realtime.");
     }
 
     m_pcapFilter = filter_buf;
