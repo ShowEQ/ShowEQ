@@ -6,6 +6,8 @@ dohpaZ (10/2/04)
 + Update INSTALL to reflect new minimum automake 1.7 requirement for 
   Makefile.dist users.
 + Exclude MOC output files m_*.cpp from Doxygen processing.
++ Removed QT_VERSION checks that for versions of Qt that we no longer 
+  support (Qt 2.x, 3.0.x) to improve code readability/maintainability.
 
 dohpaZ (10/1/04)
 ------------------------
