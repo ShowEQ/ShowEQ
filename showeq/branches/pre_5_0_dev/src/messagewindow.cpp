@@ -392,7 +392,8 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
     m_typeFilterMenu(0),
     m_findDialog(0),
     m_enabledTypes(0xFFFFFFFFFFFFFFFF),
-    m_enabledUserFilters(0),
+    m_enabledShowUserFilters(0),
+    m_enabledHideUserFilters(0),
     m_defaultColor(black),
     m_defaultBGColor(white),
     m_dateTimeFormat("hh:mm"),
@@ -408,9 +409,12 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
 {
   m_enabledTypes = pSEQPrefs->getPrefUInt64("EnabledTypes", preferenceName(), 
 					    m_enabledTypes);
-  m_enabledUserFilters = pSEQPrefs->getPrefUInt("EnabledUserFilters",
+  m_enabledShowUserFilters = pSEQPrefs->getPrefUInt("EnabledShowUserFilters",
 						preferenceName(), 
-						m_enabledUserFilters);
+						m_enabledShowUserFilters);
+  m_enabledHideUserFilters = pSEQPrefs->getPrefUInt("EnabledHideUserFilters",
+						preferenceName(), 
+						m_enabledHideUserFilters);
   m_defaultColor = pSEQPrefs->getPrefColor("DefaultColor", preferenceName(),
 					   m_defaultColor);
   m_defaultBGColor = pSEQPrefs->getPrefColor("DefaultBGColor", 
@@ -497,7 +501,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   QPopupMenu* typeStyleMenu = new QPopupMenu;
 
   m_typeFilterMenu = new QPopupMenu;
-  m_menu->insertItem("Show Message Type", m_typeFilterMenu);
+  m_menu->insertItem("Message Type Filter - Show", m_typeFilterMenu);
 
   m_typeFilterMenu->insertItem("&Enable All", 
 			       this, SLOT(enableAllTypeFilters()), 0, 64);
@@ -527,14 +531,23 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   connect(typeStyleMenu, SIGNAL(activated(int)),
 	  this, SLOT(setTypeStyle(int)));
 
-  m_userFilterMenu = new QPopupMenu;
-  m_menu->insertItem("User Message Filters", m_userFilterMenu);
+  m_showUserFilterMenu = new QPopupMenu;
+  m_menu->insertItem("User Message Filter - Show", m_showUserFilterMenu);
 
-  m_userFilterMenu->insertItem("&Enable All", 
-			       this, SLOT(enableAllUserFilters()), 0, 66);
-  m_userFilterMenu->insertItem("&Disable All", 
-			       this, SLOT(disableAllUserFilters()), 0, 67);
-  m_userFilterMenu->insertSeparator(-1);
+  m_showUserFilterMenu->insertItem("&Enable All", 
+			       this, SLOT(enableAllShowUserFilters()), 0, 66);
+  m_showUserFilterMenu->insertItem("&Disable All", 
+			       this, SLOT(disableAllShowUserFilters()), 0, 67);
+  m_showUserFilterMenu->insertSeparator(-1);
+
+  m_hideUserFilterMenu = new QPopupMenu;
+  m_menu->insertItem("User Message Filter - Hide", m_hideUserFilterMenu);
+
+  m_hideUserFilterMenu->insertItem("&Enable All", 
+			       this, SLOT(enableAllHideUserFilters()), 0, 66);
+  m_hideUserFilterMenu->insertItem("&Disable All", 
+			       this, SLOT(disableAllHideUserFilters()), 0, 67);
+  m_hideUserFilterMenu->insertSeparator(-1);
 
   const MessageFilter* filter;
   for(int i = 0; i < maxMessageFilters; i++)
@@ -542,13 +555,18 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
     filter = m_messageFilters->filter(i);
     if (filter)
     {
-      m_userFilterMenu->insertItem(filter->name(), i);
-      m_userFilterMenu->setItemChecked(i, (1 << i) & m_enabledUserFilters);
+      m_showUserFilterMenu->insertItem(filter->name(), i);
+      m_showUserFilterMenu->setItemChecked(i, (1 << i) & m_enabledShowUserFilters);
+
+      m_hideUserFilterMenu->insertItem(filter->name(), i);
+      m_hideUserFilterMenu->setItemChecked(i, (1 << i) & m_enabledHideUserFilters);
     }
   }
 
-  connect(m_userFilterMenu, SIGNAL(activated(int)),
-	  this, SLOT(toggleUserFilter(int)));
+  connect(m_showUserFilterMenu, SIGNAL(activated(int)),
+	  this, SLOT(toggleShowUserFilter(int)));
+  connect(m_hideUserFilterMenu, SIGNAL(activated(int)),
+	  this, SLOT(toggleHideUserFilter(int)));
 
   m_menu->insertSeparator(-1);
   m_menu->insertItem("&Find...", this, SLOT(findDialog()), 
@@ -609,8 +627,9 @@ void MessageWindow::addMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
-      ((m_enabledUserFilters & message.filterFlags()) == 0))
+  if ((((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
+       ((m_enabledShowUserFilters & message.filterFlags()) == 0)) ||
+      ((m_enabledHideUserFilters & message.filterFlags()) != 0))
     return;
   
   QString text;
@@ -641,8 +660,9 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
-      ((m_enabledUserFilters & message.filterFlags()) == 0))
+  if ((((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
+       ((m_enabledShowUserFilters & message.filterFlags()) == 0)) ||
+      ((m_enabledHideUserFilters & message.filterFlags()) != 0))
     return;
 
   // if the message has a specific color, then use it
@@ -818,60 +838,117 @@ void MessageWindow::enableAllTypeFilters()
   }
 }
 
-void MessageWindow::toggleUserFilter(int id)
+void MessageWindow::toggleShowUserFilter(int id)
 {
   // toggle whether the filter is enabled/disabled
-  if (((1 << id) & m_enabledUserFilters) != 0)
-    m_enabledUserFilters &= ~(1 << id);
+  if (((1 << id) & m_enabledShowUserFilters) != 0)
+    m_enabledShowUserFilters &= ~(1 << id);
   else
-    m_enabledUserFilters |= (1 << id);
+    m_enabledShowUserFilters |= (1 << id);
 
   // save the new setting
-  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
-			 m_enabledUserFilters);
+  pSEQPrefs->setPrefUInt("EnabledShowUserFilters", preferenceName(), 
+			 m_enabledShowUserFilters);
  
   // (un)check the appropriate menu item
-  m_userFilterMenu->setItemChecked(id, 
-				   ((m_enabledUserFilters & (1 << id)) != 0));
+  m_showUserFilterMenu->setItemChecked(id, 
+				   ((m_enabledShowUserFilters & (1 << id)) != 0));
 }
 
-void MessageWindow::disableAllUserFilters()
+void MessageWindow::disableAllShowUserFilters()
 {
   // set and save all filters disabled setting
-  m_enabledUserFilters = 0;
-  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
-			 m_enabledUserFilters);
+  m_enabledShowUserFilters = 0;
+  pSEQPrefs->setPrefUInt("EnabledShowUserFilters", preferenceName(), 
+			 m_enabledShowUserFilters);
   
   // make sure the All menu items are unchecked
-  m_userFilterMenu->setItemChecked(66, false);
-  m_userFilterMenu->setItemChecked(67, false);
+  m_showUserFilterMenu->setItemChecked(66, false);
+  m_showUserFilterMenu->setItemChecked(67, false);
 
   // uncheck all the menu items
   QString typeName;
   for (int i = 0; i <= maxMessageFilters; i++)
   {
     if (m_messageFilters->filter(i))
-      m_userFilterMenu->setItemChecked(i, false);
+      m_showUserFilterMenu->setItemChecked(i, false);
   }
 }
 
-void MessageWindow::enableAllUserFilters()
+void MessageWindow::enableAllShowUserFilters()
 {
   // set and save all filters enabled flag
-  m_enabledUserFilters = 0xFFFFFFFF;
-  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
-			 m_enabledUserFilters);
+  m_enabledShowUserFilters = 0xFFFFFFFF;
+  pSEQPrefs->setPrefUInt("EnabledShowUserFilters", preferenceName(), 
+			 m_enabledShowUserFilters);
 
   // make sure the All menu items are unchecked
-  m_userFilterMenu->setItemChecked(66, false);
-  m_userFilterMenu->setItemChecked(67, false);
+  m_showUserFilterMenu->setItemChecked(66, false);
+  m_showUserFilterMenu->setItemChecked(67, false);
 
   // check all the menu items
   QString typeName;
   for (int i = 0; i <= maxMessageFilters; i++)
   {
     if (m_messageFilters->filter(i))
-      m_userFilterMenu->setItemChecked(i, true);
+      m_showUserFilterMenu->setItemChecked(i, true);
+  }
+}
+
+void MessageWindow::toggleHideUserFilter(int id)
+{
+  // toggle whether the filter is enabled/disabled
+  if (((1 << id) & m_enabledHideUserFilters) != 0)
+    m_enabledHideUserFilters &= ~(1 << id);
+  else
+    m_enabledHideUserFilters |= (1 << id);
+
+  // save the new setting
+  pSEQPrefs->setPrefUInt("EnabledHideUserFilters", preferenceName(), 
+			 m_enabledHideUserFilters);
+ 
+  // (un)check the appropriate menu item
+  m_hideUserFilterMenu->setItemChecked(id, 
+				   ((m_enabledHideUserFilters & (1 << id)) != 0));
+}
+
+void MessageWindow::disableAllHideUserFilters()
+{
+  // set and save all filters disabled setting
+  m_enabledHideUserFilters = 0;
+  pSEQPrefs->setPrefUInt("EnabledHideUserFilters", preferenceName(), 
+			 m_enabledHideUserFilters);
+  
+  // make sure the All menu items are unchecked
+  m_hideUserFilterMenu->setItemChecked(66, false);
+  m_hideUserFilterMenu->setItemChecked(67, false);
+
+  // uncheck all the menu items
+  QString typeName;
+  for (int i = 0; i <= maxMessageFilters; i++)
+  {
+    if (m_messageFilters->filter(i))
+      m_hideUserFilterMenu->setItemChecked(i, false);
+  }
+}
+
+void MessageWindow::enableAllHideUserFilters()
+{
+  // set and save all filters enabled flag
+  m_enabledHideUserFilters = 0xFFFFFFFF;
+  pSEQPrefs->setPrefUInt("EnabledHideUserFilters", preferenceName(), 
+			 m_enabledHideUserFilters);
+
+  // make sure the All menu items are unchecked
+  m_hideUserFilterMenu->setItemChecked(66, false);
+  m_hideUserFilterMenu->setItemChecked(67, false);
+
+  // check all the menu items
+  QString typeName;
+  for (int i = 0; i <= maxMessageFilters; i++)
+  {
+    if (m_messageFilters->filter(i))
+      m_hideUserFilterMenu->setItemChecked(i, true);
   }
 }
 
@@ -1030,24 +1107,39 @@ void MessageWindow::restoreFont()
 void MessageWindow::removedFilter(uint32_t mask, uint8_t filter)
 {
   // remove the user filter menu item
-  m_userFilterMenu->removeItem(filter);
+  m_showUserFilterMenu->removeItem(filter);
+  m_hideUserFilterMenu->removeItem(filter);
   
   // if all filters are enabled, don't unselect it
-  if (m_enabledUserFilters == 0xFFFFFFFF)
-    return;
+  if (m_enabledShowUserFilters != 0xFFFFFFFF)
+  {
+    // remove the filter from the enabled filters list
+    m_enabledShowUserFilters &= ~mask;
 
-  // remove the filter from the enabled filters list
-  m_enabledUserFilters &= ~mask;
+    // update the preference
+    pSEQPrefs->setPrefUInt("EnabledShowUserFilters", preferenceName(), 
+			   m_enabledShowUserFilters);
+  }
+  
+  // if all filters are enabled, don't unselect it
+  if (m_enabledHideUserFilters != 0xFFFFFFFF)
+  {
+    // remove the filter from the enabled filters list
+    m_enabledHideUserFilters &= ~mask;
 
-  // update the preference
-  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
-			 m_enabledUserFilters);
+    // update the preference
+    pSEQPrefs->setPrefUInt("EnabledHideUserFilters", preferenceName(), 
+			   m_enabledHideUserFilters);
+  }
 }
 
 void MessageWindow::addedFilter(uint32_t mask, uint8_t filterid, 
 				const MessageFilter& filter)
 {
   // insert a user filter menu item for the new filter
-  m_userFilterMenu->insertItem(filter.name(), filterid);
+  m_showUserFilterMenu->insertItem(filter.name(), filterid);
+
+  // insert a user filter menu item for the new filter
+  m_hideUserFilterMenu->insertItem(filter.name(), filterid);
 }
 
