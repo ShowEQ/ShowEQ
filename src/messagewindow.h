@@ -35,9 +35,13 @@ class MessageBrowser : public QTextEdit
 
  signals:
   void rightClickedMouse(QMouseEvent* e);
+  void refreshRequest();
+  void findRequest();
+  void lockRequest();
 
  protected:
-  bool eventFilter(QObject *o, QEvent *e);
+  virtual void keyPressEvent(QKeyEvent* e);
+  virtual bool eventFilter(QObject *o, QEvent *e);
 };
 
 //----------------------------------------------------------------------
@@ -86,7 +90,7 @@ class MessageWindow : public SEQWindow
 
  protected slots:
   void toggleTypeFilter(int);
-  void toggleLockedText(int);
+  void toggleLockedText();
   void toggleDisplayType(int);
   void toggleDisplayTime(int);
   void toggleEQDisplayTime(int);
@@ -104,10 +108,14 @@ class MessageWindow : public SEQWindow
   void clicked(int para, int pos);
 
  protected:
+  void addMessage(const MessageEntry& message);
+  void addColorMessage(const MessageEntry& message);
+  
   Messages* m_messages;
   MessageBrowser* m_messageWindow;
   QPopupMenu* m_menu;
   QPopupMenu* m_typeFilterMenu;
+  int m_id_lockText;
   MessageFindDialog* m_findDialog;
   uint32_t m_enabledTypes;
   QColor m_defaultColor;

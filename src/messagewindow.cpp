@@ -29,6 +29,11 @@ MessageBrowser::MessageBrowser(QWidget* parent, const char* name)
 
 bool MessageBrowser::eventFilter(QObject *o, QEvent *e)
 {
+  if (e->type() == QEvent::KeyPress)
+  {
+    QKeyEvent* k = (QKeyEvent*)e;
+    fprintf(stderr, "MessageBrowser::eventFilter(KeyEvent, %x)\n", k->key());
+  }
   if (e->type() != QEvent::MouseButtonPress)
     return QTextEdit::eventFilter(o, e);
 
@@ -42,6 +47,34 @@ bool MessageBrowser::eventFilter(QObject *o, QEvent *e)
   }
 
   return QTextEdit::eventFilter(o, e);
+}
+
+void MessageBrowser::keyPressEvent(QKeyEvent* e)
+{
+  fprintf(stderr, "MessageBrowser::keyPressEvent(%x)\n", e->key());
+  switch (e->key())
+  {
+  case Key_R:
+    if (e->state() == ControlButton)
+    {
+      emit refreshRequest();
+      return;
+    }
+  case Key_F:
+    if (e->state() == ControlButton)
+    {
+      emit findRequest();
+      return;
+    }
+  case Key_L:
+    if (e->state() == ControlButton)
+    {
+      emit lockRequest();
+      return;
+    }
+  };
+  
+  QTextEdit::keyPressEvent(e);
 }
 
 //----------------------------------------------------------------------
@@ -58,6 +91,9 @@ MessageFindDialog::MessageFindDialog(MessageBrowser* messageWindow,
   
   // setup the GUI
   QGridLayout* grid = new QGridLayout(this, 5, 2);
+
+  // sets margin around the grid
+  grid->setMargin(5);
 
   m_findText = new QLineEdit(this);
   m_findText->setReadOnly(false);
@@ -88,6 +124,9 @@ MessageFindDialog::MessageFindDialog(MessageBrowser* messageWindow,
   connect(close, SIGNAL(clicked()),
 	  this, SLOT(close()));
   layout->addStretch();
+
+  // turn off resizing
+  setSizeGripEnabled(false);
 }
 
 void MessageFindDialog::find()
@@ -209,6 +248,12 @@ MessageWindow::MessageWindow(Messages* messages,
 	  this, SLOT(mousePressEvent(QMouseEvent*)));
   connect(m_messageWindow, SIGNAL(clicked(int, int)),
 	  this, SLOT(clicked(int, int)));
+  connect(m_messageWindow, SIGNAL(refreshRequest()),
+	  this, SLOT(refreshMessages()));
+  connect(m_messageWindow, SIGNAL(findRequest()),
+	  this, SLOT(findDialog()));
+  connect(m_messageWindow, SIGNAL(lockRequest()),
+	  this, SLOT(toggleLockedText()));
 
   m_menu = new QPopupMenu;
   QPopupMenu* typeColorMenu = new QPopupMenu;
@@ -258,9 +303,12 @@ MessageWindow::MessageWindow(Messages* messages,
   m_menu->insertItem("&Find...", this, SLOT(findDialog()), 
 		     CTRL+Key_F);
   m_menu->insertSeparator(-1);
+  m_id_lockText = m_menu->insertItem("&Lock Text", this,
+				     SLOT(toggleLockedText()), CTRL+Key_L);
   int x;
-  x = m_menu->insertItem("&Lock Text", this, SLOT(toggleLockedText(int)),
-			 CTRL+Key_L);
+  x = m_menu->insertItem("Refresh Messages...", this, SLOT(refreshMessages()),
+			 CTRL+Key_R);
+  m_menu->insertSeparator(-1);
   m_menu->setItemChecked(x, m_lockedText);
   m_menu->insertSeparator(-1);
   x = m_menu->insertItem("Display &Type", this, SLOT(toggleDisplayType(int)));
@@ -279,9 +327,6 @@ MessageWindow::MessageWindow(Messages* messages,
   m_menu->insertItem("Text Back&ground Color...", this, SLOT(setBGColor()));
   m_menu->insertItem("Type C&olor", typeColorMenu);
   m_menu->insertItem("Type &Background Color", typeBGColorMenu);
-  m_menu->insertSeparator(-1);
-  x = m_menu->insertItem("Refresh Messages...", this, SLOT(refreshMessages()),
-			 Key_F5);
 
   refreshMessages();
 }
@@ -309,7 +354,7 @@ void MessageWindow::clicked(int para, int pos)
   //printf("MessageWindow::clicked(%d, %d)\n", para, pos);
 }
 
-void MessageWindow::newMessage(const MessageEntry& message)
+void MessageWindow::addMessage(const MessageEntry& message)
 {
   MessageType type = message.type();
 
@@ -317,17 +362,44 @@ void MessageWindow::newMessage(const MessageEntry& message)
   if (((m_enabledTypes & ( 1 << type)) == 0) || m_lockedText)
     return;
   
-  // if using color, then use it... ;-)
-  if (m_useColor)
-  {
-    // if the message has a specific color, then use it
-    if (message.color() != ME_InvalidColor)
-      m_messageWindow->setColor(QColor(message.color()));
-    else if (m_typeColors[type].isValid()) // or use the types color
-      m_messageWindow->setColor(m_typeColors[type]);
-    else // otherwise use the default color
-      m_messageWindow->setColor(m_defaultColor);
-  }
+  QString text;
+
+  // if displaying the type, add it
+  if (m_displayType)
+    text = m_messages->messageTypeString(message.type()) + ": ";
+    
+  // if displaying the message date/time append it
+  if (m_displayDateTime)
+    text += message.dateTime().toString(m_dateTimeFormat) + " - ";
+
+  // if displaying the messages eq date/time, append it
+  if (m_displayEQDateTime && (message.eqDateTime().isValid()))
+    text += message.eqDateTime().toString(m_eqDateTimeFormat) + " - ";
+
+  // append the actual message text
+  text += message.text();
+
+  text.replace(m_itemPattern, "\\2 (#\\1)");
+
+  // now append the message text to the buffer
+  m_messageWindow->append(text);
+}
+
+void MessageWindow::addColorMessage(const MessageEntry& message)
+{
+  MessageType type = message.type();
+
+  // if the message type isn't enabled, nothing to do
+  if (((m_enabledTypes & ( 1 << type)) == 0) || m_lockedText)
+    return;
+  
+  // if the message has a specific color, then use it
+  if (message.color() != ME_InvalidColor)
+    m_messageWindow->setColor(QColor(message.color()));
+  else if (m_typeColors[type].isValid()) // or use the types color
+    m_messageWindow->setColor(m_typeColors[type]);
+  else // otherwise use the default color
+    m_messageWindow->setColor(m_defaultColor);
  
   QString text;
 
@@ -351,14 +423,19 @@ void MessageWindow::newMessage(const MessageEntry& message)
   // now append the message text to the buffer
   m_messageWindow->append(text);
 
+  int para = m_messageWindow->paragraphs() - 1;
+  if (m_typeBGColors[type].isValid())
+    m_messageWindow->setParagraphBackgroundColor(para, m_typeBGColors[type]);
+  else
+    m_messageWindow->setParagraphBackgroundColor(para, m_defaultBGColor);
+}
+
+void MessageWindow::newMessage(const MessageEntry& message)
+{
   if (m_useColor)
-  {
-    int para = m_messageWindow->paragraphs() - 1;
-    if (m_typeBGColors[type].isValid())
-      m_messageWindow->setParagraphBackgroundColor(para, m_typeBGColors[type]);
-    else
-      m_messageWindow->setParagraphBackgroundColor(para, m_defaultBGColor);
-  }
+    addColorMessage(message);
+  else
+    addMessage(message);
 }
 
 void MessageWindow::refreshMessages()
@@ -388,8 +465,13 @@ void MessageWindow::refreshMessages()
   // iterate over the message list and add the messages
   MessageList::const_iterator it;
   int i;
-  for (i = 0, it = messages.begin(); it != messages.end(); ++it, ++i)
-    newMessage(*it); // append the message
+  if (m_useColor)
+    for (i = 0, it = messages.begin(); it != messages.end(); ++it, ++i)
+      addColorMessage(*it); // append the message with color
+  else 
+    for (i = 0, it = messages.begin(); it != messages.end(); ++it, ++i)
+      addMessage(*it); // append the message plain
+    
 
   // move the cursor to the end of the document
   m_messageWindow->scrollToBottom();
@@ -430,10 +512,10 @@ void MessageWindow::toggleTypeFilter(int id)
   pSEQPrefs->setPrefInt("EnabledTypes", preferenceName(), m_enabledTypes);
 }
 
-void MessageWindow::toggleLockedText(int id)
+void MessageWindow::toggleLockedText()
 {
   m_lockedText = !m_lockedText;
-  m_menu->setItemChecked(id, m_lockedText);
+  m_menu->setItemChecked(m_id_lockText, m_lockedText);
 
   // if the text had been locked, refresh the messages
   if (!m_lockedText)
