@@ -85,8 +85,8 @@ class MessageWindow : public SEQWindow
   
  public slots:
   void newMessage(const MessageEntry& message);
-  void refreshMessages();
-  void findDialog();
+  void refreshMessages(void);
+  void findDialog(void);
 
  protected slots:
   void toggleTypeFilter(int);

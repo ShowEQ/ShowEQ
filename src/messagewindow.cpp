@@ -245,6 +245,8 @@ MessageWindow::MessageWindow(Messages* messages,
   // connect to the Messages signal(s)
   connect(m_messages, SIGNAL(newMessage(const MessageEntry&)),
 	  this, SLOT(newMessage(const MessageEntry&)));
+  connect(m_messages, SIGNAL(cleared(void)),
+	  this, SLOT(refreshMessages(void)));
 
   // connect up our own signals
   connect(m_messageWindow, SIGNAL(rightClickedMouse(QMouseEvent*)),
@@ -435,7 +437,7 @@ void MessageWindow::newMessage(const MessageEntry& message)
     addMessage(message);
 }
 
-void MessageWindow::refreshMessages()
+void MessageWindow::refreshMessages(void)
 {
   // get the list of messages
   const MessageList& messages = m_messages->messageList();
@@ -485,7 +487,7 @@ void MessageWindow::refreshMessages()
   m_messageWindow->unsetCursor();
 }
 
-void MessageWindow::findDialog()
+void MessageWindow::findDialog(void)
 {
   // create the find dialog, if necessary
   if (!m_findDialog)

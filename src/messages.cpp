@@ -89,5 +89,15 @@ void Messages::addMessage(MessageType type, const QString& text,
   // create the message and append it to the end of the list
   m_messages.append(message);
 
+  // signal that a new message exists
   emit newMessage(message);
+}
+
+void Messages::clear(void)
+{
+  // clear the messages
+  m_messages.clear();
+
+  // signal that the messages have been cleared
+  emit cleared();
 }

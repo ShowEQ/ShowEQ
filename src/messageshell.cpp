@@ -597,29 +597,29 @@ void MessageShell::player(const uint8_t* data)
   const charProfileStruct* player = (const charProfileStruct*)data;
   QString message;
 
-  message.sprintf("Name: '%s' Last: '%s'\n", 
+  message.sprintf("Name: '%s' Last: '%s'", 
 		  player->name, player->lastName);
   m_messages->addMessage(MT_Player, message);
   
-  message.sprintf("Level: %d\n", player->level);
+  message.sprintf("Level: %d", player->level);
   m_messages->addMessage(MT_Player, message);
   
-  message.sprintf("PlayerMoney: P=%d G=%d S=%d C=%d\n",
+  message.sprintf("PlayerMoney: P=%d G=%d S=%d C=%d",
 		 player->platinum, player->gold, 
 		 player->silver, player->copper);
   m_messages->addMessage(MT_Player, message);
   
-  message.sprintf("BankMoney: P=%d G=%d S=%d C=%d\n",
+  message.sprintf("BankMoney: P=%d G=%d S=%d C=%d",
 		  player->platinum_bank, player->gold_bank, 
 		  player->silver_bank, player->copper_bank);
   m_messages->addMessage(MT_Player, message);
 
-  message.sprintf("CursorMoney: P=%d G=%d S=%d C=%d\n",
+  message.sprintf("CursorMoney: P=%d G=%d S=%d C=%d",
 		  player->platinum_cursor, player->gold_cursor, 
 		  player->silver_cursor, player->copper_cursor);
   m_messages->addMessage(MT_Player, message);
 
-  message.sprintf("SharedMoney: P=%d\n",
+  message.sprintf("SharedMoney: P=%d",
 		  player->platinum_shared);
   m_messages->addMessage(MT_Player, message);
 
@@ -634,7 +634,7 @@ void MessageShell::player(const uint8_t* data)
   {
     if (player->buffs[buffnumber].spellid && player->buffs[buffnumber].duration)
     {
-      message.sprintf("You have buff %s duration left is %d in ticks.\n",
+      message.sprintf("You have buff %s duration left is %d in ticks.",
 		      (const char*)spell_name(player->buffs[buffnumber].spellid),
 		      player->buffs[buffnumber].duration);
       m_messages->addMessage(MT_Player, message);
@@ -656,7 +656,7 @@ void MessageShell::updateLevel(const uint8_t* data)
 {
   const levelUpUpdateStruct *levelup = (const levelUpUpdateStruct *)data;
   QString tempStr;
-  tempStr.sprintf("NewLevel: %d\n", levelup->level);
+  tempStr.sprintf("NewLevel: %d", levelup->level);
   m_messages->addMessage(MT_Player, tempStr);
 }
   
