@@ -120,9 +120,6 @@ public:
    void buffLoad(const spellBuff*); 
    void newSpeed               (int speed);
    void msgReceived            (const QString &);
-   void stsMessage             ( const QString &,
-                                 int              = 0
-                               );
    void statChanged            ( int statNum,
                                  int val,
                                  int max
@@ -143,9 +140,16 @@ public:
                                );
    void deleteLanguages();
 
+   void setExp(uint32_t totalExp, uint32_t totalTick,
+	       uint32_t minExpLevel, uint32_t maxExpLevel, 
+	       uint32_t tickExpLevel);
+
+   void newExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick,
+	       uint32_t minExpLevel, uint32_t maxExpLevel, 
+	       uint32_t tickExpLevel);
+
    void expAltChangedStr       (const QString &);
    void expAltChangedInt       (int, int, int);
-   void expChangedStr          (const QString &);
    void expChangedInt          (int, int, int);
                                
    void expGained              ( const QString &,
@@ -191,8 +195,8 @@ public:
    uint16_t m_defaultDeity;
    uint8_t m_defaultClass;
    uint8_t m_defaultLevel;
-   uint8_t m_playerSkills [MAX_KNOWN_SKILLS];
-   uint8_t m_playerLanguages [MAX_KNOWN_LANGS];
+   uint8_t m_playerSkills[MAX_KNOWN_SKILLS];
+   uint8_t m_playerLanguages[MAX_KNOWN_LANGS];
 
    uint16_t m_plusMana;
    uint16_t m_plusHP;

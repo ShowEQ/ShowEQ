@@ -227,10 +227,6 @@ void Player::player(const uint8_t* data)
   
   emit expChangedInt (m_currentExp, m_minExp, m_maxExp);
   
-  messag = "Player: Exp: " + Commanate(player->exp);
-  emit expChangedStr(messag);
-  emit msgReceived(messag);
-
   emit expAltChangedInt(m_currentAltExp, 0, 15000000);
   
   messag = "ExpAA: " + Commanate(player->altexp);
@@ -560,49 +556,30 @@ void Player::updateExp(const uint8_t* data)
   //   player packet).
   if (exp->type == 0) 
   {
-    uint32_t realExp = (m_tickExp * exp->exp) + m_minExp;
-    uint32_t expIncrement;
-    // deal with fractional experience
-    if (realExp > m_currentExp)
-      expIncrement = realExp - m_currentExp;
-    else 
-      expIncrement = 0;
+    // signal the setting of experience
+    emit setExp(m_currentExp, exp->exp, m_minExp, m_maxExp, m_tickExp);
 
-    QString tempStr;
-    tempStr.sprintf("Set: Exp: exp=%d realExp=%d currentExp=%d expInc=%d",
-		    exp->exp, realExp, m_currentExp, expIncrement);
-    emit msgReceived(tempStr);
+    // nothing more to do.
     return;
   }
 
-  QString totalExp;
-  QString incrementExp;
-  QString leftExp;
-  QString needKills;
-  QString tempStr;
-  QString tempStr2;
-
   uint32_t realExp = (m_tickExp * exp->exp) + m_minExp;
   uint32_t expIncrement;
+  
+  // if realExperience is greater then current expereince, calculate the 
+  // increment, otherwise this was a < 1/330'th kill and/or the calculated
+  // real experience is in that funky rounding place that EQ has...
   if (realExp > m_currentExp)
     expIncrement = realExp - m_currentExp;
   else 
     expIncrement = 0;
+
+  // signal the new experience
+  emit newExp(expIncrement, realExp, exp->exp, 
+	      m_minExp, m_maxExp, m_tickExp);
   
-  incrementExp = Commanate(m_tickExp);
-
-  totalExp  = Commanate(realExp - m_minExp);
-  leftExp = Commanate(m_maxExp - realExp);
-  needKills = Commanate(((m_maxExp - realExp) / (realExp > m_currentExp ? realExp - m_currentExp : 1)) + 1 );
-
-  tempStr = QString("Exp: %1 (%2/330) [%3]").arg(totalExp).arg(tempStr2.sprintf("%u",exp->exp)).arg(needKills);
-  emit expChangedStr(tempStr);
   emit expChangedInt (realExp, m_minExp, m_maxExp);
     
-  tempStr = QString("Exp: %1 (%2/330) left %3 - 1/330 = %4").arg(totalExp).arg(tempStr2.sprintf("%u",exp->exp)).arg(leftExp).arg(incrementExp);
-  emit msgReceived(tempStr);
-  emit stsMessage(tempStr);
-
   if(m_freshKill)
   {
      emit expGained( m_lastSpawnKilledName,
@@ -642,33 +619,28 @@ void Player::updateExp(const uint8_t* data)
 void Player::updateLevel(const uint8_t* data)
 {
   const levelUpUpdateStruct *levelup = (const levelUpUpdateStruct *)data;
-  QString totalExp;
-  QString gainedExp;
-  QString leftExp;
-  QString needKills;
-  QString tempStr;
 
+  // cache previous experience for later calculations
   uint32_t prevExp = m_currentExp;
 
+  // save the new level information
   m_defaultLevel = levelup->level;
   m_level  = levelup->level;
+
+  // calculate the new experience information
   m_minExp = calc_exp(level() - 1, race(), classVal());
   m_maxExp = calc_exp(level(), race(), classVal ());
   m_tickExp = (m_maxExp - m_minExp) / 330;
   m_currentExp = (m_tickExp * levelup->exp) + m_minExp;
   m_validExp = true;
 
+  // calculate the increment in experience between the current experience and
+  // the previous experience
   uint32_t expIncrement =  m_currentExp - prevExp;
+  
+  emit newExp(expIncrement, m_currentExp, levelup->exp, 
+	      m_minExp, m_maxExp, m_tickExp);
 
-  fprintf(stderr, 
-	  "\e[1;42mLevelUP prevExp=%d currentExp=%d expInc=%d\n",
-	  prevExp, m_currentExp, expIncrement);
-  fprintf(stderr,
-	  "\tminExp=%d maxExp=%d tickExp=%d\n",
-	  m_minExp, m_maxExp, m_tickExp);
-  fprintf(stderr,
-	  "\tfreshKill=%d lastKill='%s' \e[0;0m\n", 
-	  m_freshKill, (const char*)m_lastSpawnKilledName);
   if(m_freshKill)
   {
      emit expGained( m_lastSpawnKilledName,
@@ -698,21 +670,6 @@ void Player::updateLevel(const uint8_t* data)
 		     expIncrement,
 		     m_zoneMgr->longZoneName());
 
-  tempStr.sprintf("Player: NewLevel: %d\n", levelup->level);
-  emit stsMessage(tempStr);
-  
-  totalExp = Commanate(m_currentExp);
-  gainedExp = Commanate((uint32_t) (m_currentExp - prevExp));
-  
-  needKills = Commanate(((m_maxExp - m_currentExp) /
-			 (m_currentExp > prevExp   ?
-			  m_currentExp - prevExp : 1)));
-  
-  tempStr = QString("Level: Exp: %1 (%2) [%3]").arg(totalExp).arg(gainedExp).arg(needKills);
-  
-  emit expChangedStr (tempStr);
-  emit msgReceived(tempStr);
-
   emit expChangedInt( m_currentExp, m_minExp, m_maxExp);
 
   // update the con table
@@ -723,6 +680,7 @@ void Player::updateLevel(const uint8_t* data)
 
   updateLastChanged();
 
+  // signal that the level changed
   emit levelChanged(m_level);
   emit changeItem(this, tSpawnChangedLevel);
 }

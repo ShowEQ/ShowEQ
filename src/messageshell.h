@@ -82,6 +82,14 @@ class MessageShell : public QObject
    void updateLevel(const uint8_t* data);
    void consMessage(const uint8_t* data, size_t, uint8_t dir);
 
+   void setExp(uint32_t totalExp, uint32_t totalTick,
+	       uint32_t minExpLevel, uint32_t maxExpLevel, 
+	       uint32_t tickExpLevel);
+
+   void newExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick,
+	       uint32_t minExpLevel, uint32_t maxExpLevel, 
+	       uint32_t tickExpLevel);
+
  protected:
    Messages* m_messages;
    EQStr* m_eqStrings;

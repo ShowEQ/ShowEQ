@@ -739,3 +739,41 @@ void MessageShell::consMessage(const uint8_t* data, size_t, uint8_t dir)
 } // end consMessage()
 
 
+void MessageShell::setExp(uint32_t totalExp, uint32_t totalTick,
+			  uint32_t minExpLevel, uint32_t maxExpLevel, 
+			  uint32_t tickExpLevel)
+{
+    QString tempStr;
+    tempStr.sprintf("Exp: Set: %u total, with %u (%u/330) into level with %u left, where 1/330 = %u",
+		    totalExp, (totalExp - minExpLevel), totalTick, 
+		    (maxExpLevel - totalExp), tickExpLevel);
+    m_messages->addMessage(MT_Player, tempStr);
+}
+
+void MessageShell::newExp(uint32_t newExp, uint32_t totalExp, 
+			  uint32_t totalTick,
+			  uint32_t minExpLevel, uint32_t maxExpLevel, 
+			  uint32_t tickExpLevel)
+{
+  QString tempStr;
+  uint32_t leftExp = maxExpLevel - totalExp;
+
+  // only can display certain things if new experience is greater then 0,
+  // ie. a > 1/330'th experience increment.
+  if (newExp)
+  {
+    // calculate the number of this type of kill needed to level.
+    uint32_t needKills = (maxExpLevel - totalExp) / newExp;
+
+    tempStr.sprintf("Exp: New: %u, %u (%u/330) into level with %u left [~%u kills]",
+		    newExp, (totalExp - minExpLevel), totalTick, 
+		    leftExp, (leftExp / newExp));
+  }
+  else
+    tempStr.sprintf("Exp: New: < %u, %u (%u/330) into level with %u left",
+		    tickExpLevel, (totalExp - minExpLevel), totalTick, 
+		    leftExp);
+  
+  m_messages->addMessage(MT_Player, tempStr);
+}
+

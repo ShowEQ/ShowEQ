@@ -29,11 +29,13 @@ MessageBrowser::MessageBrowser(QWidget* parent, const char* name)
 
 bool MessageBrowser::eventFilter(QObject *o, QEvent *e)
 {
+#if 0 // ZBTEMP
   if (e->type() == QEvent::KeyPress)
   {
     QKeyEvent* k = (QKeyEvent*)e;
     fprintf(stderr, "MessageBrowser::eventFilter(KeyEvent, %x)\n", k->key());
   }
+#endif // ZBTEPM
   if (e->type() != QEvent::MouseButtonPress)
     return QTextEdit::eventFilter(o, e);
 
@@ -51,7 +53,7 @@ bool MessageBrowser::eventFilter(QObject *o, QEvent *e)
 
 void MessageBrowser::keyPressEvent(QKeyEvent* e)
 {
-  fprintf(stderr, "MessageBrowser::keyPressEvent(%x)\n", e->key());
+  //fprintf(stderr, "MessageBrowser::keyPressEvent(%x)\n", e->key());
   switch (e->key())
   {
   case Key_R:
@@ -341,12 +343,6 @@ void MessageWindow::mousePressEvent(QMouseEvent* e)
 {
   if (e->button() == RightButton)
     m_menu->popup(mapToGlobal(e->pos()));
-  if (e->button() == LeftButton)
-  {
-    QString anchor = m_messageWindow->anchorAt(e->pos(), Qt::AnchorHref);
-    if (!anchor.isNull())
-      printf("Clicked Anchor '%s'!", (const char*)anchor);
-  }
 }
 
 void MessageWindow::clicked(int para, int pos)
