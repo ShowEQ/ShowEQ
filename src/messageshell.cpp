@@ -623,10 +623,10 @@ void MessageShell::player(const uint8_t* data)
 		  player->platinum_shared);
   m_messages->addMessage(MT_Player, message);
 
-  message = "Player: Exp =" + Commanate(player->exp);
+  message = "Exp: " + Commanate(player->exp);
   m_messages->addMessage(MT_Player, message);
 
-  message = "Player: ExpAA =" + Commanate(player->altexp);
+  message = "ExpAA: " + Commanate(player->altexp);
   m_messages->addMessage(MT_Player, message);
 
   int buffnumber;

@@ -65,7 +65,7 @@ void Messages::addMessage(MessageType type, const QString& text,
 			  uint32_t color)
 {
   // filter the message
-  uint32_t filterFlags = m_messageFilters->filter(type, text);
+  uint32_t filterFlags = m_messageFilters->filterMessage(type, text);
   
   // create a message entry
   MessageEntry message(type, QDateTime::currentDateTime(),

@@ -91,10 +91,11 @@ class MessageFilters : public QObject
   bool remFilter(uint8_t filter);
   bool remFilter(const QString& name);
   uint32_t mask(uint8_t filter) { return 1 << filter; }
+  const MessageFilter* filter(uint8_t filter) const { return m_filters[filter]; }
 
-  uint32_t filter(MessageEntry& message);
-  uint32_t filter(MessageType messageType, const QString& message);
-  uint32_t filter(uint64_t messageTypeMask, const QString& message);
+  uint32_t filterMessage(MessageEntry& message);
+  uint32_t filterMessage(MessageType messageType, const QString& message);
+  uint32_t filterMessage(uint64_t messageTypeMask, const QString& message);
 
  signals:
   void removed(uint32_t mask, uint8_t filter);
@@ -104,15 +105,15 @@ class MessageFilters : public QObject
   MessageFilter* m_filters[maxMessageFilters];
 };
 
-inline uint32_t MessageFilters::filter(MessageEntry& message)
+inline uint32_t MessageFilters::filterMessage(MessageEntry& message)
 {
-  return filter(message.type(), message.text());
+  return filterMessage(message.type(), message.text());
 }
 
-inline uint32_t MessageFilters::filter(MessageType messageType, 
-				       const QString& message)
+inline uint32_t MessageFilters::filterMessage(MessageType messageType, 
+					      const QString& message)
 {
-  return filter(uint64_t(1) << messageType, message);
+  return filterMessage(uint64_t(1) << messageType, message);
 }
 
 #endif // _MESSAGEFILTER_H_
