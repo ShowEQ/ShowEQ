@@ -126,6 +126,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_unknownZoneLog(0),
     m_opcodeMonitorLog(0),
     m_selectedSpawn(0),
+    m_windowsMenus(11),
     m_compass(0),
     m_expWindow(0),
     m_combatWindow(0),
@@ -135,6 +136,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 {
   // disable the dock menu
   setDockMenuEnabled(false);
+  
+  // make sure the windows menus list autodeletes
+  m_windowsMenus.setAutoDelete(true);
 
   setCentralWidget(new QWidget(this, "filler"));
   
@@ -2095,8 +2099,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
             this, SLOT(numPacket(int, int)));
    connect (m_packet, SIGNAL(resetPacket(int, int)),
             this, SLOT(resetPacket(int, int)));
-   connect (m_player, SIGNAL(newSpeed(int)),
-            this, SLOT(newSpeed(int)));
+   connect (m_player, SIGNAL(newSpeed(double)),
+            this, SLOT(newSpeed(double)));
    connect(m_player, SIGNAL(setExp(uint32_t, uint32_t, uint32_t, uint32_t, 
 				   uint32_t)),
 	   this, SLOT(setExp(uint32_t, uint32_t, uint32_t, 
@@ -4384,7 +4388,7 @@ EQInterface::numSpawns(int num)
 }
 
 void
-EQInterface::newSpeed(int speed)
+EQInterface::newSpeed(double speed)
 {
   // update twice per sec
   static int lastupdate = 0;
@@ -4393,7 +4397,7 @@ EQInterface::newSpeed(int speed)
   lastupdate = mTime();
 
    QString tempStr;
-   tempStr.sprintf("Run Speed: %d", speed);
+   tempStr.sprintf("Run Speed: %3.1f", speed);
    m_stsbarSpeed->setText(tempStr);
 }
 
@@ -6049,12 +6053,28 @@ void EQInterface::insertWindowMenu(SEQWindow* window)
 {
   QPopupMenu* menu = window->menu();
   if (menu)
-    m_windowMenu->insertItem(window->caption(), menu, int(window));
+  {
+    // insert the windows menu into the window menu
+    int id = m_windowMenu->insertItem(window->caption(), menu);
+
+    // insert it into the window to window menu id dictionary
+    m_windowsMenus.insert((void*)window, new int(id));
+  }
 }
 
 void EQInterface::removeWindowMenu(SEQWindow* window)
 {
-  m_windowMenu->removeItem(int(window));
+  // find the windows menu id
+  int* id = m_windowsMenus.find((void*)window);
+
+  // if the window had a menu, then remove it
+  if (id)
+  {
+    m_windowMenu->removeItem(*id);
+
+    // remove the item from the list
+    m_windowsMenus.remove(window);
+  }
 }
 
 void EQInterface::setDockEnabled(QDockWindow* dw, bool enable)
