@@ -16,7 +16,7 @@
 
 // ISO/ANSI/ECMA graphics codes, refer to ECMA-048 Section 8.3.117 SGR
 //   available here http://www.ecma.ch/ecma1/STAND/ECMA-048.HTM
-const char* defaultStyle = "\e[0;0m";
+const char* defaultStyle = "\e[0m";
 const char* typeStyles[] = 
   {
     "\e[1;32m",   // 0 - Guild
@@ -140,7 +140,7 @@ void Terminal::newMessage(const MessageEntry& message)
 
   if (m_useColor)
     text.replace(m_itemPattern, 
-		 QString("\e[1;4;34m\\2 (#\\1)") + setColor);
+		 QString("\e[1;4;34m\\2 (#\\1)\e[0;24m") + setColor);
   else
     text.replace(m_itemPattern, "\\2 (#\\1)");
 

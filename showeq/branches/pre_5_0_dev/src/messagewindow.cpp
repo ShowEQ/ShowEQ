@@ -486,6 +486,13 @@ MessageWindow::MessageWindow(Messages* messages,
   m_typeFilterMenu = new QPopupMenu;
   m_menu->insertItem("Show Message Type", m_typeFilterMenu);
 
+  m_typeFilterMenu->insertItem("&Enable All", 
+			       this, SLOT(enableAllTypeFilters()), 0, 64);
+  m_typeFilterMenu->insertItem("&Disable All", 
+			       this, SLOT(disableAllTypeFilters()), 0, 65);
+  
+  m_typeFilterMenu->insertSeparator(-1);
+
   QString typeName;
   // iterate over the message types, filling in various menus and getting 
   // font color preferences
@@ -727,6 +734,38 @@ void MessageWindow::toggleTypeFilter(int id)
   m_typeFilterMenu->setItemChecked(id, ((m_enabledTypes & (uint64_t(1) << id)) != 0));
 
   pSEQPrefs->setPrefUInt64("EnabledTypes", preferenceName(), m_enabledTypes);
+}
+
+void MessageWindow::disableAllTypeFilters()
+{
+  m_enabledTypes = 0;
+  
+  m_typeFilterMenu->setItemChecked(64, false);
+  m_typeFilterMenu->setItemChecked(65, false);
+
+  QString typeName;
+  for (int i = MT_Guild; i <= MT_Max; i++)
+  {
+    typeName = m_messages->messageTypeString((MessageType)i);
+    if (!typeName.isEmpty())
+      m_typeFilterMenu->setItemChecked(i, false);
+  }
+}
+
+void MessageWindow::enableAllTypeFilters()
+{
+  m_enabledTypes = 0xFFFFFFFFFFFFFFFF;
+
+  m_typeFilterMenu->setItemChecked(64, false);
+  m_typeFilterMenu->setItemChecked(65, false);
+
+  QString typeName;
+  for (int i = MT_Guild; i <= MT_Max; i++)
+  {
+    typeName = m_messages->messageTypeString((MessageType)i);
+    if (!typeName.isEmpty())
+      m_typeFilterMenu->setItemChecked(i, true);
+  }
 }
 
 void MessageWindow::toggleLockedText()
