@@ -1,5 +1,12 @@
 Version: $Id$ $Name$
 
+dohpaZ (10/2/04)
+------------------------
++ Migrate to new (autoconf >2.50) style AC_INIT & AM_INIT_AUTOMAKE
++ Update INSTALL to reflect new minimum automake 1.7 requirement for 
+  Makefile.dist users.
++ Exclude MOC output files m_*.cpp from Doxygen processing.
+
 dohpaZ (10/1/04)
 ------------------------
 + Integrated patch #'s: 1037498, 1037496, 1037494, 1037493, 1037491
