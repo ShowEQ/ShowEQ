@@ -384,6 +384,8 @@ class EQInterface:public QMainWindow
    QLabel* m_stsbarPkt;
    QLabel* m_stsbarEQTime;
    QLabel* m_stsbarSpeed;
+   // ZEM code
+   QLabel* m_stsbarZEM;
 
    QIntDict<QString> m_formattedMessageStrings;
 

@@ -787,7 +787,8 @@ QString Spawn::classString() const
   };
 
   // return class name from list if it's within range
-  if (classVal() < (sizeof(classnames) / sizeof (char*)) && classnames[classVal()] != NULL)
+  if ((classVal() < (sizeof(classnames) / sizeof (char*))) && 
+      (classnames[classVal()] != NULL))
     return classnames[classVal()];
   else
     return QString::number(classVal());
