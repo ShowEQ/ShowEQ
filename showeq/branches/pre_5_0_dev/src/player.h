@@ -119,7 +119,6 @@ public:
    void newPlayer(void);
    void buffLoad(const spellBuff*); 
    void newSpeed               (int speed);
-   void msgReceived            (const QString &);
    void statChanged            ( int statNum,
                                  int val,
                                  int max
@@ -147,8 +146,10 @@ public:
    void newExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick,
 	       uint32_t minExpLevel, uint32_t maxExpLevel, 
 	       uint32_t tickExpLevel);
-
-   void expAltChangedStr       (const QString &);
+   void setAltExp(uint32_t totalExp,
+		  uint32_t maxExp, uint32_t tickExp, uint32_t aapoints);
+   void newAltExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick, 
+		  uint32_t maxExp, uint32_t tickExp, uint32_t aapoints);
    void expAltChangedInt       (int, int, int);
    void expChangedInt          (int, int, int);
                                

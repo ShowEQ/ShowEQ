@@ -763,11 +763,11 @@ void MessageShell::newExp(uint32_t newExp, uint32_t totalExp,
   if (newExp)
   {
     // calculate the number of this type of kill needed to level.
-    uint32_t needKills = (maxExpLevel - totalExp) / newExp;
+    uint32_t needKills = leftExp / newExp;
 
     tempStr.sprintf("Exp: New: %u, %u (%u/330) into level with %u left [~%u kills]",
 		    newExp, (totalExp - minExpLevel), totalTick, 
-		    leftExp, (leftExp / newExp));
+		    leftExp, needKills);
   }
   else
     tempStr.sprintf("Exp: New: < %u, %u (%u/330) into level with %u left",
@@ -776,4 +776,35 @@ void MessageShell::newExp(uint32_t newExp, uint32_t totalExp,
   
   m_messages->addMessage(MT_Player, tempStr);
 }
+
+void MessageShell::setAltExp(uint32_t totalExp,
+			     uint32_t maxExp, uint32_t tickExp, 
+			     uint32_t aaPoints)
+{
+  QString tempStr;
+  tempStr.sprintf("ExpAA: Set: %u total, with %u aapoints",
+		  totalExp, aaPoints);
+
+  m_messages->addMessage(MT_Player, tempStr);
+}
+
+void MessageShell::newAltExp(uint32_t newExp, uint32_t totalExp, 
+			     uint32_t totalTick, 
+			     uint32_t maxExp, uint32_t tickExp, 
+			     uint32_t aapoints)
+{
+  QString tempStr;
+  
+  // only can display certain things if new experience is greater then 0,
+  // ie. a > 1/330'th experience increment.
+  if (newExp)
+    tempStr.sprintf("ExpAA: %u, %u (%u/330) with %u left",
+		    newExp, totalExp, totalTick, maxExp - totalExp);
+  else
+    tempStr.sprintf("ExpAA: < %u, %u (%u/330) with %u left",
+		    tickExp, totalExp, totalTick, maxExp - totalExp);
+
+  m_messages->addMessage(MT_Player, tempStr);
+}
+
 

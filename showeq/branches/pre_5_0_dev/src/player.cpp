@@ -226,11 +226,9 @@ void Player::player(const uint8_t* data)
   m_currentAApts = player->aapoints;
   
   emit expChangedInt (m_currentExp, m_minExp, m_maxExp);
-  
   emit expAltChangedInt(m_currentAltExp, 0, 15000000);
-  
-  messag = "ExpAA: " + Commanate(player->altexp);
-  emit expAltChangedStr(messag);
+
+  emit setAltExp(m_currentAltExp, 15000000, 15000000/330, m_currentAApts);
 
   if (showeq_params->savePlayerState)
     savePlayerState();
@@ -513,36 +511,22 @@ void Player::manaChange(const uint8_t* data)
 void Player::updateAltExp(const uint8_t* data)
 {
   const altExpUpdateStruct* altexp = (const altExpUpdateStruct*)data;
-  QString totalAltExp;
-  QString leftAltExp;
-  QString incrementAltExp;
-  QString tempStr;
-  QString tempStr2;
-  uint32_t realexp;
-  uint16_t aapoints;
 
-  realexp = altexp->altexp * altexp->percent * (15000000 / 33000);
-  aapoints = altexp->aapoints;
+  uint32_t realExp = altexp->altexp * altexp->percent * (15000000 / 33000);
+  uint32_t expIncrement;
 
-  if (m_currentAApts != aapoints)
-  {
-      m_currentAApts = aapoints;
-      m_currentAltExp = realexp;
-  }
-  if (m_currentAltExp > realexp)
-      realexp = m_currentAltExp;
+  if (realExp > m_currentExp)
+    expIncrement = realExp - m_currentAltExp;
+  else
+    expIncrement = 0;
 
-  totalAltExp = Commanate(realexp);
-  leftAltExp = Commanate(15000000 - realexp);
-  incrementAltExp = Commanate(15000000/330);
+  m_currentAApts = altexp->aapoints;
+  m_currentAltExp = realExp;
 
-  emit expAltChangedInt(realexp, 0, 15000000);
+  emit expAltChangedInt(m_currentAltExp, 0, 15000000);
 
-  tempStr = QString("ExpAA: %1 (%2/330)").arg(totalAltExp).arg(tempStr2.sprintf("%u",altexp->altexp));
-  emit expAltChangedStr(tempStr);
-  tempStr = QString("ExpAA: %1 (%2/330) left %3 - 1/330 = %4").arg(totalAltExp).arg(tempStr2.sprintf("%u",altexp->altexp)).arg(leftAltExp).arg(incrementAltExp);
-  emit msgReceived(tempStr);
-
+  emit newAltExp(expIncrement, m_currentAltExp, altexp->altexp,
+		 15000000, 15000000/330, m_currentAApts);
 
   if (showeq_params->savePlayerState)
     savePlayerState();
@@ -573,6 +557,9 @@ void Player::updateExp(const uint8_t* data)
     expIncrement = realExp - m_currentExp;
   else 
     expIncrement = 0;
+  
+  m_currentExp = realExp;
+  m_validExp = true;
 
   // signal the new experience
   emit newExp(expIncrement, realExp, exp->exp, 
@@ -590,27 +577,11 @@ void Player::updateExp(const uint8_t* data)
      // have gained experience for the kill, it's no longer fresh
      m_freshKill = false;
   }
-  else if ((m_lastSpellOnId == 0x0184) || // Resuscitate
-	   (m_lastSpellOnId == 0x0187) || // Revive (does it or don't it?)
-	   (m_lastSpellOnId == 0x0188) || // Resurrection
-	   (m_lastSpellOnId == 0x02f4) || // Resurrection Effects
-	   (m_lastSpellOnId == 0x02f5) || // Resurrection Effect
-	   (m_lastSpellOnId == 0x03e2) || // Customer Service Resurrection
-	   (m_lastSpellOnId == 0x05f4)) // Reviviscence
-  {
-     emit expGained( spell_name(m_lastSpellOnId),
-                     0, // level of caster would only confuse things further
-                     expIncrement,
-                     m_zoneMgr->longZoneName());
-  }
-  else if (m_currentExp != 0) 
+  else
      emit expGained( "Unknown", // Randomly blessed with xp?
                      0, // don't know what gave it so, level 0
 		     expIncrement,
 		     m_zoneMgr->longZoneName());
-  
-  m_currentExp = realExp;
-  m_validExp = true;
 
   if (showeq_params->savePlayerState)
     savePlayerState();
@@ -651,20 +622,7 @@ void Player::updateLevel(const uint8_t* data)
      // have gained experience for the kill, it's no longer fresh
      m_freshKill = false;
   }
-  else if ((m_lastSpellOnId == 0x0184) || // Resuscitate
-	   (m_lastSpellOnId == 0x0187) || // Revive (does it or don't it?)
-	   (m_lastSpellOnId == 0x0188) || // Resurrection
-	   (m_lastSpellOnId == 0x02f4) || // Resurrection Effects
-	   (m_lastSpellOnId == 0x02f5) || // Resurrection Effect
-	   (m_lastSpellOnId == 0x03e2) || // Customer Service Resurrection
-	   (m_lastSpellOnId == 0x05f4)) // Reviviscence
-  {
-     emit expGained( spell_name(m_lastSpellOnId),
-                     0, // level of caster would only confuse things further
-                     expIncrement,
-                     m_zoneMgr->longZoneName());
-  }
-  else if (m_currentExp != 0) 
+  else
      emit expGained( "Unknown", // Randomly blessed with xp?
                      0, // don't know what gave it so, level 0
 		     expIncrement,
