@@ -45,6 +45,7 @@
 #include "spells.h"
 #include "datetimemgr.h"
 #include "datalocationmgr.h"
+#include "eqstr.h"
 
 #include <qfont.h>
 #include <qapplication.h>
@@ -97,6 +98,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_itemDB(NULL),
     m_guildmgr(NULL),
     m_dateTimeMgr(NULL),
+    m_eqStrings(NULL),
     m_spawnLogger(NULL),
     m_globalLog(0),
     m_worldLog(0),
@@ -107,8 +109,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_compass(NULL),
     m_expWindow(NULL),
     m_combatWindow(NULL),
-    m_netDiag(NULL),
-    m_formattedMessageStrings(8009) // increase if eqstr_us.txt gets longer
+    m_netDiag(NULL)
 {
   setDockMenuEnabled(false);
   for (int l = 0; l < maxNumMaps; l++)
@@ -190,6 +191,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Create the date/time manager
    m_dateTimeMgr = new DateTimeMgr(this, "datetimemgr");
+   
+   // Create the EQStr storage
+   m_eqStrings = new EQStr(8009); // increase if the number of stings exeeds
 
    // Create the Zone Manager
    m_zoneMgr = new ZoneMgr(this, "zonemgr");
@@ -1783,7 +1787,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
 EQInterface::~EQInterface()
 {
-  m_formattedMessageStrings.clear();
   m_msgDialogList.clear();
 
   if (m_netDiag != NULL)
@@ -1840,6 +1843,12 @@ EQInterface::~EQInterface()
 
   if (m_filterMgr != NULL)
     delete m_filterMgr;
+
+  if (m_dateTimeMgr != NULL)
+    delete m_dateTimeMgr;
+
+  if (m_eqStrings != NULL)
+    delete m_eqStrings;
 
   // Shutdown the Item DB before any other cleanup
   if (m_itemDB != NULL)
@@ -2512,10 +2521,6 @@ void EQInterface::setCaption(const QString& text)
 
 void EQInterface::loadFormatStrings()
 {
-  // clear out any existing contents
-  m_formattedMessageStrings.setAutoDelete(true);
-  m_formattedMessageStrings.clear();
-
   // get the name of the format file
   QString formatFileName = pSEQPrefs->getPrefString("FormatFile", "Interface", 
 						    "eqstr_us.txt");
@@ -2523,62 +2528,8 @@ void EQInterface::loadFormatStrings()
   QFileInfo fileInfo = m_dataLocationMgr->findExistingFile(".", 
 							   formatFileName);
 
-  // create a QFile on the file
-  QFile formatFile(fileInfo.absFilePath());
-
-  // open the file read only
-  if (formatFile.open(IO_ReadOnly))
-  {
-    // allocate a QCString large enough to hold the entire file
-    QCString textData(formatFile.size() + 1);
-
-    // read in the entire file
-    formatFile.readBlock(textData.data(), textData.size());
-
-    // construct a regex to deal with either style line termination
-    QRegExp lineTerm("[\r\n]{1,2}");
-
-    // split the data into lines at the line termination
-    QStringList lines = QStringList::split(lineTerm, 
-					   QString::fromUtf8(textData), false);
-
-    // start iterating over the lines
-    QStringList::Iterator it = lines.begin();
-
-    // first is the magic id string
-    QString magicString = (*it++);
-    int spc;
-    uint32_t formatId;
-    QString formatString;
-    uint32_t maxFormatId = 0;
-
-    // next skip over the count, etc...
-    it++;
-
-    // now iterate over the format lines
-    for (; it != lines.end(); ++it)
-    {
-      // find the beginning space
-      spc = (*it).find(' ');
-
-      // convert the beginnign of the string to a ULong
-      formatId = (*it).left(spc).toULong();
-      
-      if (formatId > maxFormatId) 
-	maxFormatId = formatId;
-
-      // insert the format string into the dictionary.
-      m_formattedMessageStrings.insert(formatId, new QString((*it).mid(spc+1)));    }
-
-    fprintf(stderr,
-	    "Loaded %d message strings from '%s' maxFormat=%d\n",
-	    m_formattedMessageStrings.count(), formatFileName.latin1(),
-	    maxFormatId);
-  }
-  else
-    fprintf(stderr,
-	    "EQInterface::loadFormatStrings(): Failed to open '%s'\n",
-	    formatFileName.latin1());
+  // load the strings
+  m_eqStrings->load(fileInfo.absFilePath());
 }
 
 /* Capture resize events and reset the geometry */
@@ -3955,140 +3906,36 @@ void EQInterface::channelMessage(const uint8_t* data, size_t, uint8_t dir)
 
 void EQInterface::formattedMessage(const uint8_t* data, size_t len, uint8_t dir)
 {
-  const formattedMessageStruct* fmsg = (const formattedMessageStruct*)data;
-  QString tempStr;
-
   // avoid client chatter and do nothing if not viewing channel messages
   if ((dir == DIR_Client) || !m_viewChannelMsgs)
     return;
 
-  int messagesLen = 
+  const formattedMessageStruct* fmsg = (const formattedMessageStruct*)data;
+  QString tempStr;
+
+  size_t messagesLen = 
     len
     - ((uint8_t*)&fmsg->messages[0] - (uint8_t*)fmsg) 
     - sizeof(fmsg->unknownXXXX);
 
-  QString* formatStringRes = m_formattedMessageStrings.find(fmsg->messageFormat);
-
-  if (formatStringRes == NULL)
-  {
-    tempStr.sprintf( "Formatted: %04x: ",
-		     fmsg->messageFormat);
-    tempStr += QString::fromUtf8(fmsg->messages);
-
-    int totalArgsLen = strlen(fmsg->messages) + 1;
-    
-    const char* curMsg;
-    while (totalArgsLen < messagesLen)
-    {
-      curMsg = fmsg->messages + totalArgsLen;
-      tempStr += QString(", ") + QString::fromUtf8(curMsg);
-      totalArgsLen += strlen(curMsg) + 1;
-    }
-  }
-  else
-  {
-    QValueVector<QString> argList;
-    argList.reserve(5); // reserve space for 5 elements to handle most common sizes
-    
-    // 
-    int totalArgsLen = 0;
-    const char* curArg;
-    while (totalArgsLen < messagesLen)
-    {
-      curArg = fmsg->messages + totalArgsLen;
-      // insert argument into the argument list
-      argList.push_back(QString::fromUtf8(curArg));
-      totalArgsLen += strlen(curArg) + 1;
-    }
-
-    bool ok;
-    int curPos;
-    size_t substArg;
-    int substArgValue;
-    QString* substFormatStringRes;
-    QString substFormatString;
-
-    ////////////////////////////
-    // replace template (%T) arguments in formatted string
-    QString formatString = *formatStringRes;
-    QRegExp rxt("%T(\\d{1,3})", true, false);
-
-    // find first template substitution
-    curPos = rxt.search(formatString, 0);
-
-    while (curPos != -1)
-    {
-      substFormatStringRes = NULL;
-      substArg = rxt.cap(1).toInt(&ok);
-      if (ok && (substArg <= argList.size()))
-      {
-	substArgValue = argList[substArg-1].toInt(&ok);
-
-	if (ok)
-	  substFormatStringRes = m_formattedMessageStrings.find(substArgValue);
-      }
-      
-      // replace template argument with subst string
-      if (substFormatStringRes != NULL)
-	formatString.replace(curPos, rxt.matchedLength(), *substFormatStringRes);
-      else
-	curPos += rxt.matchedLength(); // if no replacement string, skip over
-      
-      // find next substitution
-      curPos = rxt.search(formatString, curPos);
-    }
-
-    ////////////////////////////
-    // now replace substitution arguments in formatted string
-    // NOTE: not using QString::arg() because not all arguments are always used
-    //       and it will do screwy stuff in this situation
-    QRegExp rx("%(\\d{1,3})", true, false);
-
-    // find first template substitution
-    curPos = rx.search(formatString, 0);
-
-    while (curPos != -1)
-    {
-      substArg = rx.cap(1).toInt(&ok);
-
-      // replace substitution argument with argument from list
-      if (ok && (substArg <= argList.size()))
-	formatString.replace(curPos, rx.matchedLength(), argList[substArg-1]);
-      else
-	curPos += rx.matchedLength(); // if no such argument, skip over
-
-      // find next substitution
-      curPos = rx.search(formatString, curPos);
-    }
-    
-    
-    tempStr = QString("Formatted: ") + formatString;
-  }
-
+  tempStr = "Formatted: ";
+  tempStr += m_eqStrings->formatMessage(fmsg->messageFormat,
+					fmsg->messages, messagesLen);
+  
   emit msgReceived(tempStr);
 }
 
 void EQInterface::simpleMessage(const uint8_t* data, size_t len, uint8_t dir)
 {
-  const simpleMessageStruct* smsg = (const simpleMessageStruct*)data;
-  QString tempStr;
-
   // avoid client chatter and do nothing if not viewing channel messages
   if ((dir == DIR_Client) || !m_viewChannelMsgs)
     return;
 
-  QString* formatStringRes = m_formattedMessageStrings.find(smsg->messageFormat);
-
-  if (formatStringRes == NULL)
-  {
-    tempStr.sprintf( "Formatted:Simple: %04x: %04x",
-		     smsg->messageFormat,
-		     smsg->color);
-  }
-  else
-  {
-    tempStr = QString("Formatted: ") + *formatStringRes;
-  }
+  const simpleMessageStruct* smsg = (const simpleMessageStruct*)data;
+  QString tempStr;
+  
+  tempStr = "Formatted: ";
+  tempStr += m_eqStrings->message(smsg->messageFormat);
 
   emit msgReceived(tempStr);
 }

@@ -11,7 +11,6 @@ A full "to do" list is maintained on SourceForge
  + More general packet cleanup.
 + Move all non-GUI related stuff out of EQInterface
 + Move terminal UI to its own class
-+ Move eqstr_{}.txt handling to its own class
 + Improved filtering system
 + Map
  + Support multiple user configurable icons (for spawns, pc's, items, etc...)
@@ -26,4 +25,3 @@ A full "to do" list is maintained on SourceForge
   for the users to reconfigure/add stuff.
 + Seperate UI from data storage/handling in Combat Window and Experience Window
 + Create new and improved item db support.
-+ 
