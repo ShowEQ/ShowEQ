@@ -73,7 +73,7 @@ m_%.cpp: %.h
 	$(MOC) -nw $< -o $@
 
 s_%.h: %.h
-	./h2info.pl $< $@
+	$(srcdir)/h2info.pl $< $@
 
 ui_%.h: %.ui
 	$(UIC) -nounload $< > $@
