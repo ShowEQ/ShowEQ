@@ -1,5 +1,10 @@
 Version: $Id$ $Name$
 
+dohpaZ (02/19/04)
+---------------------
++ Added ctype.h to bazaarlog.cpp to fix builds on some distros.
++ Added seqfilters.dtd file.
+
 dohpaZ (02/18/04)
 ---------------------
 + Updated version to 5.0.0.7
