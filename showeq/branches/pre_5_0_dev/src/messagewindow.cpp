@@ -14,6 +14,11 @@
 #include <qfontdialog.h>
 #include <qcolordialog.h>
 #include <qregexp.h>
+#include <qlayout.h>
+#include <qpushbutton.h>
+#include <qcheckbox.h>
+#include <qlabel.h>
+#include <qlineedit.h>
 
 //---------------------------------------------------------------------- 
 // MessageBrowser
@@ -40,6 +45,75 @@ bool MessageBrowser::eventFilter(QObject *o, QEvent *e)
 }
 
 //----------------------------------------------------------------------
+// MessageFindDialog
+MessageFindDialog::MessageFindDialog(MessageBrowser* messageWindow, 
+				     const QString& caption,
+				     QWidget* parent, const char* name)
+  : QDialog(parent, name, false, 0),
+    m_messageWindow(messageWindow),
+    m_lastParagraph(0),
+    m_lastIndex(0)
+{
+  setCaption(caption);
+  
+  // setup the GUI
+  QGridLayout* grid = new QGridLayout(this, 5, 2);
+
+  m_findText = new QLineEdit(this);
+  m_findText->setReadOnly(false);
+  connect(m_findText, SIGNAL(textChanged(const QString&)),
+	  this, SLOT(textChanged(const QString&)));
+  grid->addMultiCellWidget(m_findText, 0, 0, 1, 2);
+  QLabel* label = new QLabel("Find &Text:", this);
+  label->setBuddy(m_findText);
+  grid->addWidget(label, 0, 0);
+  m_matchCase = new QCheckBox("&Match case", this);
+  grid->addWidget(m_matchCase, 1, 1);
+  m_wholeWords = new QCheckBox("&Whole Words", this);
+  grid->addWidget(m_wholeWords, 2, 1);
+  m_findBackwards = new QCheckBox("Find &Backwards", this);
+  grid->addWidget(m_findBackwards, 3, 1);
+
+  QHBoxLayout* layout = new QHBoxLayout(grid);
+  grid->addMultiCell(layout, 5, 5, 0, 2);
+  layout->addStretch();
+  m_find = new QPushButton("&Find", this);
+  layout->addWidget(m_find);
+  m_find->setEnabled(false);
+  connect(m_find, SIGNAL(clicked()),
+	  this, SLOT(find()));
+  layout->addStretch();
+  QPushButton* close = new QPushButton("&Close", this);
+  layout->addWidget(close);
+  connect(close, SIGNAL(clicked()),
+	  this, SLOT(close()));
+  layout->addStretch();
+}
+
+void MessageFindDialog::find()
+{
+  // perform a find in the message window, starting at the current position
+  // using the settings from the checkboxes.
+  m_messageWindow->find(m_findText->text(),
+			m_matchCase->isChecked(),
+			m_wholeWords->isChecked(), 
+			!m_findBackwards->isChecked(), 
+			0, 0);
+}
+
+void MessageFindDialog::close()
+{
+  // close the dialog
+  QDialog::close(false);
+}
+
+void MessageFindDialog::textChanged(const QString& newText)
+{
+  // enable the find button iff there is text to search with
+  m_find->setEnabled(!newText.isEmpty());
+}
+
+//----------------------------------------------------------------------
 // MessageWindow
 MessageWindow::MessageWindow(Messages* messages, 
 			     const QString& prefName,
@@ -47,22 +121,24 @@ MessageWindow::MessageWindow(Messages* messages,
 			     QWidget* parent, const char* name)
   : SEQWindow(prefName, caption, parent, name),
     m_messages(messages),
-    m_menu(0),
     m_messageWindow(0),
+    m_menu(0),
+    m_typeFilterMenu(0),
+    m_findDialog(0),
     m_enabledTypes(0xFFFFFFFF),
     m_defaultColor(black),
     m_defaultBGColor(white),
     m_dateTimeFormat("hh:mm"),
     m_eqDateTimeFormat("ddd M/d/yyyy h:mm"),
+    m_typeColors(0),
+    m_typeBGColors(0),
+    m_itemPattern("\022(\\d{5,7})\\w*-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)\022"),
     m_lockedText(false),
     m_displayType(true),
     m_displayDateTime(false),
     m_displayEQDateTime(false),
-    m_useColor(false),
-    m_wrapText(true),
-    m_typeColors(0),
-    m_typeBGColors(0),
-    m_itemPattern("\022(\\d{5,7})\\w*-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)\022")
+    m_useColor(true),
+    m_wrapText(true)
 {
   m_enabledTypes = pSEQPrefs->getPrefInt("EnabledTypes", preferenceName(), 
 					 m_enabledTypes);
@@ -179,8 +255,12 @@ MessageWindow::MessageWindow(Messages* messages,
   m_menu->insertItem("User Message Filters", userFilterMenu);
 
   m_menu->insertSeparator(-1);
+  m_menu->insertItem("&Find...", this, SLOT(findDialog()), 
+		     CTRL+Key_F);
+  m_menu->insertSeparator(-1);
   int x;
-  x = m_menu->insertItem("&Lock Text", this, SLOT(toggleLockedText(int)));
+  x = m_menu->insertItem("&Lock Text", this, SLOT(toggleLockedText(int)),
+			 CTRL+Key_L);
   m_menu->setItemChecked(x, m_lockedText);
   m_menu->insertSeparator(-1);
   x = m_menu->insertItem("Display &Type", this, SLOT(toggleDisplayType(int)));
@@ -193,15 +273,15 @@ MessageWindow::MessageWindow(Messages* messages,
   m_menu->setItemChecked(x, m_useColor);
   x = m_menu->insertItem("&Wrap Text", this, SLOT(toggleWrapText(int)));
   m_menu->setItemChecked(x, m_wrapText);
-  m_menu->insertItem("&Font...", this, SLOT(setFont()));
+  m_menu->insertItem("Fo&nt...", this, SLOT(setFont()));
   m_menu->insertItem("&Caption...", this, SLOT(setCaption()));
   m_menu->insertItem("Text Colo&r...", this, SLOT(setColor()));
   m_menu->insertItem("Text Back&ground Color...", this, SLOT(setBGColor()));
   m_menu->insertItem("Type C&olor", typeColorMenu);
   m_menu->insertItem("Type &Background Color", typeBGColorMenu);
   m_menu->insertSeparator(-1);
-  x = m_menu->insertItem("Refresh Messages...", this, SLOT(refreshMessages()));
-
+  x = m_menu->insertItem("Refresh Messages...", this, SLOT(refreshMessages()),
+			 Key_F5);
 
   refreshMessages();
 }
@@ -324,6 +404,17 @@ void MessageWindow::refreshMessages()
   // set the IBeam Cursor for easier text selection
   unsetCursor();
   m_messageWindow->unsetCursor();
+}
+
+void MessageWindow::findDialog()
+{
+  // create the find dialog, if necessary
+  if (!m_findDialog)
+    m_findDialog = new MessageFindDialog(m_messageWindow, caption() + " Find",
+					 this, "messagefinddialog");
+
+  // show the find dialog
+  m_findDialog->show();
 }
 
 void MessageWindow::toggleTypeFilter(int id)
