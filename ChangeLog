@@ -1,5 +1,9 @@
 Version: $Id$ $Name$
 
+dophaZ (09/27/04)
+------------------------
++ Added kdevelop project.
+	
 dophaZ (09/25/04)
 ------------------------
 + Fixed some more gcc 3.4 warnings.
