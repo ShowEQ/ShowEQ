@@ -1489,6 +1489,13 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 				     uint32_t, uint32_t)),
 	     m_messageShell, SLOT(newExp(uint32_t, uint32_t, uint32_t,  
 					 uint32_t, uint32_t, uint32_t)));
+     connect(m_player, SIGNAL(setAltExp(uint32_t, uint32_t, uint32_t, uint32_t)),
+	     m_messageShell, SLOT(setAltExp(uint32_t, uint32_t, uint32_t, uint32_t)));
+     connect(m_player, SIGNAL(newAltExp(uint32_t, uint32_t, uint32_t, uint32_t,
+					uint32_t, uint32_t)),
+	     m_messageShell, SLOT(newAltExp(uint32_t, uint32_t, uint32_t, uint32_t,
+					    uint32_t, uint32_t)));
+
      connect(m_dateTimeMgr, SIGNAL(syncDateTime(const QDateTime&)),
 	     m_messageShell, SLOT(syncDateTime(const QDateTime&)));
 #if 0 // ZBTEMP
@@ -1674,8 +1681,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // interface statusbar slots
    connect (this, SIGNAL(newZoneName(const QString&)),
             m_stsbarZone, SLOT(setText(const QString&)));
-   connect (m_player, SIGNAL(expAltChangedStr(const QString&)),
-            m_stsbarExpAA, SLOT(setText(const QString&)));
    connect (m_packet, SIGNAL(stsMessage(const QString &, int)),
             this, SLOT(stsMessage(const QString &, int)));
    connect (m_spawnShell, SIGNAL(numSpawns(int)),
@@ -1686,14 +1691,20 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
             this, SLOT(resetPacket(int, int)));
    connect (m_player, SIGNAL(newSpeed(int)),
             this, SLOT(newSpeed(int)));
-     connect(m_player, SIGNAL(setExp(uint32_t, uint32_t, uint32_t, uint32_t, 
-				     uint32_t)),
-	     this, SLOT(setExp(uint32_t, uint32_t, uint32_t, 
-			       uint32_t, uint32_t)));
+   connect(m_player, SIGNAL(setExp(uint32_t, uint32_t, uint32_t, uint32_t, 
+				   uint32_t)),
+	   this, SLOT(setExp(uint32_t, uint32_t, uint32_t, 
+			     uint32_t, uint32_t)));
    connect(m_player, SIGNAL(newExp(uint32_t, uint32_t, uint32_t, uint32_t, 
 				   uint32_t, uint32_t)),
 	   this, SLOT(newExp(uint32_t, uint32_t, uint32_t,  
 			     uint32_t, uint32_t, uint32_t)));
+   connect(m_player, SIGNAL(setAltExp(uint32_t, uint32_t, uint32_t, uint32_t)),
+	   this, SLOT(setAltExp(uint32_t, uint32_t, uint32_t, uint32_t)));
+   connect(m_player, SIGNAL(newAltExp(uint32_t, uint32_t, uint32_t, uint32_t,
+				      uint32_t, uint32_t)),
+	   this, SLOT(newAltExp(uint32_t, uint32_t, uint32_t, uint32_t,
+				uint32_t, uint32_t)));
    connect(m_player, SIGNAL(levelChanged(uint8_t)),
 	   this, SLOT(levelChanged(uint8_t)));
 
@@ -1773,10 +1784,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      else
        diag->hide();
    }
-
-   // connect signals for receiving string messages
-   connect (m_player, SIGNAL (msgReceived(const QString &)),
-            this, SLOT (msgReceived(const QString &)));
 
    //
    // Geometry Configuration
@@ -3716,10 +3723,10 @@ void EQInterface::setExp(uint32_t totalExp, uint32_t totalTick,
 			  uint32_t tickExpLevel)
 {
   if (m_stsbarExp)
-    m_stsbarExp->setText(QString("Exp: %1; %2 (%3/330)")
+    m_stsbarExp->setText(QString("Exp: %1; %2 (%3/330); 1/330 = %4")
 			 .arg(Commanate(totalExp))
 			 .arg(Commanate(totalExp - minExpLevel))
-			 .arg(totalTick));
+			 .arg(totalTick).arg(tickExpLevel));
 }
 
 void EQInterface::newExp(uint32_t newExp, uint32_t totalExp, 
@@ -3735,8 +3742,8 @@ void EQInterface::newExp(uint32_t newExp, uint32_t totalExp,
     uint32_t needKills = leftExp / newExp;
     // format a string for the status bar
     if (m_stsbarStatus)
-      m_stsbarStatus->setText(QString("Exp: <%1; %2 (%3/330); %4 left [~ %5 kills]")
-			      .arg(Commanate(tickExpLevel))
+      m_stsbarStatus->setText(QString("Exp: %1; %2 (%3/330); %4 left [~ %5 kills]")
+			      .arg(Commanate(newExp))
 			      .arg(Commanate(totalExp - minExpLevel))
 			      .arg(totalTick)
 			      .arg(Commanate(leftExp))
@@ -3762,6 +3769,24 @@ void EQInterface::newExp(uint32_t newExp, uint32_t totalExp,
 			   .arg(Commanate(intoExp))
 			   .arg(totalTick));
   }
+}
+
+void EQInterface::setAltExp(uint32_t totalExp,
+			    uint32_t maxExp, uint32_t tickExp, 
+			    uint32_t aapoints)
+{
+  if (m_stsbarExpAA)
+    m_stsbarExpAA->setText(QString("ExpAA: %1").arg(totalExp));
+}
+
+void EQInterface::newAltExp(uint32_t newExp, uint32_t totalExp, 
+			    uint32_t totalTick, 
+			    uint32_t maxExp, uint32_t tickExp, 
+			    uint32_t aapoints)
+{
+  if (m_stsbarExpAA)
+    m_stsbarExpAA->setText(QString("ExpAA: %1 (%2/330)")
+			   .arg(Commanate(totalExp)).arg(totalTick));
 }
 
 void EQInterface::levelChanged(uint8_t level)

@@ -89,6 +89,10 @@ class MessageShell : public QObject
    void newExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick,
 	       uint32_t minExpLevel, uint32_t maxExpLevel, 
 	       uint32_t tickExpLevel);
+   void setAltExp(uint32_t totalExp,
+		  uint32_t maxExp, uint32_t tickExp, uint32_t aapoints);
+   void newAltExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick, 
+		  uint32_t maxExp, uint32_t tickExp, uint32_t aapoints);
 
  protected:
    Messages* m_messages;

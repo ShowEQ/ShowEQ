@@ -227,6 +227,7 @@ void ZoneMgr::zonePoints(const uint8_t* data, size_t len, uint8_t)
   m_zonePoints = new zonePointStruct[m_zonePointCount];
 
   // copy the zone point information
-  memcpy((void*)m_zonePoints, zp, sizeof(zonePointStruct) * m_zonePointCount);
+  memcpy((void*)m_zonePoints, zp->zonePoints, 
+	 sizeof(zonePointStruct) * m_zonePointCount);
 }
 
