@@ -179,6 +179,10 @@
     <opcode id="00c0" name="OP_SenseHeading" updated="11/05/03">
         <comment>old cSenseHeadingCode</comment>
     </opcode>
+    <opcode id="00cd" name="OP_GroupInvite2" updated="11/05/03">
+        <payload dir="both" typename="groupInviteStruct" sizechecktype="match"/>
+        <comment></comment>
+    </opcode>
     <opcode id="00d0" name="OP_Jump" updated="11/05/03">
         <comment>old cJumpCode?</comment>
     </opcode>
@@ -578,7 +582,8 @@
         <payload dir="server" typename="inspectDataStruct" sizechecktype="match"/>
     </opcode>
     <opcode id="0233" name="OP_GroupUpdate" updated="11/05/03">
-        <payload dir="server" typename="groupUpdateStruct" sizechecktype="none"/>
+        <payload dir="server" typename="groupUpdateStruct" sizechecktype="match"/>
+        <payload dir="server" typename="groupFullUpdateStruct" sizechecktype="match"/>
         <comment></comment>
     </opcode>
     <opcode id="0247" name="OP_GroupFollow" updated="11/05/03">
