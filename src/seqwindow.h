@@ -33,9 +33,9 @@ class SEQWindow : public QDockWindow
  public slots:
    virtual void setCaption(const QString&);
    void setWindowFont(const QFont&);
-   void restoreFont();
    void restoreSize();
    void restorePosition();
+   virtual void restoreFont();
    virtual void savePrefs(void);
   
  private:
