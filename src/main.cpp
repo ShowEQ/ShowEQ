@@ -166,6 +166,9 @@ int main (int argc, char **argv)
    //   QApplication::setStyle( new QWindowsStyle );
    QApplication qapp (argc, argv);
 
+   /* Print the version number */
+   displayVersion();
+
    // create the data location manager (with user data under ~/.showeq
    DataLocationMgr dataLocMgr(".showeq");
 
@@ -678,9 +681,6 @@ int main (int argc, char **argv)
          }
       }
    }
-
-   /* Print the version number */
-   displayVersion();
 
    if (bOptionHelp)
    {

@@ -179,6 +179,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_messages = new Messages(m_dateTimeMgr, m_messageFilters, 
 			     this, "messages");
 
+   // Create the terminal object
+   m_terminal = new Terminal(m_messages, this, "terminal");
+
    QString fileName, fileName2;
    QFileInfo fileInfo, fileInfo2;
 
@@ -230,9 +233,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    
    // Create the EQStr storage
    m_eqStrings = new EQStr(8009); // increase if the number of stings exeeds
-
-   // Create the terminal object
-   m_terminal = new Terminal(m_messages, this, "terminal");
 
    // Create the Zone Manager
    m_zoneMgr = new ZoneMgr(this, "zonemgr");
