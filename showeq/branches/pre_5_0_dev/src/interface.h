@@ -76,6 +76,7 @@ class MessageWindow;
 class Terminal;
 class MessageFilterDialog;
 class GuildShell;
+class GuildListWindow;
 
 //--------------------------------------------------
 // typedefs
@@ -249,6 +250,7 @@ class EQInterface:public QMainWindow
    void toggle_view_PlayerSkills();
    void toggle_view_Map(int id);
    void toggle_view_NetDiag();
+   void toggle_view_GuildList();
    void resetMaxMana();
    void select_filter_file();
    void save_as_filter_file();
@@ -305,6 +307,7 @@ class EQInterface:public QMainWindow
    void showSpellList(void);
    void showCompass(void);
    void showNetDiag(void);
+   void showGuildList(void);
    void createFilteredSpawnLog(void);
    void createSpawnLog(void);
    void createGlobalLog(void);
@@ -383,6 +386,7 @@ class EQInterface:public QMainWindow
    CombatWindow* m_combatWindow;
    NetDiag* m_netDiag;
    MessageFilterDialog* m_messageFilterDialog;
+   GuildListWindow* m_guildListWindow;
 
    QLabel* m_stsbarSpawns;
    QLabel* m_stsbarStatus;
@@ -422,6 +426,7 @@ class EQInterface:public QMainWindow
    int  m_id_view_Map[maxNumMaps];
    int  m_id_view_MessageWindow[maxNumMessageWindows];
    int  m_id_view_NetDiag;
+   int  m_id_view_GuildListWindow;
    int  m_id_view_SpellList;
    int  m_id_view_PlayerStats_Options;
    int  m_id_view_PlayerStats_Stats[LIST_MAXLIST];

@@ -17,10 +17,16 @@
 
 #include <qdatetime.h>
 
-#define GUILDSHELL_DIAG 1
+//----------------------------------------------------------------------
+// diagnostic defines
+// #define GUILDSHELL_DIAG 1
 
-static const QString guildRanks[] = { "M", "O", "L", };
+//----------------------------------------------------------------------
+// constants
+static const QString guildRanks[] = { "M", "O", "L", "?", };
 
+//----------------------------------------------------------------------
+// GuildMember implementation
 GuildMember::GuildMember(NetStream& netStream)
 {
   m_name = netStream.readText();
@@ -54,9 +60,14 @@ QString GuildMember::classString() const
 
 const QString& GuildMember::guildRankString() const
 {
-  if (m_zoneId)
+  if (m_guildRank <= 2)
+    return guildRanks[m_guildRank];
+  else
+    return guildRanks[3]; // return the unknown rank character
 }
 
+//----------------------------------------------------------------------
+// GuildShell implementation
 GuildShell::GuildShell(ZoneMgr* zoneMgr, QObject* parent, const char* name)
   : QObject(parent, name),
     m_maxNameLength(0),
@@ -69,7 +80,7 @@ GuildShell::~GuildShell()
 {
 }
 
-QString GuildShell::zoneString(uint16_t zoneid)
+QString GuildShell::zoneString(uint16_t zoneid) const
 {
   if (zoneid == 0)
     return "";
@@ -115,7 +126,7 @@ void GuildShell::dumpMembers(QTextStream& out)
       zone += ":" + QString::number(member->zoneInstance());
     out << format.arg(member->name(), nameFieldWidth)
       .arg(member->level(), 2).arg(member->classString(), classFieldWidth)
-      .arg(guildRanks[member->guildRank()], 1)
+      .arg(member->guildRankString(), 1)
       .arg(dt.toString(dateFormat), -24)
       .arg(zone, -18);
 

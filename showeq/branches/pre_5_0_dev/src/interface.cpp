@@ -34,6 +34,7 @@
 #include "itemdb.h"
 #include "guild.h"
 #include "guildshell.h"
+#include "guildlist.h"
 #include "spells.h"
 #include "datetimemgr.h"
 #include "datalocationmgr.h"
@@ -127,7 +128,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_expWindow(0),
     m_combatWindow(0),
     m_netDiag(0),
-    m_messageFilterDialog(0)
+    m_messageFilterDialog(0),
+    m_guildListWindow(0)
 {
   // disable the dock menu
   setDockMenuEnabled(false);
@@ -507,6 +509,11 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    if (pSEQPrefs->getPrefBool("ShowNetStats", section, false))
      showNetDiag();
 
+   //
+   // Create the Guild member List window as required
+   if (pSEQPrefs->getPrefBool("ShowGuildList", section, false))
+     showGuildList();
+
 /////////////////////
 // QMenuBar
 
@@ -583,6 +590,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
 
    m_id_view_NetDiag = pViewMenu->insertItem("Network Diagnostics", this, SLOT(toggle_view_NetDiag()));
+
+   m_id_view_GuildListWindow = 
+     pViewMenu->insertItem("Guild Member List", this, 
+			   SLOT(toggle_view_GuildList()));
 
    pViewMenu->insertSeparator(-1);
 
@@ -3705,6 +3716,32 @@ EQInterface::toggle_view_NetDiag(void)
   pSEQPrefs->setPrefBool("ShowNetStats", "Interface", !wasVisible);
 }
 
+void
+EQInterface::toggle_view_GuildList(void)
+{
+  bool wasVisible = ((m_guildListWindow != 0) && 
+		     (m_guildListWindow->isVisible()));
+
+  if (!wasVisible)
+    showGuildList();
+  else
+  {
+    // if it's not visible, hide it
+    m_guildListWindow->hide();
+
+    // remove its window menu
+    removeWindowMenu(m_guildListWindow);
+
+    // then delete it
+    delete m_guildListWindow;
+
+    // make sure to clear it's variable
+    m_guildListWindow = 0;
+  }
+
+  pSEQPrefs->setPrefBool("ShowGuildList", "Interface", !wasVisible);
+}
+
 bool 
 EQInterface::getMonitorOpCodeList(const QString& title, 
 				  QString& opCodeList)
@@ -4626,6 +4663,9 @@ void EQInterface::init_view_menu()
   menuBar()->setItemChecked(m_id_view_NetDiag, 
 			    (m_netDiag != 0) &&
 			    m_netDiag->isVisible());
+  menuBar()->setItemChecked(m_id_view_GuildListWindow, 
+			    (m_guildListWindow != 0) &&
+			    m_guildListWindow->isVisible());
   menuBar()->setItemChecked (m_id_view_SpellList, 
 			     (m_spellList != 0) &&
 			     m_spellList->isVisible());
@@ -5467,6 +5507,37 @@ void EQInterface::showNetDiag()
 
   // make sure it's visible
   m_netDiag->show();
+}
+
+void EQInterface::showGuildList(void)
+{
+  if (!m_guildListWindow)
+  {
+    m_guildListWindow = new GuildListWindow(m_player, m_guildShell, 
+					    0, "GuildList");
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_guildListWindow->preferenceName(),
+					    Bottom);
+    addDockWindow(m_guildListWindow, edge, true);
+    m_guildListWindow->undock();
+
+    connect(this, SIGNAL(restoreFonts(void)),
+	    m_guildListWindow, SLOT(restoreFont(void)));
+    connect(this, SIGNAL(saveAllPrefs(void)),
+	    m_guildListWindow, SLOT(savePrefs(void)));
+
+    m_guildListWindow->restoreSize();
+    
+    // move window to new position
+    if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
+      m_guildListWindow->restorePosition(); 
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_guildListWindow);
+  }
+
+  // make sure it's visible
+  m_guildListWindow->show();
 }
 
 void EQInterface::createFilteredSpawnLog(void)
