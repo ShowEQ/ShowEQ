@@ -95,17 +95,29 @@ void MapIconDialog::revert()
 
 void MapIconDialog::init()
 {
+  
     QString temp;
     // setup the map icons combo box
     for (int i = tIconTypeDrop; i <= tIconTypeMax; i++)
       m_mapIconCombo->insertItem(MapIcons::iconTypeName((MapIconType)i), i-1);
     
+    int sizeWH = m_mapIconCombo->height() - 8;
+    int size = sizeWH >> 1;
+    QPoint point(size, size);
     // setup the image styles
+    QPixmap pix(QSize(sizeWH+1, sizeWH+1));
     for (int i = tIconStyleNone; i <= tIconStyleMax; i++)
     {
+	pix.fill(white);
+	QPainter p(&pix);
+	p.setPen(QPen(black));
+	p.setBrush(QBrush(gray));
+	MapIcon::paintIconImage(MapIconStyle(i), p, point, size, sizeWH);
+	p.end();
+      
 	temp = MapIcon::iconStyleName((MapIconStyle)i);
-	m_imageImage->insertItem(temp, i);
-	m_highlightImage->insertItem(temp, i);
+	m_imageImage->insertItem(pix, temp, i);
+	m_highlightImage->insertItem(pix, temp, i);
     }
         
     // setup the image sizes
@@ -118,23 +130,33 @@ void MapIconDialog::init()
         
     const QString penStyleNames[] =
     {
-	"NoPen",
-	"Solid Line",
-	"Dash Line",
-	"Dot Line",
-	"Dash Dot Line",
-	"Dash Dot Dot Line"
+	"None",
+	"Solid",
+	"Dash",
+	"Dot",
+	"Dash Dot",
+	"Dash Dot Dot"
     };
     
     // setup pen style names
+    QPen pen(black);
     for (int i = NoPen; i <= DashDotDotLine; i++)
     {
-	m_imagePenStyle->insertItem(penStyleNames[i], i);
-	m_highlightPenStyle->insertItem(penStyleNames[i], i);
-	m_line0PenStyle->insertItem(penStyleNames[i], i);
-	m_line1PenStyle->insertItem(penStyleNames[i], i);
-	m_line2PenStyle->insertItem(penStyleNames[i], i);
-	m_walkPathPenStyle->insertItem(penStyleNames[i], i);
+	pix.fill(white);
+	QPainter p(&pix);
+	pen.setStyle(PenStyle(i));
+	p.setPen(pen);
+	p.setBrush(QBrush(gray));
+	p.drawLine(point.x() - size, point.y() - size,
+		   point.x() + size, point.y() + size);
+	p.end();
+
+	m_imagePenStyle->insertItem(pix, penStyleNames[i], i);
+	m_highlightPenStyle->insertItem(pix, penStyleNames[i], i);
+	m_line0PenStyle->insertItem(pix, penStyleNames[i], i);
+	m_line1PenStyle->insertItem(pix, penStyleNames[i], i);
+	m_line2PenStyle->insertItem(pix, penStyleNames[i], i);
+	m_walkPathPenStyle->insertItem(pix, penStyleNames[i], i);
     }
     
     const QString brushStyleNames[] = 
@@ -157,10 +179,19 @@ void MapIconDialog::init()
     };
  
     // setup brush style names
+    pen = QPen(black, 0, SolidLine, SquareCap, BevelJoin);
+    pen.setWidth(0);
     for (int i = NoBrush; i <= DiagCrossPattern; i++)
     {
-	m_imageBrushStyle->insertItem(brushStyleNames[i], i);
-	m_highlightBrushStyle->insertItem(brushStyleNames[i], i);
+	pix.fill(white);
+	QPainter p(&pix);
+	p.setPen(pen);
+	p.setBrush(QBrush(BrushStyle(i)));
+	p.drawRect(point.x() - size, point.y() - size, sizeWH, sizeWH);
+	p.end();
+
+	m_imageBrushStyle->insertItem(pix, brushStyleNames[i], i);
+	m_highlightBrushStyle->insertItem(pix, brushStyleNames[i], i);
     }
     
     // setup the display 
