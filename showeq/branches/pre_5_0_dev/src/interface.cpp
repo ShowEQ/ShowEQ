@@ -1481,6 +1481,14 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 			"considerStruct", SZC_Match,
 			m_messageShell, SLOT(consMessage(const uint8_t*, size_t, uint8_t)));
 
+     connect(m_player, SIGNAL(setExp(uint32_t, uint32_t, uint32_t, uint32_t, 
+				     uint32_t)),
+	     m_messageShell, SLOT(setExp(uint32_t, uint32_t, uint32_t, 
+					 uint32_t, uint32_t)));
+     connect(m_player, SIGNAL(newExp(uint32_t, uint32_t, uint32_t, uint32_t, 
+				     uint32_t, uint32_t)),
+	     m_messageShell, SLOT(newExp(uint32_t, uint32_t, uint32_t,  
+					 uint32_t, uint32_t, uint32_t)));
      connect(m_dateTimeMgr, SIGNAL(syncDateTime(const QDateTime&)),
 	     m_messageShell, SLOT(syncDateTime(const QDateTime&)));
 #if 0 // ZBTEMP
@@ -1666,13 +1674,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // interface statusbar slots
    connect (this, SIGNAL(newZoneName(const QString&)),
             m_stsbarZone, SLOT(setText(const QString&)));
-   connect (m_player, SIGNAL(expChangedStr(const QString&)),
-            m_stsbarExp, SLOT(setText(const QString&)));
    connect (m_player, SIGNAL(expAltChangedStr(const QString&)),
             m_stsbarExpAA, SLOT(setText(const QString&)));
    connect (m_packet, SIGNAL(stsMessage(const QString &, int)),
-            this, SLOT(stsMessage(const QString &, int)));
-   connect (m_player, SIGNAL(stsMessage(const QString &, int)),
             this, SLOT(stsMessage(const QString &, int)));
    connect (m_spawnShell, SIGNAL(numSpawns(int)),
             this, SLOT(numSpawns(int)));
@@ -1682,7 +1686,17 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
             this, SLOT(resetPacket(int, int)));
    connect (m_player, SIGNAL(newSpeed(int)),
             this, SLOT(newSpeed(int)));
-   
+     connect(m_player, SIGNAL(setExp(uint32_t, uint32_t, uint32_t, uint32_t, 
+				     uint32_t)),
+	     this, SLOT(setExp(uint32_t, uint32_t, uint32_t, 
+			       uint32_t, uint32_t)));
+   connect(m_player, SIGNAL(newExp(uint32_t, uint32_t, uint32_t, uint32_t, 
+				   uint32_t, uint32_t)),
+	   this, SLOT(newExp(uint32_t, uint32_t, uint32_t,  
+			     uint32_t, uint32_t, uint32_t)));
+   connect(m_player, SIGNAL(levelChanged(uint8_t)),
+	   this, SLOT(levelChanged(uint8_t)));
+
    if (m_expWindow != NULL)
    {
      // connect ExperienceWindow slots to Player signals
@@ -3697,6 +3711,66 @@ EQInterface::msgReceived(const QString &instring)
     newMessage(m_StringList.count() - 1);
 }
 
+void EQInterface::setExp(uint32_t totalExp, uint32_t totalTick,
+			  uint32_t minExpLevel, uint32_t maxExpLevel, 
+			  uint32_t tickExpLevel)
+{
+  if (m_stsbarExp)
+    m_stsbarExp->setText(QString("Exp: %1; %2 (%3/330)")
+			 .arg(Commanate(totalExp))
+			 .arg(Commanate(totalExp - minExpLevel))
+			 .arg(totalTick));
+}
+
+void EQInterface::newExp(uint32_t newExp, uint32_t totalExp, 
+			 uint32_t totalTick,
+			 uint32_t minExpLevel, uint32_t maxExpLevel, 
+			 uint32_t tickExpLevel)
+{
+  uint32_t intoExp = totalExp - minExpLevel;
+  uint32_t leftExp = maxExpLevel - totalExp;
+
+  if (newExp)
+  {
+    uint32_t needKills = leftExp / newExp;
+    // format a string for the status bar
+    if (m_stsbarStatus)
+      m_stsbarStatus->setText(QString("Exp: <%1; %2 (%3/330); %4 left [~ %5 kills]")
+			      .arg(Commanate(tickExpLevel))
+			      .arg(Commanate(totalExp - minExpLevel))
+			      .arg(totalTick)
+			      .arg(Commanate(leftExp))
+			      .arg(needKills));
+
+    if (m_stsbarExp)
+      m_stsbarExp->setText(QString("Exp: %1; %2 (%3/330) [%4]")
+			   .arg(Commanate(totalExp))
+			   .arg(Commanate(intoExp))
+			   .arg(totalTick).arg(needKills));
+  }
+  else
+  {
+    if (m_stsbarStatus)
+      m_stsbarStatus->setText(QString("Exp: <%1; %2 (%3/330); %4 left")
+			      .arg(Commanate(tickExpLevel))
+			      .arg(Commanate(totalExp - minExpLevel))
+			      .arg(totalTick).arg(Commanate(leftExp)));
+
+    if (m_stsbarExp)
+      m_stsbarExp->setText(QString("Exp: %1; %2 (%3/330)")
+			   .arg(Commanate(totalExp))
+			   .arg(Commanate(intoExp))
+			   .arg(totalTick));
+  }
+}
+
+void EQInterface::levelChanged(uint8_t level)
+{
+  QString tempStr;
+  tempStr.sprintf("New Level: %u", level);
+  if (m_stsbarStatus)
+    m_stsbarStatus->setText(tempStr);
+}
 
 //
 // TODO:  clear after timeout miliseconds

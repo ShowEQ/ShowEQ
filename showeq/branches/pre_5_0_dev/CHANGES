@@ -36,7 +36,7 @@ dohpaZ (11/?/03)
 + Added minimal support for importing maps (warning, this imports everything,
   so if not importing other SOE layers you will probably end up with duplicate
   lines, points, etc...).
-+ Move eqstr_{}.txt handling to its own class.
++ Moved eqstr_{}.txt handling to its own class.
 + Integrated patch# 844078 "Fix to class displays" by belith (UnGod).
 + Support rescaling the Z for a whole map to allow migration of old/borked 
   maps.

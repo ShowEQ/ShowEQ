@@ -106,6 +106,14 @@ class EQInterface:public QMainWindow
    void msgReceived(const QString &);
    void stsMessage(const QString &, int timeout = 0);
    void numSpawns(int);
+   void setExp(uint32_t totalExp, uint32_t totalTick,
+	       uint32_t minExpLevel, uint32_t maxExpLevel, 
+	       uint32_t tickExpLevel);
+   void newExp(uint32_t newExp, uint32_t totalExp, 
+	       uint32_t totalTick,
+	       uint32_t minExpLevel, uint32_t maxExpLevel, 
+	       uint32_t tickExpLevel);
+   void levelChanged(uint8_t level);
    void newSpeed(int);
    void numPacket(int, int);
    void resetPacket(int, int);
