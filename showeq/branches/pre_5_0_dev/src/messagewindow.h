@@ -12,12 +12,32 @@
 
 #include <stdint.h>
 
+#include <qtextedit.h>
+
+//----------------------------------------------------------------------
+// forward declarations
 class MessageEntry;
 class Messages;
 
-class QTextEdit;
 class QPopupMenu;
 
+//----------------------------------------------------------------------
+// MessageBrowser
+class MessageBrowser : public QTextEdit
+{
+  Q_OBJECT
+ public:
+  MessageBrowser(QWidget* parent = 0, const char* name = 0);
+
+ signals:
+  void rightClickedMouse(QMouseEvent* e);
+
+ protected:
+  bool eventFilter(QObject *o, QEvent *e);
+};
+
+//----------------------------------------------------------------------
+// MessageWindow
 class MessageWindow : public SEQWindow
 {
   Q_OBJECT
@@ -38,13 +58,13 @@ class MessageWindow : public SEQWindow
   void toggleUseColor(int);
   void refreshMessages();
 
- protected:
   void mousePressEvent(QMouseEvent* e);
 
+ protected:
   Messages* m_messages;
   QPopupMenu* m_menu;
   QPopupMenu* m_typeFilterMenu;
-  QTextEdit* m_messageWindow;
+  MessageBrowser* m_messageWindow;
   uint32_t m_enabledTypes;
   QColor m_defaultColor;
   QString m_dateTimeFormat;
