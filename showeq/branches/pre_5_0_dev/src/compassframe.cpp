@@ -14,7 +14,6 @@
 CompassFrame::CompassFrame(Player* player, QWidget* parent, const char* name)
   : SEQWindow("Compass", "ShowEQ - Compass", parent, name)
 {
-  setResizeEnabled(false);
   QVBoxLayout* layout = new QVBoxLayout(boxLayout());
   m_compass = new Compass (this, "compass");
   layout->addWidget(m_compass);

@@ -164,12 +164,6 @@ int main (int argc, char **argv)
    //   QApplication::setStyle( new QWindowsStyle );
    QApplication qapp (argc, argv);
 
-#if 1 // ZBTEMP
-   fprintf(stderr, "home='%s'\n", (const char*)QDir::home().absPath());
-   fprintf(stderr, "homedirpath='%s'\n", (const char*)QDir::homeDirPath());
-   fprintf(stderr, "rootdirpath='%s'\n", (const char*)QDir::rootDirPath());
-   fprintf(stderr, "currentdirpath='%s'\n", (const char*)QDir::currentDirPath());
-#endif
    // create the data location manager (with user data under ~/.showeq
    DataLocationMgr dataLocMgr(".showeq");
 
@@ -775,7 +769,7 @@ void displayVersion(void)
 void displayOptions(const char* progName)
 {
   /* The default help text */
-  printf ("Usage:\n  %s [<options>] [<client IP address>]\n\n", progName);
+  printf ("Usage:\n  %s [<options>]\n\n", progName);
   
   printf ("  -h, --help                            Shows this help\n");
   printf ("  -o CONFIGFILE                         Alternate showeq.xml pathname\n");

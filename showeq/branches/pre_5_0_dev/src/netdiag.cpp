@@ -79,7 +79,7 @@ NetDiag::NetDiag(EQPacket* packet, QWidget* parent, const char* name = NULL)
   tmpGrid->addWidget(new QLabel("Filter: ", this), row, col++);
   m_filterLabel = new QLabel(this);
   m_filterLabel->setText(m_packet->pcapFilter());
-  tmpGrid->addWidget(m_filterLabel, row, col++);
+  tmpGrid->addMultiCellWidget(m_filterLabel, row, row, col, col+5);
   
   // stream specific statistics
   row++; row++; col = 0;
