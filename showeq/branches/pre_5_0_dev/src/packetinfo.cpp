@@ -438,17 +438,8 @@ void EQPacketOPCodeDB::list(void) const
     if (!current->name().isNull())
       fprintf(stderr, " name='%s'", current->name().latin1());
 
-    //if (current->implicitLen())
-    {
-      if (current->implicitLen() != ::implicitlen(current->opcode()))
-      {
-	fprintf(stderr, " implicitlen='%d' (expected %d)", 
-		current->implicitLen(), ::implicitlen(current->opcode()));
-	exit(-1);
-      }
-      else if (current->implicitLen())
-	fprintf(stderr, " implicitlen='%d'", current->implicitLen());
-    }
+    if (current->implicitLen())
+      fprintf(stderr, " implicitlen='%d'", current->implicitLen());
     
     if (!current->updated().isNull())
       fprintf(stderr, " updated='%s'", current->updated().latin1());

@@ -125,9 +125,14 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
 
   if (!m_regexp.isValid())
   {
+#if (QT_VERSION > 0x030100)
     fprintf(stderr, "Filter Error: '%s' - %s\n",
 	    (const char*)m_regexp.pattern(), 
 	    (const char*)m_regexp.errorString());
+#else
+    fprintf(stderr, "Filter Error: '%s' - Is Invalid - Upgrade to Qt 3.1 or better for more info...\n",
+	    (const char*)m_regexp.pattern());
+#endif
   }
 }
 

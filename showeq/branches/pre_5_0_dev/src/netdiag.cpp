@@ -20,6 +20,7 @@ NetDiag::NetDiag(EQPacket* packet, QWidget* parent, const char* name = NULL)
     m_packet(packet),
     m_playbackSpeed(NULL)
 {
+  //  setResizeEnabled(false);
   // get preferences
   QGridLayout* tmpGrid = new QGridLayout(boxLayout(), 26, 9);
   tmpGrid->addColSpacing(3, 5);
