@@ -1034,10 +1034,10 @@ struct channelMessageStruct
 {
 /*0000*/ char     target[64];             // the target characters name
 /*0064*/ char     sender[64];             // The senders name 
-/*0128*/ uint8_t  language;               // Language
-/*0129*/ uint8_t  unknown0129[3];         // ***Placeholder
-/*0132*/ uint8_t  chanNum;                // Channel
-/*0133*/ int8_t   unknown0133[11];            // ***Placeholder
+/*0128*/ uint32_t language;               // Language
+/*0132*/ uint32_t chanNum;                // Channel
+/*0136*/ int8_t   unknown0136[4];        // ***Placeholder
+/*0140*/ uint32_t skillInLanguage;        // senders skill in language
 /*0144*/ char     message[0];             // Variable length message
 };
 
