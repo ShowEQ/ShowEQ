@@ -235,7 +235,7 @@ void MessageShell::randomRequest(const uint8_t* data)
   const randomReqStruct* randr = (const randomReqStruct*)data;
   QString tempStr;
 
-  tempStr.sprintf("Request random number between %d and %d\n",
+  tempStr.sprintf("Request random number between %d and %d",
 		  randr->bottom,
 		  randr->top);
   
@@ -247,7 +247,7 @@ void MessageShell::random(const uint8_t* data)
   const randomStruct* randr = (const randomStruct*)data;
   QString tempStr;
 
-  tempStr.sprintf("Random number %d rolled between %d and %d by %s\n",
+  tempStr.sprintf("Random number %d rolled between %d and %d by %s",
 		  randr->result,
 		  randr->bottom,
 		  randr->top,
@@ -505,10 +505,10 @@ void MessageShell::interruptSpellCast(const uint8_t* data)
 
   QString tempStr;
   if (item != NULL)
-    tempStr.sprintf("%s(%d): %s\n", 
+    tempStr.sprintf("%s(%d): %s", 
 		    (const char*)item->name(), icast->spawnId, icast->message);
   else
-    tempStr.sprintf("spawn(%d): %s\n", 
+    tempStr.sprintf("spawn(%d): %s", 
 		    icast->spawnId, icast->message);
 
   m_messages->addMessage(MT_Spell, tempStr);
@@ -548,7 +548,7 @@ void MessageShell::groupInfo(const uint8_t* data)
 {
   const groupInfoStruct* gmem = (const groupInfoStruct*)data;
   QString tempStr;
-  tempStr.sprintf ("Member: %s - %s\n", 
+  tempStr.sprintf ("Member: %s - %s", 
 		   gmem->yourname, gmem->membername);
   m_messages->addMessage(MT_Group, tempStr);
 }
@@ -557,7 +557,7 @@ void MessageShell::groupInvite(const uint8_t* data)
 {
   const groupInviteStruct* gmem = (const groupInviteStruct*)data;
   QString tempStr;
-  tempStr.sprintf ("Invite: %s invites %s\n", 
+  tempStr.sprintf ("Invite: %s invites %s", 
 		   gmem->membername, gmem->yourname);
   m_messages->addMessage(MT_Group, tempStr);
 }
@@ -566,7 +566,7 @@ void MessageShell::groupDecline(const uint8_t* data)
 {
   const groupDeclineStruct* gmem = (const groupDeclineStruct*)data;
   QString tempStr;
-  tempStr.sprintf ("Invite: %s declines invite from %s (%i)\n", 
+  tempStr.sprintf ("Invite: %s declines invite from %s (%i)", 
 		   gmem->membername, gmem->yourname, gmem->reason);
   m_messages->addMessage(MT_Group, tempStr);
 }
@@ -575,7 +575,7 @@ void MessageShell::groupAccept(const uint8_t* data)
 {
   const groupAcceptStruct* gmem = (const groupAcceptStruct*)data;
   QString tempStr;
-  tempStr.sprintf ("Invite: %s accepts invite from %s\n", 
+  tempStr.sprintf ("Invite: %s accepts invite from %s", 
 		   gmem->membername, gmem->yourname);
   m_messages->addMessage(MT_Group, tempStr);
 }
@@ -584,7 +584,7 @@ void MessageShell::groupDelete(const uint8_t* data)
 {
   const groupDeleteStruct* gmem = (const groupDeleteStruct*)data;
   QString tempStr;
-  tempStr.sprintf ("Delete: %s - %s\n", 
+  tempStr.sprintf ("Delete: %s - %s", 
 		   gmem->membername, gmem->yourname);
   m_messages->addMessage(MT_Group, tempStr);
 }
