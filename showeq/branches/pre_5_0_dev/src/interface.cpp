@@ -1496,6 +1496,13 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 	     m_messageShell, SLOT(newAltExp(uint32_t, uint32_t, uint32_t, uint32_t,
 					    uint32_t, uint32_t)));
 
+     connect(m_spawnShell, SIGNAL(addItem(const Item*)),
+	     m_messageShell, SLOT(addItem(const Item*)));
+     connect(m_spawnShell, SIGNAL(delItem(const Item*)),
+	     m_messageShell, SLOT(delItem(const Item*)));
+     connect(m_spawnShell, SIGNAL(killSpawn(const Item*, const Item*, uint16_t)),
+	     m_messageShell, SLOT(killSpawn(const Item*)));
+
      connect(m_dateTimeMgr, SIGNAL(syncDateTime(const QDateTime&)),
 	     m_messageShell, SLOT(syncDateTime(const QDateTime&)));
 #if 0 // ZBTEMP
@@ -1559,16 +1566,16 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // connect EQInterface slots to SpawnShell signals
    connect(m_spawnShell, SIGNAL(addItem(const Item*)),
 	   this, SLOT(addItem(const Item*)));
-   connect(m_spawnShell, SIGNAL(handleAlert(const Item*, alertType)),
-	   this, SLOT(handleAlert(const Item*, alertType)));
-   connect(m_spawnShell, SIGNAL(spawnConsidered(const Item*)),
-	   this, SLOT(spawnConsidered(const Item*)));
    connect(m_spawnShell, SIGNAL(delItem(const Item*)),
 	   this, SLOT(delItem(const Item*)));
    connect(m_spawnShell, SIGNAL(killSpawn(const Item*, const Item*, uint16_t)),
 	   this, SLOT(killSpawn(const Item*)));
    connect(m_spawnShell, SIGNAL(changeItem(const Item*, uint32_t)),
 	   this, SLOT(changeItem(const Item*)));
+   connect(m_spawnShell, SIGNAL(handleAlert(const Item*, alertType)),
+	   this, SLOT(handleAlert(const Item*, alertType)));
+   connect(m_spawnShell, SIGNAL(spawnConsidered(const Item*)),
+	   this, SLOT(spawnConsidered(const Item*)));
 
    // connect the SpawnShell slots to Packet signals
    m_packet->connect2("OP_GroundSpawn", SP_Zone, DIR_Server,
@@ -4084,13 +4091,6 @@ void EQInterface::addItem(const Item* item)
 
   if (filterFlags & FILTER_FLAG_LOCATE)
   {
-    printf ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
-    printf ("LocateSpawn: %s spawned LOC %dy, %dx, %dz at %s",
-	    (const char*)item->name(), 
-	    item->y(), item->x(), item->z(),
-	    (const char*)item->spawnTimeStr());
-    printf ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n");
-    
     if (showeq_params->spawnfilter_loglocates)
       logFilteredSpawn(item, FILTER_FLAG_LOCATE);
 
@@ -4110,11 +4110,6 @@ void EQInterface::addItem(const Item* item)
   
   if (filterFlags & FILTER_FLAG_CAUTION)
   {
-    printf ("CautionSpawn: %s spawned LOC %dy, %dx, %dz at %s\n", 
-	    (const char*)item->name(), 
-	    item->y(), item->x(), item->z(),
-	    (const char*)item->spawnTimeStr());
-    
     if (showeq_params->spawnfilter_logcautions)
       logFilteredSpawn(item, FILTER_FLAG_CAUTION);
 
@@ -4126,11 +4121,6 @@ void EQInterface::addItem(const Item* item)
   
   if (filterFlags & FILTER_FLAG_HUNT)
   {
-    printf ("HuntSpawn: %s spawned LOC %dy, %dx, %dz at %s\n", 
-	    (const char*)item->name(), 
-	    item->y(), item->x(), item->z(),
-	    (const char*)item->spawnTimeStr());
-    
     if (showeq_params->spawnfilter_loghunts)
       logFilteredSpawn(item, FILTER_FLAG_HUNT);
 
@@ -4142,11 +4132,6 @@ void EQInterface::addItem(const Item* item)
   
   if (filterFlags & FILTER_FLAG_DANGER)
   {
-    printf ("DangerSpawn: %s spawned LOC %dy, %dx, %dz at %s\n", 
-	    (const char*)item->name(), 
-	    item->y(), item->x(), item->z(),
-	    (const char*)item->spawnTimeStr());
-    
     if (showeq_params->spawnfilter_logdangers)
       logFilteredSpawn(item, FILTER_FLAG_DANGER);
 
@@ -4174,10 +4159,6 @@ void EQInterface::killSpawn(const Item* item)
   if (item == NULL)
     return;
 
-  if (item->id() == m_player->id())
-    printf("Player died at y:%d, x:%d, z:%d\n", item->y(), item->x(),
-      item->z());
-
   if (m_selectedSpawn != item)
     return;
 
@@ -4199,71 +4180,6 @@ void EQInterface::changeItem(const Item* item)
 void EQInterface::handleAlert(const Item* item, 
 			      alertType type)
 {
-  QString prefix;
-  switch (type)
-    {
-    case tNewSpawn:
-      prefix = "Spawn:";
-      break;
-    case tFilledSpawn:
-      prefix = "Filled:";
-      break;
-    case tKillSpawn:
-      prefix = "Died:";
-      break;
-    case tDelSpawn:
-      prefix = "DeSpawn:";
-      break;
-    default:
-      prefix = "WTF:";
-    }
-
-  QString msg;
-  if (pSEQPrefs->getPrefBool("AlertInfo", "Filters"))
-  {
-    long timeval;
-    struct tm *tp;
-    
-    time(&timeval);
-    tp=localtime(&timeval);
-
-    QString temp;
-
-    msg = prefix + item->name() + "/" + item->raceString() 
-      + "/" + item->classString();
-
-    const Spawn* spawn = spawnType(item);
-
-    if (spawn)
-      msg += QString("/") + spawn->lightName();
-
-    // aditional info or new spawns
-    if (type == tNewSpawn)
-    {
-      if (spawn)
-	temp.sprintf(" [%d-%d-%d %d:%d:%d] (%d,%d,%d) LVL %d, HP %d/%d", 
-		     1900 + tp->tm_year, tp->tm_mon, tp->tm_mday,
-		     tp->tm_hour, tp->tm_min, tp->tm_sec,
-		     item->x(), item->y(), item->z(),
-		     spawn->level(), spawn->HP(), spawn->maxHP());
-      else
-	temp.sprintf(" [%d-%d-%d %d:%d:%d] (%d,%d,%d)", 
-		     1900 + tp->tm_year, tp->tm_mon, tp->tm_mday,
-		     tp->tm_hour, tp->tm_min, tp->tm_sec,
-		     item->x(), item->y(), item->z());
-    }
-    else
-      temp.sprintf(" [%d-%d-%d %d:%d:%d]", 
-		    1900 + tp->tm_year, tp->tm_mon, tp->tm_mday,
-		    tp->tm_hour, tp->tm_min, tp->tm_sec);
-      
-    msg += temp;
-  }
-  else
-    msg = prefix + item->name();
-
-  emit msgReceived(msg);
-
   // Gereric system beep for those without a soundcard
   //
   if (!pSEQPrefs->getPrefBool("Audio", "Filters"))
@@ -4282,10 +4198,6 @@ void EQInterface::handleAlert(const Item* item,
     case tNewSpawn:
       audioCmd = "SpawnAudioCommand";
       audioCue = "Spawned";
-      break;
-    case tFilledSpawn:
-      audioCmd = "SpawnAudioCommand";
-      audioCue = "Filled";
       break;
     case tKillSpawn:
       audioCmd = "DeathAudioCommand";

@@ -53,10 +53,14 @@ enum MessageType
   MT_Spell,
   MT_Zone,
   MT_Inspect,
-  MT_Alert,
   MT_Player,
   MT_Consider,
-  MT_Max = MT_Consider,
+  MT_Alert,
+  MT_Danger,
+  MT_Caution,
+  MT_Hunt,
+  MT_Locate,
+  MT_Max = MT_Locate,
 };
 
 //----------------------------------------------------------------------

@@ -11,6 +11,8 @@
 #ifndef _MESSAGESHELL_H_
 #define _MESSAGESHELL_H_
 
+#include "messages.h"
+
 #include <stdint.h>
 
 #include <qobject.h>
@@ -18,11 +20,11 @@
 class QString;
 class QDateTime;
 
-class Messages;
 class EQStr;
 class Spells;
 class ZoneMgr;
 class SpawnShell;
+class Item;
 class Player;
 
 struct ClientZoneEntryStruct;
@@ -93,6 +95,12 @@ class MessageShell : public QObject
 		  uint32_t maxExp, uint32_t tickExp, uint32_t aapoints);
    void newAltExp(uint32_t newExp, uint32_t totalExp, uint32_t totalTick, 
 		  uint32_t maxExp, uint32_t tickExp, uint32_t aapoints);
+
+   void addItem(const Item* item);
+   void delItem(const Item* item);
+   void killSpawn(const Item* item);
+   void filterMessage(const QString& prefix, MessageType type,
+		      const Item* item);
 
  protected:
    Messages* m_messages;
