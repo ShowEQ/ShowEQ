@@ -717,7 +717,8 @@ void MapMgr::dumpInfo(QTextStream& out)
 // MapMenu
 MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
   : QPopupMenu(parent, name),
-    m_map(map)
+    m_map(map),
+    m_mapIcons(map->mapIcons())
 {
   QString preferenceName = m_map->preferenceName();
 
@@ -801,7 +802,6 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
   m_id_filtered = subMenu->insertItem("Filtered", this, SLOT(toggle_filtered(int)));
   m_id_map = subMenu->insertItem("Map Lines", this, SLOT(toggle_map(int)));
   m_id_velocity = subMenu->insertItem("Velocity Lines",	this, SLOT(toggle_velocity(int)));
-  m_id_lineToSelectedSpawnPoint = subMenu->insertItem("Line To Selected SpawnPoint",	this, SLOT(toggle_lineToSelectedSpawnPoint(int)));
   m_id_animate = subMenu->insertItem("Animate Spawns", this, SLOT(toggle_animate(int)));
   m_id_player = subMenu->insertItem("Player", this, SLOT(toggle_player(int)));
   m_id_playerBackground = subMenu->insertItem("Player Background", this, SLOT(toggle_playerBackground(int)));
@@ -859,9 +859,9 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
 
   subMenu = new QPopupMenu;
   m_drawSizeSpinBox = new QSpinBox(1, 6, 1, subMenu);
-  m_drawSizeSpinBox->setValue(m_map->drawSize());
+  m_drawSizeSpinBox->setValue(m_mapIcons->drawSize());
   connect(m_drawSizeSpinBox, SIGNAL(valueChanged(int)),
-	  m_map, SLOT(setDrawSize(int)));
+	  m_mapIcons, SLOT(setDrawSize(int)));
   m_id_drawSize = subMenu->insertItem(m_drawSizeSpinBox);
   m_id_drawSizeMenu = insertItem("Draw Size", subMenu);
 
@@ -869,9 +869,9 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
   QHBox* tmpHBox = new QHBox(subMenu);
   m_fovSpinBoxLabel = new QLabel("Distance:", tmpHBox);
   m_fovSpinBox = new QSpinBox(20, 1200, 20, tmpHBox, "FOV");
-  m_fovSpinBox->setValue(m_map->fovDistance());
+  m_fovSpinBox->setValue(m_mapIcons->fovDistance());
   connect(m_fovSpinBox, SIGNAL(valueChanged(int)),
-	  m_map, SLOT(setFOVDistance(int)));
+	  m_mapIcons, SLOT(setFOVDistance(int)));
   m_id_FOVDistance = subMenu->insertItem(tmpHBox);
   m_id_FOVColor = subMenu->insertItem("Color...",
 				      this, SLOT(select_fovColor(int)));
@@ -928,7 +928,7 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
 
   subMenu = new QPopupMenu;
   m_zoomDefaultSpinBox = new QSpinBox(1, 32, 1, subMenu);
-  m_zoomDefaultSpinBox->setValue(m_map->drawSize());
+  m_zoomDefaultSpinBox->setValue(m_mapIcons->drawSize());
   connect(m_zoomDefaultSpinBox, SIGNAL(valueChanged(int)),
 	  m_map, SLOT(setZoomDefault(int)));
   m_id_zoomDefault = subMenu->insertItem(m_zoomDefaultSpinBox);
@@ -973,7 +973,6 @@ void MapMenu::init_Menu(void)
   setItemChecked(m_id_filtered, m_map->showFiltered());
   setItemChecked(m_id_map, m_map->showLines());
   setItemChecked(m_id_velocity, m_map->showVelocityLines());
-  setItemChecked(m_id_lineToSelectedSpawnPoint, m_map->showLineToSelectedSpawnPoint());
   setItemChecked(m_id_animate, m_map->animate());
   setItemChecked(m_id_player, m_map->showPlayer());
   setItemChecked(m_id_playerBackground, m_map->showPlayerBackground());
@@ -986,11 +985,11 @@ void MapMenu::init_Menu(void)
   setItemChecked(m_id_unknownSpawns, m_map->showUnknownSpawns());
   setItemChecked(m_id_drops, m_map->showDrops());
   setItemChecked(m_id_doors, m_map->showDoors());
-  setItemChecked(m_id_spawnNames, m_map->showSpawnNames());
+  setItemChecked(m_id_spawnNames, m_mapIcons->showSpawnNames());
   setItemChecked(m_id_highlightConsideredSpawns, 
 		 m_map->highlightConsideredSpawns());
   setItemChecked(m_id_walkPath, m_map->walkPathShowSelect());
-  setItemChecked(m_id_npcWalkPaths, m_map->showNPCWalkPaths());
+  setItemChecked(m_id_npcWalkPaths, m_mapIcons->showNPCWalkPaths());
   setItemChecked(m_id_mapImage, m_map->showBackgroundImage());
   setItemChecked(m_id_deityPvP, m_map->deityPvP());
   setItemChecked(m_id_racePvP, m_map->racePvP());
@@ -1003,9 +1002,9 @@ void MapMenu::init_Menu(void)
   setItemChecked(m_id_mapOptimization_Normal, (method == tMap_NormalOptim));
   setItemChecked(m_id_mapOptimization_Best, (method == tMap_BestOptim));
 
-  m_drawSizeSpinBox->setValue(m_map->drawSize());
+  m_drawSizeSpinBox->setValue(m_mapIcons->drawSize());
 
-  m_fovSpinBox->setValue(m_map->fovDistance());
+  m_fovSpinBox->setValue(m_mapIcons->fovDistance());
 
   int fovStyle = m_map->fovStyle();
   setItemChecked(m_id_FOVNoBrush, (fovStyle == Qt::NoBrush));
@@ -1051,7 +1050,7 @@ void MapMenu::init_fovMenu(void)
   else 
     m_fovSpinBoxLabel->setText("Distance:");
 
-  int fovDistance = m_map->fovDistance();
+  int fovDistance = m_mapIcons->fovDistance();
   m_fovSpinBox->setRange(newFOVDistMin, newFOVDistMax);
   m_fovSpinBox->setLineStep(newFOVDistInc);
   m_fovSpinBox->setValue(fovDistance);
@@ -1104,11 +1103,6 @@ void MapMenu::toggle_racePvP(int itemId)
 void MapMenu::toggle_velocity(int itemId)
 {
   m_map->setShowVelocityLines(!m_map->showVelocityLines());
-}
-
-void MapMenu::toggle_lineToSelectedSpawnPoint(int itemId)
-{
-  m_map->setShowLineToSelectedSpawnPoint(!m_map->showLineToSelectedSpawnPoint());
 }
 
 void MapMenu::toggle_animate(int itemId)
@@ -1173,7 +1167,7 @@ void MapMenu::toggle_doors(int itemId)
 
 void MapMenu::toggle_spawnNames(int itemId)
 {
-  m_map->setShowSpawnNames(!m_map->showSpawnNames());
+  m_mapIcons->setShowSpawnNames(!m_mapIcons->showSpawnNames());
 }
 
 void MapMenu::toggle_highlightConsideredSpawns(int itemId)
@@ -1188,7 +1182,7 @@ void MapMenu::toggle_walkPath(int itemId)
 
 void MapMenu::toggle_npcWalkPaths(int itemId)
 {
-  m_map->setShowNPCWalkPaths(!m_map->showNPCWalkPaths());
+  m_mapIcons->setShowNPCWalkPaths(!m_mapIcons->showNPCWalkPaths());
 }
 
 void MapMenu::toggle_mapImage(int itemId)
@@ -1297,7 +1291,7 @@ void MapMenu::select_fovMode(int itemId)
     m_map->setFOVMode(newFOVMode);
 
     if (newFOVDistance != 0)
-      m_map->setFOVDistance(newFOVDistance);
+      m_mapIcons->setFOVDistance(newFOVDistance);
 
     init_fovMenu();
   }
@@ -1342,6 +1336,9 @@ Map::Map(MapMgr* mapMgr,
   m_mapIcons = new MapIcons(player, preferenceName + "Icons", 
 			    this, "mapicons");
 
+  connect(m_mapIcons, SIGNAL(changed()),
+	  this, SLOT(reAdjustAndRefreshMap()));
+
   // load the map icon information
   m_mapIcons->load();
 
@@ -1373,9 +1370,6 @@ Map::Map(MapMgr* mapMgr,
 
   tmpPrefString = "VelocityLines";
   m_showVelocityLines = pSEQPrefs->getPrefBool(tmpPrefString, prefString, true);
-
-  tmpPrefString = "ShowLineToSelectedSpawnPoint";
-  m_showLineToSelectedSpawnPoint = pSEQPrefs->getPrefBool(tmpPrefString, prefString, false);
 
   tmpPrefString = "SpawnDepthFilter";
   m_spawnDepthFilter = pSEQPrefs->getPrefBool(tmpPrefString, prefString, false);
@@ -1586,7 +1580,7 @@ Map::Map(MapMgr* mapMgr,
 	  this, SLOT(delItem(const Item*)));
   connect(m_spawnShell, SIGNAL(clearItems()),
 	  this, SLOT(clearItems()));
-  connect (m_spawnShell, SIGNAL(changeItem(const Item*, uint32_t)),
+  connect (m_spawnShell,SIGNAL(changeItem(const Item*, uint32_t)),
 	   this, SLOT(changeItem(const Item*, uint32_t)));
 
   m_timer->start(1000/m_frameRate, false);
@@ -2123,24 +2117,6 @@ void Map::setFrameRate(int val)
   }
 }
 
-void Map::setDrawSize(int val) 
-{ 
-  m_mapIcons->setDrawSize(val);
-  
-  if(!m_cacheChanges)
-    refreshMap ();
-}
-
-void Map::setFOVDistance(int val) 
-{ 
-  m_mapIcons->setFOVDistance(val);
-
-  reAdjust();
-
-  if(!m_cacheChanges)
-    refreshMap ();
-}
-
 void Map::setFOVStyle(int val)
 {
   if ((val < Qt::NoBrush) || (val > Qt::DiagCrossPattern))
@@ -2275,31 +2251,12 @@ void Map::setShowDoors(bool val)
     refreshMap ();
 }
 
-void Map::setShowSpawnNames(bool val) 
-{ 
-  m_mapIcons->setShowSpawnNames(val); 
-
-  if(!m_cacheChanges)
-    refreshMap ();
-}
-
 void Map::setShowVelocityLines(bool val) 
 { 
   m_showVelocityLines = val; 
   
   QString tmpPrefString = "VelocityLines";
   pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_showVelocityLines);
-
-  if(!m_cacheChanges)
-    refreshMap ();
-}
-
-void Map::setShowLineToSelectedSpawnPoint(bool val) 
-{ 
-  m_showLineToSelectedSpawnPoint = val; 
-  
-  QString tmpPrefString = "ShowLineToSelectedSpawnPoint";
-  pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_showLineToSelectedSpawnPoint);
 
   if(!m_cacheChanges)
     refreshMap ();
@@ -2383,14 +2340,6 @@ void Map::setWalkPathShowSelect(bool val)
 
   QString tmpPrefString = "WalkPathShowSelect";
   pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_walkpathshowselect);
-  
-  if(!m_cacheChanges)
-    refreshMap ();
-}
-
-void Map::setShowNPCWalkPaths(bool val) 
-{ 
-  m_mapIcons->setShowNPCWalkPaths(val);
   
   if(!m_cacheChanges)
     refreshMap ();
@@ -2785,15 +2734,24 @@ void Map::resizeEvent (QResizeEvent *qs)
    QWidget::resizeEvent(qs);
 }
 
-void Map::refreshMap (void)
+void Map::reAdjustAndRefreshMap(void)
+{
+  // first,, readjust the map state
+  reAdjust();
+
+  // then, repaint the map
+   repaint(mapRect(), FALSE);
+}
+
+void Map::refreshMap(void)
 {
 #ifdef DEBUGMAP
    debug ("refreshMap()");
 #endif /* DEBUGMAP */
-   repaint (mapRect (), FALSE);
+   repaint(mapRect(), FALSE);
 }
 
-void Map::reAdjust ()
+void Map::reAdjust()
 {
   switch (m_followMode)
   {

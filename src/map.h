@@ -221,7 +221,6 @@ class MapMenu : public QPopupMenu
   void toggle_filtered(int itemId);
   void toggle_map(int itemId);
   void toggle_velocity(int itemId);
-  void toggle_lineToSelectedSpawnPoint(int itemId);
   void toggle_animate(int itemId);
   void toggle_player(int itemId);
   void toggle_playerBackground(int itemId);
@@ -258,6 +257,7 @@ class MapMenu : public QPopupMenu
  protected:
   // pointer to the Map this menu controls
   Map* m_map;
+  MapIcons* m_mapIcons;
 
   QLabel* m_fovSpinBoxLabel;
   QSpinBox* m_fovSpinBox;
@@ -282,7 +282,6 @@ class MapMenu : public QPopupMenu
   int m_id_filtered;
   int m_id_map;
   int m_id_velocity;
-  int m_id_lineToSelectedSpawnPoint;
   int m_id_animate;
   int m_id_player;
   int m_id_playerBackground;
@@ -364,6 +363,7 @@ class Map :public QWidget
   QSizePolicy sizePolicy() const; // size policy
   QRect getRect()         { return rect(); }
   MapMgr* mapMgr() const { return m_mapMgr; }
+  MapIcons* mapIcons() const { return m_mapIcons; }
 
   unsigned char getZEM (void);
   void          setZEM (unsigned char newZEM);
@@ -379,8 +379,6 @@ class Map :public QWidget
   const Item* selectedItem() { return m_selectedItem; }
   FollowMode followMode() const { return m_followMode; }
   int frameRate() const { return m_frameRate; }
-  int drawSize() const { return m_mapIcons->drawSize(); }
-  uint16_t fovDistance() const { return m_mapIcons->fovDistance(); }
   int fovStyle() const { return m_fovStyle; }
   const QColor& fovColor() const { return m_fovColor; }
   FOVMode fovMode() const { return m_fovMode; }
@@ -393,10 +391,8 @@ class Map :public QWidget
   bool showUnknownSpawns() const { return m_showUnknownSpawns; }
   bool showDrops() const { return m_showDrops; }
   bool showDoors() const { return m_showDoors; }
-  bool showSpawnNames() const { return m_mapIcons->showSpawnNames(); }
   bool showFiltered() const { return m_showFiltered; }
   bool showVelocityLines() const { return m_showVelocityLines; }
-  bool showLineToSelectedSpawnPoint() const { return m_showLineToSelectedSpawnPoint; }
 #ifdef DEBUG
   bool showDebugInfo() const { return m_showDebugInfo; }
 #endif
@@ -406,7 +402,6 @@ class Map :public QWidget
   bool highlightConsideredSpawns() const { return m_highlightConsideredSpawns; }
   bool showTooltips() const { return m_showTooltips; }
   bool walkPathShowSelect() const { return m_walkpathshowselect; }
-  bool showNPCWalkPaths() const { return m_mapIcons->showNPCWalkPaths(); }
   bool deityPvP() const { return m_deityPvP; }
   bool racePvP() const { return m_racePvP; }
   
@@ -473,6 +468,7 @@ class Map :public QWidget
   void viewTarget();
   void viewLock();
 
+  void reAdjustAndRefreshMap(void);
   void reAdjust (void);
   void refreshMap(void);
   
@@ -480,8 +476,6 @@ class Map :public QWidget
   void setFollowMode(FollowMode mode);
   void setShowFiltered(bool val);
   void setFrameRate(int val);
-  void setDrawSize(int val);
-  void setFOVDistance(int val);
   void setFOVStyle(int val);
   void setFOVColor(const QColor& color);
   void setFOVMode(FOVMode mode);
@@ -495,9 +489,7 @@ class Map :public QWidget
   void setShowUnknownSpawns(bool val);
   void setShowDrops(bool val);
   void setShowDoors(bool val);
-  void setShowSpawnNames(bool val);
   void setShowVelocityLines(bool val);
-  void setShowLineToSelectedSpawnPoint(bool val);
   void setShowDebugInfo(bool val);
   void setCacheChanges(bool val);
   void setAnimate(bool val);
@@ -505,7 +497,6 @@ class Map :public QWidget
   void setHighlightConsideredSpawns(bool val);
   void setShowTooltips(bool val);
   void setWalkPathShowSelect(bool val);
-  void setShowNPCWalkPaths(bool val);
   void setDeityPvP(bool val);
   void setRacePvP(bool val);
   
@@ -635,7 +626,6 @@ private:
    bool m_showSpawnNames;
    bool m_showFiltered;
    bool m_showVelocityLines;
-   bool m_showLineToSelectedSpawnPoint;
 #ifdef DEBUG
    bool m_showDebugInfo;
 #endif

@@ -2212,7 +2212,7 @@
 <!-- Item Database Options -->
  <section name="ItemDB" >
   <property name="Enabled" >
-   <bool value="true" />
+   <bool value="false" />
    <comment>Enables ItemDB, setting to false will disable all ItemDB functionality within ShowEQ</comment>
   </property>
   <property name="DatabasesEnabled" >

@@ -58,6 +58,7 @@ dohpaZ (12/5/03)
   XML preference system.
 + Fixed the spawn logger to log the adjusted x/y/z values for zone/new spawns..
 + Found zonePoint in doorStruct.  
++ Made itemdb support default to disabled until the new version is in-place.
 + zones.h, changed 162 to be ssratemple and 182 to be nedaria, thanks to 
   darkgrue and uRit1u2CBBA= respectively.
 + Integrated patch# 832080 "freebsd-stable compile 10/24/03" from jonseq
