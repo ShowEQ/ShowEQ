@@ -23,7 +23,6 @@ AddStruct(newZoneStruct);
 AddStruct(charProfileStruct);
 AddStruct(playerAAStruct);
 AddStruct(spawnStruct);
-AddStruct(zoneSpawnsStruct);
 AddStruct(doorStruct);
 AddStruct(makeDropStruct);
 AddStruct(zonePointStruct);

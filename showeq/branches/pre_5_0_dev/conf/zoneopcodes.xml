@@ -391,7 +391,7 @@
     </opcode>
     <opcode id="018f" name="OP_SwapSpell" updated="11/05/03">
         <comment>old TradeSpellBookSlotsCode</comment>
-        <payload dir="server" typename="tradeSpellBookSlotsStruct" sizechecktype="match"/>
+        <payload dir="both" typename="tradeSpellBookSlotsStruct" sizechecktype="match"/>
     </opcode>
     <opcode id="0190" name="OP_BecomePK" updated="11/05/03">
         <comment></comment>

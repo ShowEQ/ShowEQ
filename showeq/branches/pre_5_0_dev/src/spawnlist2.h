@@ -1,5 +1,5 @@
 /*
- * spawnlist.h
+ * spawnlist2.h
  *
  * ShowEQ Distributed under GPL
  * http://www.hackersquest.gomp.ch/
