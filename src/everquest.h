@@ -101,7 +101,7 @@
 #define RTEAM_OTHER			5
 
 //Maximum limits of certain types of data
-#define MAX_KNOWN_SKILLS                74
+#define MAX_KNOWN_SKILLS                75
 #define MAX_KNOWN_LANGS                 25
 #define MAX_SPELLBOOK_SLOTS             400
 #define MAX_GROUP_MEMBERS               6
@@ -559,8 +559,8 @@ struct charProfileStruct
 /*2964*/ uint32_t  copper_cursor;      // Copper Pieces on cursor
 /*2968*/ uint32_t  platinum_shared;    // Shared platinum pieces
 /*2972*/ uint8_t   unknown2972[20];    // Unknown - all zero
-/*2992*/ uint32_t  skills[74];         // List of skills (MAX_KNOWN_SKILLS)
-/*3288*/ uint8_t   unknown3288[412];   //
+/*2992*/ uint32_t  skills[75];         // List of skills (MAX_KNOWN_SKILLS)
+/*3288*/ uint8_t   unknown3288[408];   //
 /*3700*/ uint16_t  zoneId;             // see zones.h
 /*3702*/ uint16_t  zoneInstance;       // 
 /*3704*/ spellBuff buffs[15];          // Buffs currently on the player
