@@ -342,7 +342,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    section = "Interface";
 
    // Initialize the experience window;
-   m_expWindow = new ExperienceWindow(m_dataLocationMgr, m_player, m_groupMgr);
+   m_expWindow = new ExperienceWindow(m_dataLocationMgr, m_player, m_groupMgr,
+				      m_zoneMgr);
    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
 					   m_expWindow->preferenceName(),
 					   Bottom);
