@@ -6,7 +6,7 @@ SUBDIRS = src conf
 include doxygen.am
 
 EXTRA_DIST = BUGS ChangeLog FAQ INSTALL.newbies Makefile.dist README.libEQ \
-ROADMAP showeq.1 TODO $(DX_CONFIG)
+ROADMAP showeq.1 TODO showeq.kdevelop Doxyfile $(DX_CONFIG)
 
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 Makefile.in ltconfig libqt2.dbg libqt3.dbg Makefile.dist.dbg \
