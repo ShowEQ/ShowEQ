@@ -12,12 +12,16 @@
 #include "guildshell.h"
 #include "player.h"
 #include "zonemgr.h"
+#include "main.h"
 
 #include <qfont.h>
 #include <qpainter.h>
 #include <qfontdialog.h>
 #include <qinputdialog.h>
 #include <qpopupmenu.h>
+#include <qlineedit.h>
+#include <qlabel.h>
+#include <qlayout.h>
 
 //----------------------------------------------------------------------
 // GuildListItem
@@ -120,7 +124,8 @@ GuildListWindow::GuildListWindow(Player* player,
     m_player(player),
     m_guildShell(guildShell), 
     m_guildListItemDict(709),
-    m_menu(0)
+    m_menu(0),
+    m_membersOn(0)
 {
   m_guildListItemDict.setAutoDelete(false);
 
@@ -131,12 +136,32 @@ GuildListWindow::GuildListWindow(Player* player,
   // get whether to keep the list sorted or not
   m_keepSorted = pSEQPrefs->getPrefBool("KeepSorted", preferenceName(), false);
 
+  QBoxLayout* vLayout = new QVBoxLayout(boxLayout());
+  QHBoxLayout* hLayout= new QHBoxLayout(vLayout);
+
+  // Guild Name
+  m_guildName = new QLabel("Guild", this);
+  m_guildName->setAlignment(AlignLeft|AlignVCenter|SingleLine);
+  m_guildName->setFrameShape(LineEditPanel);
+  m_guildName->setFrameShadow(Sunken);
+  m_guildName->setMinimumWidth(50);
+  m_guildName->setMaximumWidth(300);
+  hLayout->addWidget(m_guildName, 1, AlignLeft);
+  guildChanged();
+
+  // Guild Totals
+  m_guildTotals = new QLabel("", this);
+  m_guildTotals->setAlignment(AlignRight|AlignVCenter|SingleLine);
+  m_guildTotals->setFrameShape(LineEditPanel);
+  m_guildTotals->setFrameShadow(Sunken);
+  m_guildTotals->setMinimumWidth(30);
+  m_guildTotals->setMaximumWidth(120);
+  hLayout->addWidget(m_guildTotals, 0, AlignRight);
+
   // create the spawn listview
   m_guildList = new SEQListView(preferenceName(), 
 				this, "guildlistview");
-
-  // for the moment this is the only widget
-  setWidget(m_guildList);
+  vLayout->addWidget(m_guildList);
 
   // setup the columns
   m_guildList->addColumn("Name");
@@ -156,6 +181,9 @@ GuildListWindow::GuildListWindow(Player* player,
 	  this, SLOT(loaded()));
   connect(m_guildShell, SIGNAL(updated(const GuildMember*)),
 	  this, SLOT(updated(const GuildMember*)));
+
+  connect(m_player, SIGNAL(guildChanged()),
+	  this, SLOT(guildChanged()));
 
   // populate the window
   populate();
@@ -270,7 +298,16 @@ void GuildListWindow::updated(const GuildMember* member)
   // make sure the guild list is sorted
   if (m_keepSorted)
     m_guildList->sort();
-    
+
+  updateCount();
+}
+
+void GuildListWindow::guildChanged()
+{
+  QString guild(" Guild: %1 ");
+
+  // set the guild name
+  m_guildName->setText(guild.arg(m_player->guildTag()));
 }
 
 void GuildListWindow::init_Menu(void)
@@ -347,11 +384,16 @@ void GuildListWindow::set_caption(int id)
 
 void GuildListWindow::clear(void)
 {
+  // clear count
+  m_membersOn = 0;
+
   // clear out the guild list item dictionary
   m_guildListItemDict.clear();
   
   // clear the guild list contents
   m_guildList->clear();
+
+  updateCount();
 }
 
 void GuildListWindow::populate(void)
@@ -374,6 +416,10 @@ void GuildListWindow::populate(void)
     // iterate over all the members
     while ((member = it.current()))
     {
+      // increment members on count for each member on
+      if (member->zoneId())
+	m_membersOn++;
+
       // add the new guild member item
       memberItem = new GuildListItem(m_guildList, member, m_guildShell);
       
@@ -391,6 +437,9 @@ void GuildListWindow::populate(void)
       // all online members will have a non-zero zone id.
       if (member->zoneId())
       {
+	// increment members on count for each member on
+	m_membersOn++;
+
 	// add the new guild member item
 	memberItem = new GuildListItem(m_guildList, member, m_guildShell);
 	
@@ -405,8 +454,17 @@ void GuildListWindow::populate(void)
   // make sure the guild list is sorted
   m_guildList->sort();
 
+  // update the counts
+  updateCount();
+
   // re-enable updates and force a repaint
   setUpdatesEnabled(true);
   repaint();
+}
+
+void GuildListWindow::updateCount(void)
+{
+  QString text(" %1 on/%2 total ");
+  m_guildTotals->setText(text.arg(m_membersOn).arg(m_guildShell->members().count()));
 }
 
