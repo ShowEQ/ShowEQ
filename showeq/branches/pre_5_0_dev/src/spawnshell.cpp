@@ -711,22 +711,8 @@ void SpawnShell::consMessage(const uint8_t* data, size_t, uint8_t dir)
     return;
   }
 
-  QString lvl("");
-  QString hps("");
-  QString cn("");
-
-  QString msg("Faction: Your faction standing with ");
-
   // is it you that you've conned?
-  if (con->playerid == con->targetid) 
-  {
-    // print it's deity
-    printf("Deity: %s\n", (const char*)m_player->deityName());
-    
-    // well, this is You
-    msg += "YOU";
-  }
-  else 
+  if (con->playerid != con->targetid) 
   {
     // find the spawn if it exists
     item = m_spawns.find(con->targetid);
@@ -734,9 +720,8 @@ void SpawnShell::consMessage(const uint8_t* data, size_t, uint8_t dir)
     // has the spawn been seen before?
     if (item != NULL)
     {
-      Spawn* spawn = (Spawn*)item;
       // yes
-      printf("Deity: %s\n", (const char*)spawn->deityName());
+      Spawn* spawn = (Spawn*)item;
 
       int changed = tSpawnChangedNone;
 
@@ -775,64 +760,8 @@ void SpawnShell::consMessage(const uint8_t* data, size_t, uint8_t dir)
       spawn->setConsidered(true);
 
       emit spawnConsidered(item);
-
-      msg += item->name();
     } // end if spawn found
-    else
-      msg += "Spawn:" + QString::number(con->targetid, 16);
   } // else not yourself
-  
-  switch (con->level) 
-  {
-     case 0:
-     {
-        cn.sprintf(" (even)");
-        break;
-     }
-     case 2:
-     {
-        cn.sprintf(" (green)");
-        break;
-     }
-     case 4:
-     {
-        cn.sprintf(" (blue)");
-        break;
-     }
-     case 13:
-     {
-        cn.sprintf(" (red)");
-        break;
-     }
-     case 15:
-     {
-        cn.sprintf(" (yellow)");
-        break;
-     }
-     case 18:
-     {
-        cn.sprintf(" (cyan)");
-        break;
-     }
-     default:
-     {
-        cn.sprintf(" (unknown: %d)", con->level);
-        break;
-     }
-  }
-
-  msg += cn;
-
-  if (con->maxHp || con->curHp)
-  {
-    lvl.sprintf(" (%i/%i HP)", con->curHp, con->maxHp);
-    msg += lvl;
-  }
-  
-  msg += QString(" is: ") + print_faction(con->faction) + " (" 
-    + QString::number(con->faction) + ")!";
-  
-  emit msgReceived(msg);
 } // end consMessage()
 
 void SpawnShell::deleteSpawn(const uint8_t* data)

@@ -1467,6 +1467,19 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      m_packet->connect2("OP_CastSpell", SP_Zone, DIR_Server|DIR_Client,
 			"startCastStruct", SZC_Match,
 			m_messageShell, SLOT(startCast(const uint8_t*)));
+     m_packet->connect2("OP_PlayerProfile", SP_Zone, DIR_Server,
+			"charProfileStruct", SZC_Match,
+			m_messageShell, SLOT(player(const uint8_t*)));
+     m_packet->connect2("OP_SkillUpdate", SP_Zone, DIR_Server,
+			"skillIncStruct", SZC_Match,
+			m_messageShell, SLOT(increaseSkill(const uint8_t*)));
+     m_packet->connect2("OP_LevelUpdate", SP_Zone, DIR_Server,
+			"levelUpUpdateStruct", SZC_Match,
+			m_messageShell, SLOT(updateLevel(const uint8_t*)));
+
+     m_packet->connect2("OP_Consider", SP_Zone, DIR_Server,
+			"considerStruct", SZC_Match,
+			m_messageShell, SLOT(consMessage(const uint8_t*, size_t, uint8_t)));
 
      connect(m_dateTimeMgr, SIGNAL(syncDateTime(const QDateTime&)),
 	     m_messageShell, SLOT(syncDateTime(const QDateTime&)));
