@@ -1010,7 +1010,7 @@ struct sysMsgStruct
 
 struct emoteTextStruct
 {
-/*0000*/ uint8_t  unknown0002[2];         // ***Placeholder
+/*0000*/ uint8_t  unknown0002[4];         // ***Placeholder
 /*0002*/ char     text[0];                // Emote `Text
 };
 
@@ -1041,7 +1041,7 @@ struct formattedMessageStruct
 {
 /*0000*/ uint8_t  unknown0002[4];         // ***Placeholder
 /*0004*/ uint32_t messageFormat;          // Indicates the message format
-/*0008*/ uint8_t  unknown0010[4];         // ***Placeholder (arguments?)
+/*0008*/ ChatColor messageColor;          // Message color
 /*0012*/ char     messages[0];            // messages(NULL delimited)
 /*0???*/ uint8_t  unknownXXXX[8];         // ***Placeholder
 };

@@ -46,6 +46,7 @@ enum MessageType
   MT_General,
   MT_Motd,
   MT_System,
+  MT_Money,
   MT_Random,
   MT_Emote,
   MT_Time,

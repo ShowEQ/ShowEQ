@@ -13,7 +13,6 @@
  */
 
 #include "spells.h"
-#include "everquest.h"
 #include "util.h"
 
 #include <stdio.h>
@@ -152,18 +151,20 @@ Spell::Spell(const QString& spells_enLine)
   : m_spell(0)
 {
   // split the ^ delimited spell entry into a QStringList
-  m_spellInfo = QStringList::split("^", spells_enLine, true);
+  QStringList spellInfo = QStringList::split("^", spells_enLine, true);
 
   // I'll add support for the rest of the fields later
-  m_spell = m_spellInfo[0].toUShort();
-  m_name = m_spellInfo[1];
-  m_buffDurationFormula = m_spellInfo[16].toUShort();
-  m_buffDurationArgument = m_spellInfo[17].toUShort();
-  m_targetType = uint8_t(m_spellInfo[86].toUShort());
+  m_spell = spellInfo[0].toUShort();
+  m_name = spellInfo[1];
+  m_buffDurationFormula = spellInfo[16].toUShort();
+  m_buffDurationArgument = spellInfo[17].toUShort();
+  m_targetType = uint8_t(spellInfo[86].toUShort());
 
+  for (size_t i = 0; i < playerClasses; i++)
+    m_classLevels[i] = uint8_t(spellInfo[104 + i].toUShort());
 #if 0 // ZBTEMP
   fprintf(stderr, "Spell: %d  Fields: %d\n", m_spell, 
-	  m_spellInfo.count());
+	  spellInfo.count());
 #endif 
 }
 
@@ -211,18 +212,10 @@ int16_t Spell::calcDuration(uint8_t level) const
 
 uint8_t Spell::level(uint8_t class_) const
 {
-  if (class_ < PLAYER_CLASSES)
-    return uint8_t(m_spellInfo[92 + class_ - 1].toUShort());
+  if ((class_ > 0) && (class_ <= PLAYER_CLASSES))
+    return m_classLevels[class_ - 1];
   else
     return 255;
-}
-
-QString Spell::spellField(uint8_t field) const
-{
-  if (field < m_spellInfo.count())
-    return m_spellInfo[field];
-  
-  return "";
 }
 
 Spells::Spells(const QString& spellsFileName)
@@ -333,9 +326,7 @@ void Spells::unloadSpells(void)
   if (m_spells)
   {
     for (int i = 0; i <= m_maxSpell; i++)
-    {
       delete m_spells[i];
-    }
     
     delete [] m_spells;
 

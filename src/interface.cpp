@@ -47,6 +47,7 @@
 #include "datalocationmgr.h"
 #include "eqstr.h"
 #include "messages.h"
+#include "messageshell.h"
 #include "messagewindow.h"
 
 #include <qfont.h>
@@ -102,6 +103,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_dateTimeMgr(NULL),
     m_eqStrings(NULL),
     m_messages(NULL),
+    m_messageShell(NULL),
     m_messageWindow(NULL),
     m_spawnLogger(NULL),
     m_globalLog(0),
@@ -287,6 +289,11 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Create the Group Manager
    m_groupMgr = new GroupMgr(m_spawnShell, m_player, "groupmgr");
+
+   // Create the message shell
+   m_messageShell = new MessageShell(m_messages, m_eqStrings, m_spells, 
+				     m_zoneMgr, m_spawnShell, m_player,
+				     this, "messageshell");
 
    // Create log objects as necessary
    if (pSEQPrefs->getPrefBool("LogAllPackets", "PacketLogging", false))
@@ -1389,6 +1396,91 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 	     m_guildmgr, SLOT(guildList2text(QString)));
    }
 
+   if (m_messageShell)
+   {
+     m_packet->connect2("OP_CommonMessage", SP_Zone, DIR_Client|DIR_Server,
+			"channelMessageStruct", SZC_None,
+			m_messageShell,
+			SLOT(channelMessage(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_FormattedMessage", SP_Zone, DIR_Server,
+			"formattedMessageStruct", SZC_None,
+			m_messageShell,
+			SLOT(formattedMessage(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_SimpleMessage", SP_Zone, DIR_Server,
+			"simpleMessageStruct", SZC_None,
+			m_messageShell,
+			SLOT(simpleMessage(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_SpecialMesg", SP_Zone, DIR_Server,
+			"specialMessageStruct", SZC_None,
+			m_messageShell,
+			SLOT(specialMessage(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_GuildMOTD", SP_Zone, DIR_Server,
+			"guildMOTDStruct", SZC_None,
+			m_messageShell,
+			SLOT(guildMOTD(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_RandomReq", SP_Zone, DIR_Client,
+			"randomReqStruct", SZC_Match,
+			m_messageShell, SLOT(randomRequest(const uint8_t*)));
+     m_packet->connect2("OP_RandomReply", SP_Zone, DIR_Server,
+			"randomStruct", SZC_Match,
+			m_messageShell, SLOT(random(const uint8_t*)));
+     m_packet->connect2("OP_Emote", SP_Zone, DIR_Server|DIR_Client,
+			"emoteTextStruct", SZC_None,
+			m_messageShell, SLOT(emoteText(const uint8_t*)));
+     m_packet->connect2("OP_InspectAnswer", SP_Zone, DIR_Server,
+			"inspectDataStruct", SZC_Match,
+			m_messageShell, SLOT(inspectData(const uint8_t*)));
+     m_packet->connect2("OP_MoneyOnCorpse", SP_Zone, DIR_Server,
+			"moneyOnCorpseStruct", SZC_Match,
+			m_messageShell, SLOT(moneyOnCorpse(const uint8_t*)));
+     m_packet->connect2("OP_Logout", SP_Zone, DIR_Server,
+			"none", SZC_Match,
+			m_messageShell, SLOT(logOut(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_NewZone", SP_Zone, DIR_Server,
+			"newZoneStruct", SZC_Match,
+			m_messageShell, SLOT(zoneNew(const uint8_t*, size_t, uint8_t)));
+     connect(m_zoneMgr, SIGNAL(zoneBegin(const ClientZoneEntryStruct*, size_t, uint8_t)),
+	     m_messageShell, SLOT(zoneEntryClient(const ClientZoneEntryStruct*)));
+     connect(m_zoneMgr, SIGNAL(zoneBegin(const ServerZoneEntryStruct*, size_t, uint8_t)),
+	     m_messageShell, SLOT(zoneEntryServer(const ServerZoneEntryStruct*)));
+     connect(m_zoneMgr, SIGNAL(zoneChanged(const zoneChangeStruct*, size_t, uint8_t)),
+	     m_messageShell, SLOT(zoneChanged(const zoneChangeStruct*, size_t, uint8_t)));
+     connect(m_zoneMgr, SIGNAL(zoneBegin(const QString&)),
+	     m_messageShell, SLOT(zoneBegin(const QString&)));
+     connect(m_zoneMgr, SIGNAL(zoneEnd(const QString&, const QString&)),
+	     m_messageShell, SLOT(zoneEnd(const QString&, const QString&)));
+     connect(m_zoneMgr, SIGNAL(zoneChanged(const QString&)),
+	     m_messageShell, SLOT(zoneChanged(const QString&)));
+
+     m_packet->connect2("OP_MOTD", SP_World, DIR_Server,
+			"worldMOTDStruct", SZC_None,
+			m_messageShell, SLOT(worldMOTD(const uint8_t*)));
+     m_packet->connect2("OP_MemorizeSpell", SP_Zone, DIR_Server|DIR_Client,
+			"memSpellStruct", SZC_Match,
+			m_messageShell, SLOT(handleSpell(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_BeginCast", SP_Zone, DIR_Server|DIR_Client,
+			"beginCastStruct", SZC_Match,
+			m_messageShell, SLOT(beginCast(const uint8_t*)));
+     m_packet->connect2("OP_BuffFadeMsg", SP_Zone, DIR_Server|DIR_Client,
+			"spellFadedStruct", SZC_None,
+			m_messageShell, SLOT(spellFaded(const uint8_t*)));
+     m_packet->connect2("OP_CastSpell", SP_Zone, DIR_Server|DIR_Client,
+			"startCastStruct", SZC_Match,
+			m_messageShell, SLOT(startCast(const uint8_t*)));
+#if 0 // ZBTEMP
+     connect(m_packet, SIGNAL(groupInfo(const uint8_t*, size_t, uint8_t)),
+	     m_messageShell, SLOT(groupInfo(const uint8_t*)));
+     connect(m_packet, SIGNAL(groupInvite(const uint8_t*, size_t, uint8_t)),
+	     m_messageShell, SLOT(groupInvite(const uint8_t*)));
+     connect(m_packet, SIGNAL(groupDecline(const uint8_t*, size_t, uint8_t)),
+	     m_messageShell, SLOT(groupDecline(const uint8_t*)));
+     connect(m_packet, SIGNAL(groupAccept(const uint8_t*, size_t, uint8_t)),
+	     m_messageShell, SLOT(groupAccept(const uint8_t*)));
+     connect(m_packet, SIGNAL(groupDelete(const uint8_t*, size_t, uint8_t)),
+	     m_messageShell, SLOT(groupDelete(const uint8_t*)));
+#endif // ZBTEMP
+   }
+
    // connect interface slots to Packet signals
    m_packet->connect2("OP_TargetMouse", SP_Zone, DIR_Client|DIR_Server,
 		      "clientTargetStruct", SZC_Match,
@@ -1403,58 +1495,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_packet->connect2("OP_Death", SP_Zone, DIR_Server,
 		      "newCorpseStruct", SZC_Match,
 		      this, SLOT(combatKillSpawn(const uint8_t*)));
-   m_packet->connect2("OP_MoneyOnCorpse", SP_Zone, DIR_Server,
-		      "moneyOnCorpseStruct", SZC_Match,
-		      this, SLOT(moneyOnCorpse(const uint8_t*)));
-   m_packet->connect2("OP_CommonMessage", SP_Zone, DIR_Client|DIR_Server,
-		      "channelMessageStruct", SZC_None,
-		      this, SLOT(channelMessage(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_FormattedMessage", SP_Zone, DIR_Server,
-		      "formattedMessageStruct", SZC_None,
-		      this, SLOT(formattedMessage(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_SimpleMessage", SP_Zone, DIR_Server,
-		      "simpleMessageStruct", SZC_None,
-		      this, SLOT(simpleMessage(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_SpecialMesg", SP_Zone, DIR_Server,
-		      "specialMessageStruct", SZC_None,
-		      this, SLOT(specialMessage(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_GuildMOTD", SP_Zone, DIR_Server,
-		      "guildMOTDStruct", SZC_None,
-		      this, SLOT(guildMOTD(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_RandomReq", SP_Zone, DIR_Client,
-		      "randomReqStruct", SZC_Match,
-		      this, SLOT(randomRequest(const uint8_t*)));
-   m_packet->connect2("OP_RandomReply", SP_Zone, DIR_Server,
-		      "randomStruct", SZC_Match,
-		      this, SLOT(random(const uint8_t*)));
-   m_packet->connect2("OP_Logout", SP_Zone, DIR_Server,
-		      "none", SZC_Match,
-		      this, SLOT(logOut(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_Emote", SP_Zone, DIR_Server|DIR_Client,
-		      "emoteTextStruct", SZC_None,
-		      this, SLOT(emoteText(const uint8_t*)));
-   m_packet->connect2("OP_GroundSpawn", SP_Zone, DIR_Server,
-		      "makeDropStruct", SZC_Match,
-		      this, SLOT(newGroundItem(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_InspectAnswer", SP_Zone, DIR_Server,
-		      "inspectDataStruct", SZC_Match,
-		      this, SLOT(inspectData(const uint8_t*)));
 #if 0 // ZBTEMP
    connect(m_packet, SIGNAL(spMessage(const uint8_t*, size_t, uint8_t)),
 	   this, SLOT(spMessage(const uint8_t*)));
 #endif
-   m_packet->connect2("OP_MemorizeSpell", SP_Zone, DIR_Server|DIR_Client,
-		      "memSpellStruct", SZC_Match,
-		      this, SLOT(handleSpell(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_BeginCast", SP_Zone, DIR_Server|DIR_Client,
-		      "beginCastStruct", SZC_Match,
-		      this, SLOT(beginCast(const uint8_t*)));
-   m_packet->connect2("OP_BuffFadeMsg", SP_Zone, DIR_Server|DIR_Client,
-		      "spellFadedStruct", SZC_None,
-		      this, SLOT(spellFaded(const uint8_t*)));
-   m_packet->connect2("OP_CastSpell", SP_Zone, DIR_Server|DIR_Client,
-		      "startCastStruct", SZC_Match,
-		      this, SLOT(startCast(const uint8_t*)));
 #if 0 // ZBTEMP
    connect(m_packet, SIGNAL(interruptSpellCast(const uint8_t*, size_t, uint8_t)),
 	   this, SLOT(interruptSpellCast(const uint8_t*)));
@@ -1464,24 +1508,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 	   this, SLOT(moneyUpdate(const uint8_t*)));
    connect(m_packet, SIGNAL(moneyThing(const uint8_t*, size_t, uint8_t)),
 	   this, SLOT(moneyThing(const uint8_t*)));
-   connect(m_packet, SIGNAL(groupInfo(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(groupInfo(const uint8_t*)));
-   connect(m_packet, SIGNAL(groupInvite(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(groupInvite(const uint8_t*)));
-   connect(m_packet, SIGNAL(groupDecline(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(groupDecline(const uint8_t*)));
-   connect(m_packet, SIGNAL(groupAccept(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(groupAccept(const uint8_t*)));
-   connect(m_packet, SIGNAL(groupDelete(const uint8_t*, size_t, uint8_t)),
-	   this, SLOT(groupDelete(const uint8_t*)));
 #endif // ZBTEMP
-   m_packet->connect2("OP_NewZone", SP_Zone, DIR_Server,
-		      "newZoneStruct", SZC_Match,
-		      this, SLOT(zoneNew(const uint8_t*, size_t, uint8_t)));
-
-   m_packet->connect2("OP_MOTD", SP_World, DIR_Server,
-		      "worldMOTDStruct", SZC_None,
-		      this, SLOT(worldMOTD(const uint8_t*)));
 
    connect(m_packet, SIGNAL(toggle_session_tracking()),
 	   this, SLOT(toggle_net_session_tracking()));
@@ -1489,16 +1516,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // connect EQInterface slots to ZoneMgr signals
   connect(m_zoneMgr, SIGNAL(zoneBegin(const QString&)),
 	  this, SLOT(zoneBegin(const QString&)));
-  connect(m_zoneMgr, SIGNAL(zoneChanged(const zoneChangeStruct*, size_t, uint8_t)),
-	  this, SLOT(zoneChanged(const zoneChangeStruct*, size_t, uint8_t)));
-  connect(m_zoneMgr, SIGNAL(zoneChanged(const QString&)),
-	  this, SLOT(zoneChanged(const QString&)));
   connect(m_zoneMgr, SIGNAL(zoneEnd(const QString&, const QString&)),
 	  this, SLOT(zoneEnd(const QString&, const QString&)));
-  connect(m_zoneMgr, SIGNAL(zoneBegin(const ClientZoneEntryStruct*, size_t, uint8_t)),
-          this, SLOT(zoneEntryClient(const ClientZoneEntryStruct*)));
-  connect(m_zoneMgr, SIGNAL(zoneBegin(const ServerZoneEntryStruct*, size_t, uint8_t)),
-          this, SLOT(zoneEntryServer(const ServerZoneEntryStruct*)));
+  connect(m_zoneMgr, SIGNAL(zoneChanged(const QString&)),
+	  this, SLOT(zoneChanged(const QString&)));
 
    // connect the SpellShell slots to EQInterface signals
    connect(this, SIGNAL(spellMessage(QString&)),
@@ -3763,288 +3784,6 @@ void EQInterface::combatKillSpawn(const uint8_t* data)
   }
 }
 
-void EQInterface::moneyOnCorpse(const uint8_t* data)
-{
-  const moneyOnCorpseStruct* money = (const moneyOnCorpseStruct*)data;
-
-  QString tempStr;
-
-  if( money->platinum || money->gold || money->silver || money->copper )
-  {
-    bool bneedComma = false;
-    
-    tempStr = "Money: You receive ";
-    
-    if(money->platinum)
-    {
-      tempStr += QString::number(money->platinum) + " platinum";
-      bneedComma = true;
-    }
-    
-    if(money->gold)
-    {
-      if(bneedComma)
-	tempStr += ", ";
-      
-      tempStr += QString::number(money->gold) + " gold";
-      bneedComma = true;
-    }
-    
-    if(money->silver)
-    {
-      if(bneedComma)
-	tempStr += ", ";
-      
-      tempStr += QString::number(money->silver) + " silver";
-      bneedComma = true;
-    }
-    
-    if(money->copper)
-      {
-	if(bneedComma)
-	  tempStr += ", ";
-	
-	tempStr += QString::number(money->copper) + " copper";
-      }
-    
-    tempStr += " from the corpse";
-    
-    emit msgReceived(tempStr);
-  }
-}
-
-void EQInterface::channelMessage(const uint8_t* data, size_t, uint8_t dir)
-{
-  const channelMessageStruct* cmsg = (const channelMessageStruct*)data;
-
-  QString tempStr;
-
-  // avoid client chatter and do nothing if not viewing channel messages
-  if ((dir == DIR_Client) || !m_viewChannelMsgs)
-    return;
-
-  bool target = false;
-  switch (cmsg->chanNum)
-  {
-  case 0:
-    tempStr.sprintf("Guild");
-    break;
-    
-  case 2:
-    tempStr.sprintf("Group");
-    break;
-    
-  case 3:
-    tempStr.sprintf("Shout");
-    break;
-    
-  case 4:
-    tempStr.sprintf("Auction");
-    break;
-    
-  case 5:
-    tempStr.sprintf("OOC");
-    break;
-    
-  case 7:
-    tempStr.sprintf("Tell");
-    target = true;
-    break;
-    
-  case 8:
-    tempStr.sprintf("Say");
-    target = true;
-    break;
-    
-  case 11:
-    tempStr.sprintf("GM-SAY");
-    target = true;
-    break;
-
-  case 14:
-    tempStr.sprintf("GM-Tell");
-    target = true;
-    break;
-
-  case 15:
-    tempStr.sprintf("Raid");
-    target = true;
-    break;
-
-  default:
-    tempStr.sprintf("Chan%02x", cmsg->chanNum);
-    target = true;
-    break;
-  }
-  
-  if (cmsg->language)
-  {
-    if ((cmsg->target[0] != 0) && target)
-    {
-      tempStr.sprintf( "%s: '%s' -> '%s' - %s {%s}",
-		       tempStr.ascii(),
-		       cmsg->sender,
-		       cmsg->target,
-		       cmsg->message,
-		       (const char*)language_name(cmsg->language)
-		       );
-    }
-    else
-    {
-      tempStr.sprintf( "%s: '%s' - %s {%s}",
-		       tempStr.ascii(),
-		       cmsg->sender,
-		       cmsg->message,
-		       (const char*)language_name(cmsg->language)
-		       );
-    }
-  }
-  else // Don't show common, its obvious
-  {
-    if ((cmsg->target[0] != 0) && target)
-    {
-      tempStr.sprintf( "%s: '%s' -> '%s' - %s",
-		       tempStr.ascii(),
-		       cmsg->sender,
-		       cmsg->target,
-		       cmsg->message
-		       );
-    }
-    else
-    {
-      tempStr.sprintf( "%s: '%s' - %s",
-		       tempStr.ascii(),
-		       cmsg->sender,
-		       cmsg->message
-		       );
-    }
-  }
-
-#if 0 // ZBTEMP
-  m_messages->addMessage((MessageType)cmsg->chanNum, tempStr);
-#endif 
-
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::formattedMessage(const uint8_t* data, size_t len, uint8_t dir)
-{
-  // avoid client chatter and do nothing if not viewing channel messages
-  if ((dir == DIR_Client) || !m_viewChannelMsgs)
-    return;
-
-  const formattedMessageStruct* fmsg = (const formattedMessageStruct*)data;
-  QString tempStr;
-
-  size_t messagesLen = 
-    len
-    - ((uint8_t*)&fmsg->messages[0] - (uint8_t*)fmsg) 
-    - sizeof(fmsg->unknownXXXX);
-
-  tempStr = "Formatted: ";
-  tempStr += m_eqStrings->formatMessage(fmsg->messageFormat,
-					fmsg->messages, messagesLen);
-  
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::simpleMessage(const uint8_t* data, size_t len, uint8_t dir)
-{
-  // avoid client chatter and do nothing if not viewing channel messages
-  if ((dir == DIR_Client) || !m_viewChannelMsgs)
-    return;
-
-  const simpleMessageStruct* smsg = (const simpleMessageStruct*)data;
-  QString tempStr;
-  
-  tempStr = "Formatted: ";
-  tempStr += m_eqStrings->message(smsg->messageFormat);
-
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::specialMessage(const uint8_t* data, size_t, uint8_t dir)
-{
-  // avoid client chatter and do nothing if not viewing channel messages
-  if ((dir == DIR_Client) || !m_viewChannelMsgs)
-    return;
-
-  const specialMessageStruct* smsg = (const specialMessageStruct*)data;
-
-  const Item* target = NULL;
-  
-  if (smsg->target)
-    target = m_spawnShell->findID(tSpawn, smsg->target);
-
-  // calculate the message position
-  const char* message = smsg->source + strlen(smsg->source) + 1 
-    + sizeof(smsg->unknown0xxx);
-  
-  if (target)
-    emit msgReceived(QString("Formatted:Special: '%1' -> '%2' - %3")
-		     .arg(smsg->source)
-		     .arg(target->name())
-		     .arg(message));
-  else
-    emit msgReceived(QString("Formatted:Special: '%1' - %2")
-		     .arg(smsg->source)
-		     .arg(message));
-}
-
-void EQInterface::guildMOTD(const uint8_t* data, size_t, uint8_t dir)
-{
-  // avoid client chatter and do nothing if not viewing channel messages
-  if ((dir == DIR_Client) || !m_viewChannelMsgs)
-    return;
-
-  const guildMOTDStruct* gmotd = (const guildMOTDStruct*)data;
-
-  emit msgReceived(QString("Guild:MOTD: %1 - %2")
-		   .arg(QString::fromUtf8(gmotd->sender))
-		   .arg(QString::fromUtf8(gmotd->message)));
-
-  ;
-}
-
-void EQInterface::randomRequest(const uint8_t* data)
-{
-  const randomReqStruct* randr = (const randomReqStruct*)data;
-  QString tempStr;
-
-  tempStr.sprintf("RANDOM: Request random number between %d and %d\n",
-		  randr->bottom,
-		  randr->top);
-  
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::random(const uint8_t* data)
-{
-  const randomStruct* randr = (const randomStruct*)data;
-  QString tempStr;
-
-  tempStr.sprintf("RANDOM: Random number %d rolled between %d and %d by %s\n",
-		  randr->result,
-		  randr->bottom,
-		  randr->top,
-		  randr->name);
-  
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::emoteText(const uint8_t* data)
-{
-  const emoteTextStruct* emotetext = (const emoteTextStruct*)data;
-  QString tempStr;
-
-  if (!m_viewChannelMsgs)
-    return;
-
-  tempStr.sprintf("Emote: %s", emotetext->text);
-
-  emit msgReceived(tempStr);
-}
-
 void EQInterface::updatedDateTime(const QDateTime& dt)
 {
   
@@ -4055,18 +3794,7 @@ void EQInterface::syncDateTime(const QDateTime& dt)
 {
   QString dateString = dt.toString(pSEQPrefs->getPrefString("DateTimeFormat", "Interface", "ddd MMM dd,yyyy - hh:mm ap"));
 
-  emit msgReceived(QString("EQTime: ") + dateString);
-
   m_stsbarEQTime->setText(dateString);
-}
-
-void EQInterface::inspectData(const uint8_t* data)
-{
-  const inspectDataStruct *inspt = (const inspectDataStruct *)data;
-  for (int inp = 0; inp < 21; inp ++)
-    printf("He has %s (icn:%i)\n", inspt->itemNames[inp], inspt->icons[inp]);
-  
-  printf("His info: %s\n", inspt->mytext);
 }
 
 void EQInterface::spMessage(const uint8_t* data)
@@ -4130,178 +3858,6 @@ void EQInterface::spMessage(const uint8_t* data)
   emit msgReceived(tempStr);
 }
 
-void EQInterface::handleSpell(const uint8_t* data, size_t, uint8_t dir)
-{
-  const memSpellStruct* mem = (const memSpellStruct*)data;
-  QString tempStr;
-
-  if (!showeq_params->showSpellMsgs)
-    return;
-  
-  bool client = (dir == DIR_Client);
-
-  tempStr = "";
-  
-  switch (mem->param1)
-  {
-  case 0:
-    {
-      if (!client)
-	tempStr = "You have finished scribing '";
-      break;
-    }
-    
-  case 1:
-    {
-      if (!client)
-	tempStr = "You have finished memorizing '";
-      break;
-    }
-    
-  case 2:
-    {
-      if (!client)
-	tempStr = "You forget '";
-      break;
-    }
-    
-  case 3:
-    {
-      if (!client)
-	tempStr = "You finish casting '";
-      break;
-    }
-    
-  default:
-    {
-      tempStr.sprintf( "Unknown Spell Event ( %s ) - '",
-		       client  ?
-		     "Client --> Server"   :
-		       "Server --> Client"
-		       );
-      break;
-    }
-  }
-  
-  
-  if (!tempStr.isEmpty())
-  {
-    QString spellName;
-    const Spell* spell = m_spells->spell(mem->spellId);
-    
-    if (spell)
-      spellName = spell->name();
-    else
-      spellName = spell_name(mem->spellId);
-
-    if (mem->param1 != 3)
-      tempStr.sprintf("SPELL: %s%s', slot %d.", 
-		      tempStr.ascii(), 
-		      (const char*)spellName, 
-		      mem->slotId);
-    else 
-    {
-      tempStr.sprintf("SPELL: %s%s'.", 
-		      tempStr.ascii(), 
-		      (const char*)spellName);
-    }
-
-    emit msgReceived(tempStr);
-  }
-}
-
-void EQInterface::beginCast(const uint8_t* data)
-{
-  const beginCastStruct *bcast = (const beginCastStruct *)data;
-  QString tempStr;
-
-  if (!showeq_params->showSpellMsgs)
-    return;
-  
-  tempStr = "";
-
-  if (bcast->spawnId == m_player->id())
-    tempStr = "You begin casting '";
-  else
-  {
-    const Item* item = m_spawnShell->findID(tSpawn, bcast->spawnId);
-    if (item != NULL)
-      tempStr = item->name();
-    
-    if (tempStr == "" || tempStr.isEmpty())
-      tempStr.sprintf("UNKNOWN (ID: %d)", bcast->spawnId);
-    
-    tempStr += " has begun casting '";
-  }
-  float casttime = ((float)bcast->param1 / 1000);
-  
-  QString spellName;
-  const Spell* spell = m_spells->spell(bcast->spellId);
-  
-  if (spell)
-    spellName = spell->name();
-  else
-    spellName = spell_name(bcast->spellId);
-  
-  tempStr.sprintf( "SPELL: %s%s' - Casting time is %g Second%s", 
-		   tempStr.ascii(),
-		   (const char*)spellName, casttime,
-		   casttime == 1 ? "" : "s"
-		   );
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::spellFaded(const uint8_t* data)
-{
-  const spellFadedStruct *sf = (const spellFadedStruct *)data;
-  QString tempStr;
-
-  if (!showeq_params->showSpellMsgs)
-    return;
-  
-  tempStr.sprintf( "SPELL: Faded: %s", 
-		   sf->message);
-
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::interruptSpellCast(const uint8_t* data)
-{
-  const badCastStruct *icast = (const badCastStruct *)data;
-  const Item* item = m_spawnShell->findID(tSpawn, icast->spawnId);
-
-  if (item != NULL)
-    printf("SPELL: %s(%d): %s\n", 
-	   (const char*)item->name(), icast->spawnId, icast->message);
-  else
-    printf("SPELL: spawn(%d): %s\n", 
-	   icast->spawnId, icast->message);
-}
-
-void EQInterface::startCast(const uint8_t* data)
-{
-  const startCastStruct* cast = (const startCastStruct*)data;
-  QString spellName;
-  const Spell* spell = m_spells->spell(cast->spellId);
-  
-  if (spell)
-    spellName = spell->name();
-  else
-    spellName = spell_name(cast->spellId);
-
-  printf("SPELL: You begin casting %s.  Current Target is ", 
-	 (const char*)spellName);
-  
-  const Item* item = m_spawnShell->findID(tSpawn, cast->targetId);
-
-  if (item != NULL)
-    printf("%s(%d)", (const char*)item->name(), cast->targetId);
-  else
-    printf("spawn(%d)", cast->targetId);
-  
-  printf("\n");
-}
-
 void EQInterface::systemMessage(const uint8_t* data)
 {
   const sysMsgStruct* smsg = (const sysMsgStruct*)data;
@@ -4320,166 +3876,8 @@ void EQInterface::systemMessage(const uint8_t* data)
   emit msgReceived(tempStr);
 }
 
-void EQInterface::newGroundItem(const uint8_t* data, size_t len, uint8_t dir)
-{
-#if 0 // ZBTEMP
-  const makeDropStruct* adrop = (const makeDropStruct*)data;
-  QString tempStr;
-
-  if (dir != DIR_Client)
-    return;
-
-  if (len == 0)
-    return;
-
-  /* If the packet is outbound  ( Client --> Server ) then it
-     should not be added to the spawn list... The server will
-     send the client a packet when it has actually placed the
-     item on the ground.
-  */
-  if (m_itemDB != NULL) 
-    tempStr = m_itemDB->GetItemLoreName(adrop->itemNr);
-  else
-    tempStr = "";
-  
-  //if (tempStr != "")
-  if (tempStr)
-  {
-    tempStr.prepend("Item: Drop: You have dropped your '");
-    tempStr.append("' on the ground!");
-    tempStr.append(" location %1, %2, %3").arg(adrop->y).arg(adrop->x).arg(adrop->z);
-  }
-  else
-    tempStr = QString("Item: Drop: You have dropped your *UNKNOWN ITEM* (ID: %1)  on the ground!\nNOTE:\tIn order for ShowEQ to know the name of the item you dropped it is suggested that you pickup and drop the item again...").arg(adrop->itemNr);
-  
-  emit msgReceived(tempStr);
-#endif
-}
-
-void EQInterface::worldMOTD(const uint8_t* data)
-{ 
-  const worldMOTDStruct* motd = (const worldMOTDStruct*)data;
-  QString tempStr = "Formatted:MOTD: ";
-  tempStr.append(QString::fromUtf8(motd->message));
-
-  emit msgReceived(tempStr);
-}
-
-void EQInterface::moneyUpdate(const uint8_t* data)
-{
-  //  const moneyUpdateStruct* money = (const moneyUpdateStruct*)data;
-  emit msgReceived("Money: Update");
-}
-
-void EQInterface::moneyThing(const uint8_t* data)
-{
-  //  const moneyUpdateStruct* money = (const moneyUpdateStruct*)data;
-  emit msgReceived("Money: Thing");
-}
-
-void EQInterface::groupInfo(const uint8_t* data)
-{
-  const groupInfoStruct* gmem = (const groupInfoStruct*)data;
-  printf ("Member: %s - %s\n", 
-	  gmem->yourname, gmem->membername);
-}
-
-void EQInterface::groupInvite(const uint8_t* data)
-{
-  const groupInviteStruct* gmem = (const groupInviteStruct*)data;
-  printf ("Group Invite: %s invites %s\n", 
-	  gmem->membername, gmem->yourname);
-}
-
-void EQInterface::groupDecline(const uint8_t* data)
-{
-  const groupDeclineStruct* gmem = (const groupDeclineStruct*)data;
-  printf ("Group Invite: %s declines invite from %s (%i)\n", 
-	  gmem->membername, gmem->yourname, gmem->reason);
-}
-
-void EQInterface::groupAccept(const uint8_t* data)
-{
-  const groupAcceptStruct* gmem = (const groupAcceptStruct*)data;
-  printf ("Group Invite: %s accepts invite from %s\n", 
-	  gmem->membername, gmem->yourname);
-}
-
-void EQInterface::groupDelete(const uint8_t* data)
-{
-  const groupDeleteStruct* gmem = (const groupDeleteStruct*)data;
-  printf ("Group Delete: %s - %s\n", 
-	  gmem->membername, gmem->yourname);
-}
-
-void EQInterface::logOut(const uint8_t*, size_t, uint8_t)
-{
-#ifdef ZONE_ORDER_DIAG
-  QString tempStr;
-  tempStr = "Zone: LogoutCode: Client logged out of server";
-  emit msgReceived(tempStr);
-#endif
-}
-
-void EQInterface::zoneEntryClient(const ClientZoneEntryStruct* zsentry)
-{
-#ifdef ZONE_ORDER_DIAG
-  //  const ClientZoneEntryStruct* zsentry = (const ClientZoneEntryStruct*)data;
-  QString tempStr;
-  tempStr = "Zone: EntryCode: Client";
-  emit msgReceived(tempStr);
-#endif
-}
-
-void EQInterface::zoneEntryServer(const ServerZoneEntryStruct* zsentry)
-{
-#ifdef ZONE_ORDER_DIAG
-  QString tempStr;
-
-  tempStr = "Zone: EntryCode: Server, Zone: ";
-  tempStr += m_zoneMgr->zoneNameFromID(zsentry->zoneId);
-  emit msgReceived(tempStr);
-#endif
-}
-
-void EQInterface::zoneChanged(const zoneChangeStruct* zoneChange, size_t, uint8_t dir)
-{
-#ifdef ZONE_ORDER_DIAG
-  QString tempStr;
-
-  if (dir == DIR_Client)
-  {
-    tempStr = "Zone: ChangeCode: Client, Zone: ";
-    tempStr += m_zoneMgr->zoneNameFromID(zoneChange->zoneId);
-    emit msgReceived(tempStr);
-  }
-  else
-  {
-    tempStr = "Zone: ChangeCode: Server, Zone:";
-    tempStr += m_zoneMgr->zoneNameFromID(zoneChange->zoneId);
-    emit msgReceived(tempStr);
-  }
-#endif
-}
-
-void EQInterface::zoneNew(const uint8_t* data, size_t, uint8_t dir)
-{
-#ifdef ZONE_ORDER_DIAG
-  const newZoneStruct* zoneNew = (const newZoneStruct*)data;
-  QString tempStr;
-  tempStr = "Zone: NewCode: Zone: ";
-  tempStr += QString(zoneNew->shortName) + " ("
-    + zoneNew->longName + ")";
-  emit msgReceived(tempStr);
-#endif
-}
-
 void EQInterface::zoneBegin(const QString& shortZoneName)
 {
-  QString tempStr;
-  tempStr = QString("Zone: Zoning, Please Wait...\t(Zone: '")
-    + shortZoneName + "')";
-  emit msgReceived(tempStr);
   emit newZoneName(shortZoneName);
 
   m_filterMgr->loadZone(shortZoneName);
@@ -4488,15 +3886,6 @@ void EQInterface::zoneBegin(const QString& shortZoneName)
 void EQInterface::zoneEnd(const QString& shortZoneName, 
 			  const QString& longZoneName)
 {
-  QString tempStr;
-  tempStr = QString("Zone: Entered: ShortName = '") + shortZoneName +
-                    "' LongName = " + longZoneName;
-  emit msgReceived(tempStr);
-
-   if (pSEQPrefs->getPrefBool("UseStdout", "Interface"))
-       printf("Loading Complete...\t(Zone: '%s')\n", 
-	      (const char*)shortZoneName);
-
   emit newZoneName(longZoneName);
   stsMessage("");
 
@@ -4508,11 +3897,6 @@ void EQInterface::zoneChanged(const QString& shortZoneName)
   QString tempStr;
   stsMessage("- Busy Zoning -");
   emit newZoneName(shortZoneName);
-  printf("Loading, Please Wait...\t(Zone: \'%s\')\n", 
-	 (const char*)shortZoneName);
-  tempStr = QString("Zone: Zoning, Please Wait...\t(Zone: '")
-    + shortZoneName + "')";
-  emit msgReceived(tempStr);
   
   m_filterMgr->loadZone(shortZoneName);
 }

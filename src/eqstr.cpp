@@ -226,6 +226,8 @@ QString EQStr::formatMessage(uint32_t formatid,
       // find next substitution
       curPos = rx.search(formatString, curPos);
     }
+
+    return formatString;
   }
 
   return tempStr;
