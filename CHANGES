@@ -2,7 +2,7 @@ Version: $Id$ $Name$
 
 dohpaZ (12/5/03)
 ---------------------
-+ Updated version to 4.9.99.1
++ Updated version to 5.0.0.1
 + OPCode and structure fixes for 11/05/03 patch.
 + Some minor optimization of door spawn handling.
 + Added zone safepoint support to ZoneMgr
@@ -73,6 +73,9 @@ dohpaZ (12/5/03)
 + Integrated patch# 850894 "Map for Cabilis West" by showeqfan
 + Integrated patch# 846353 "ZEM Display" by archpriest (with fixes).
 + Added mir{a-j], mmc[a-j], and ruj[a-j] LDoN maps.
+
++ Requirement update
+  ShowEQ will now require Qt 3.1+ from this release forward. 
 
 dohpaZ (10/24/03)
 ---------------------

@@ -715,7 +715,7 @@ else
   AC_MSG_ERROR([Please verify your Qt devel install!]);
 fi;
 
-qt_target_version="3.0.5"
+qt_target_version="3.1.0"
 
 if test $qt_major_version -le 1 ; then
   AC_MSG_ERROR([Please Make sure $qt_target_version or later is installed!!!]);
@@ -891,10 +891,10 @@ elif [[ $qt_major_version -lt 3 ]]; then
        echo "]]]]]" > /dev/null 2>&1`;
 
   if [[ -n "$MBY" ]]; then
-    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.0.5+, please upgrade
+    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.1.0+, please upgrade
 >>>>>> Workable..:	$MBY]);
   else
-    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.0.5+, please upgrade
+    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.1.0+, please upgrade
 >>>>>> Workable..:  -*{ ??? }*-]);
   fi
 
