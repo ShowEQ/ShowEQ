@@ -68,6 +68,8 @@ class UnknownPacketLog;
 class OPCodeMonitorPacketLog;
 class DataLocationMgr;
 class EQStr;
+class Messages;
+class MessageWindow;
 
 //--------------------------------------------------
 // typedefs
@@ -335,7 +337,8 @@ class EQInterface:public QMainWindow
    GuildMgr* m_guildmgr;
    DateTimeMgr* m_dateTimeMgr;
    EQStr* m_eqStrings;
-
+   Messages* m_messages;
+   MessageWindow* m_messageWindow;
    SpawnLog *m_spawnLogger;
 
    PacketLog* m_globalLog;

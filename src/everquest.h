@@ -816,16 +816,6 @@ struct spawnStruct
 };
 
 /*
-** Zone Spawns
-** Length: 6Octets + Variable Length Spawn Data
-** OpCode: ZoneSpawnsCode
-*/
-struct zoneSpawnsStruct
-{
-/*0000*/ struct spawnStruct spawn[0];    // Variable number of spawns
-};
-
-/*
 ** Generic Door Struct
 ** Length: 52 Octets
 ** Used in: 

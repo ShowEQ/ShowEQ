@@ -46,6 +46,8 @@
 #include "datetimemgr.h"
 #include "datalocationmgr.h"
 #include "eqstr.h"
+#include "messages.h"
+#include "messagewindow.h"
 
 #include <qfont.h>
 #include <qapplication.h>
@@ -99,6 +101,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_guildmgr(NULL),
     m_dateTimeMgr(NULL),
     m_eqStrings(NULL),
+    m_messages(NULL),
+    m_messageWindow(NULL),
     m_spawnLogger(NULL),
     m_globalLog(0),
     m_worldLog(0),
@@ -196,6 +200,19 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    
    // Create the EQStr storage
    m_eqStrings = new EQStr(8009); // increase if the number of stings exeeds
+
+   // Create Messages storage
+   m_messages = new Messages(m_dateTimeMgr, this, "messages");
+
+#if 1 // ZBTEMP
+   // just create the message window
+   m_messageWindow = new MessageWindow(m_messages, "MessageWindow", 
+				       "Message Window",
+				       NULL, "messagewindow");
+   addDockWindow(m_messageWindow, Bottom, false);
+   m_messageWindow->undock();
+   m_messageWindow->show();
+#endif 
 
    // Create the Zone Manager
    m_zoneMgr = new ZoneMgr(this, "zonemgr");
@@ -1598,7 +1615,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_packet->connect2("OP_Consider", SP_Zone, DIR_Server|DIR_Client,
 		      "considerStruct", SZC_Match,
 		      m_player, SLOT(consMessage(const uint8_t*, size_t, uint8_t)));
-   m_packet->connect2("OP_SwapSpell", SP_Zone, DIR_Client,
+   m_packet->connect2("OP_SwapSpell", SP_Zone, DIR_Server,
 		      "tradeSpellBookSlotsStruct", SZC_Match,
 	   m_player, SLOT(tradeSpellBookSlots(const uint8_t*, size_t, uint8_t)));
 #if 0 // ZBTEMP
@@ -3902,7 +3919,11 @@ void EQInterface::channelMessage(const uint8_t* data, size_t, uint8_t dir)
 		       );
     }
   }
-  
+
+#if 0 // ZBTEMP
+  m_messages->addMessage((MessageType)cmsg->chanNum, tempStr);
+#endif 
+
   emit msgReceived(tempStr);
 }
 
