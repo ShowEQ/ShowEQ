@@ -3858,12 +3858,12 @@ void Map::mouseMoveEvent( QMouseEvent* event )
     if (spawn)
     {
       QString guild;
-      if (spawn->GuildID() < 512)
+      if (spawn->guildID() < 512)
       {
-          if (spawn->GuildTag())
-            guild.sprintf("<%s>", (const char*)spawn->GuildTag());
-          else
-            guild = QString::number(spawn->GuildID());
+	if (!spawn->guildTag().isEmpty())
+	  guild.sprintf("<%s>", (const char*)spawn->guildTag());
+	else
+	  guild = QString::number(spawn->guildID());
       }
       else
           guild = " ";

@@ -241,8 +241,17 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    // Create the Zone Manager
    m_zoneMgr = new ZoneMgr(this, "zonemgr");
 
+   // Create GuildMgr object
+   fileName = pSEQPrefs->getPrefString("GuildsFile", "Interface",
+				       "guilds2.dat");
+   
+   fileInfo = m_dataLocationMgr->findWriteFile("tmp", fileName);
+
+   m_guildmgr = new GuildMgr(fileInfo.absFilePath(), 
+			     this, "guildmgr");
+
    // Create our player object
-   m_player = new Player(this, m_zoneMgr);
+   m_player = new Player(this, m_zoneMgr, m_guildmgr);
 
    section = "ItemDB";
    if (pSEQPrefs->getPrefBool("Enabled", section, false))
@@ -288,15 +297,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    if (!shortZoneName.isEmpty())
      m_filterMgr->loadZone(shortZoneName);
    
-   // Create GuildMgr object
-   fileName = pSEQPrefs->getPrefString("GuildsFile", "Interface",
-				       "guilds2.dat");
-   
-   fileInfo = m_dataLocationMgr->findWriteFile("tmp", fileName);
-
-   m_guildmgr = new GuildMgr(fileInfo.absFilePath(), 
-			     this, "guildmgr");
-
    m_guildShell = new GuildShell(m_zoneMgr, this, "GuildShell");
 
    // Create the spawn shell

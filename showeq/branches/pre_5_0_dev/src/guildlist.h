@@ -11,6 +11,12 @@
 #ifndef _GUILDLIST_H_
 #define _GUILDLIST_H_
 
+#ifdef __FreeBSD__
+#include <sys/types.h>
+#else
+#include <stdint.h>
+#endif
+
 #include "seqwindow.h"
 #include "seqlistview.h" 
 
@@ -24,6 +30,10 @@ class Player;
 class ZoneMgr;
 class GuildMember;
 class GuildShell;
+
+class QLabel;
+class QLineEdit;
+class QPopupMenu;
 
 //--------------------------------------------------
 // constants
@@ -79,6 +89,7 @@ class GuildListWindow : public SEQWindow
   void cleared();
   void loaded();
   void updated(const GuildMember* gm);
+  void guildChanged();
 
  protected slots:
   void init_Menu(void);
@@ -91,15 +102,19 @@ class GuildListWindow : public SEQWindow
  protected:
   void clear(void);
   void populate(void);
+  void updateCount(void);
 
   Player* m_player;
   GuildShell* m_guildShell;
   
+  QLabel* m_guildName;
+  QLabel* m_guildTotals;
   SEQListView* m_guildList;
   QPtrDict<GuildListItem> m_guildListItemDict;
   QPopupMenu* m_menu;
   int m_id_guildList_Cols[tGuildListColMaxCols];
 
+  uint32_t m_membersOn;
   bool m_showOffline;
   bool m_keepSorted;
 };

@@ -335,7 +335,7 @@ Spawn::Spawn(Spawn& s, uint16_t id)
   setClassVal(s.classVal());
   setHP(s.HP());
   setMaxHP(s.maxHP());
-  setGuildID(s.GuildID());
+  setGuildID(s.guildID());
   setLevel(s.level());
   for (int i = 0; i <= tLastCoreWearSlot; i++)
     setEquipment(i, s.equipment(i));
@@ -847,7 +847,7 @@ QString Spawn::filterString() const
 	       deityTeam(),
 	       (const char*)typeString(),
 	       (const char*)lastName().utf8(),
-               (const char*)GuildTag().utf8());
+               (const char*)guildTag().utf8());
 
   if (gm())
     buff += QString("GM:") + QString::number(gm()) + ":";
@@ -873,7 +873,7 @@ QString Spawn::dumpString() const
     + ":RTeam:" + QString::number(raceTeam())
     + ":DTeam:" + QString::number(deityTeam())
     + ":Type:" + typeString()
-    + ":Guild:" + GuildTag()
+    + ":Guild:" + guildTag()
     + ":FilterFlags:" + QString::number(filterFlags())
     + ":";
 }

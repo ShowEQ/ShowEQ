@@ -15,6 +15,7 @@ dohpaZ (12/?/03)
 + Added NetStream classes for handling network byte order data streams.
 + Cleaned up the textual dump of guild names
 + Added GuildShell to track the list of guild members.
++ Added support for LoY guild information capture/display.
 + Integrated patch #861374 "Fix-three options aren't saved".
 + Integrated patch #864328 "Nedaria's Landing Map".
 + Integrated patch #864329 "Map: JaggedPine touchups".
