@@ -1,7 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl $Id$ $Name$
 
-AC_PREREQ(2.5)
 AC_INIT(src/main.cpp)
 AC_CANONICAL_SYSTEM
 AM_CONFIG_HEADER(conf.h)
