@@ -94,7 +94,7 @@ void SpawnPoint::update(const Spawn* spawn)
   m_count++;
 }
 
-SpawnMonitor::SpawnMonitor(DataLocationMgr* dataLocMgr, 
+SpawnMonitor::SpawnMonitor(const DataLocationMgr* dataLocMgr, 
 			   ZoneMgr* zoneMgr, SpawnShell* spawnShell, 
 			   QObject* parent, const char* name )
 : QObject( parent, name ),

@@ -20,9 +20,11 @@
 #include "gdbmconv.h"
 #endif
 
+//----------------------------------------------------------------------
 // forward declarations
 struct EQItemDBEntryData;
 class EQItemDBIterator;
+class DataLocationMgr;
 
 #ifdef USE_DB3
 #define ITEMDBBASE DB3Convenience
@@ -31,6 +33,7 @@ class EQItemDBIterator;
 #define ITEMDBBASE GDBMConvenience
 #define ITEMDBITBASE GDBMIterator
 #endif
+
 
 // EQItemDB is the singleton object that manages the 
 // Item databases
@@ -100,7 +103,7 @@ class EQItemDB : public QObject, protected ITEMDBBASE
    static const char* Version();
 
    // Constructor/Destructor
-   EQItemDB();
+   EQItemDB(const DataLocationMgr* dataLocMgr);
    ~EQItemDB();
 
  protected slots:
@@ -115,6 +118,10 @@ class EQItemDB : public QObject, protected ITEMDBBASE
    int m_dbTypesEnabled;
    bool m_logItems;
    bool m_logItemPackets;
+
+   const DataLocationMgr* m_dataLocMgr;
+   QString m_itemsLog;
+   QString m_itemPacketsLog;
 
    // the filenames specifying the storage location of the databases
    QString m_ItemDataDB;

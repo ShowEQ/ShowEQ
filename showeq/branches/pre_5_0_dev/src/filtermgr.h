@@ -69,7 +69,7 @@ class FilterMgr : public QObject
   Q_OBJECT
 
  public:
-  FilterMgr(DataLocationMgr* dataLocMgr, 
+  FilterMgr(const DataLocationMgr* dataLocMgr, 
 	    const QString filterFile, bool spawnfilter_case);
   ~FilterMgr();
   
@@ -113,7 +113,7 @@ class FilterMgr : public QObject
 
 
  private:
-  DataLocationMgr* m_dataLocMgr;
+  const DataLocationMgr* m_dataLocMgr;
   FilterTypes* m_types;
   QString m_filterFile;
   Filters* m_filters;

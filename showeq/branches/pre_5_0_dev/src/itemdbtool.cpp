@@ -22,6 +22,7 @@
 #include "util.h"
 #include "gdbmconv.h"
 #include "itemdb.h"
+#include "datalocationmgr.h"
 
 #ifdef USE_DB3
 #include "db3conv.h"
@@ -158,8 +159,10 @@ main (int argc, char *argv[])
   // note program name for later use.
   progname = argv[0];
 
+  DataLocationMgr dataLocMgr(".showeq");
+
   // Get an instance of the EQItemDB
-  EQItemDB* itemDB = new EQItemDB;
+  EQItemDB* itemDB = new EQItemDB(&dataLocMgr);
   
   // begin processing options
   while ((opt = getopt_long( argc,

@@ -51,7 +51,9 @@ class EQPacket : public QObject
    Q_OBJECT 
  public:
    
-   EQPacket(uint16_t m_arqSeqGiveUp, 
+   EQPacket(const QString& worldopcodesxml,
+	    const QString& zoneopcodesxml,
+	    uint16_t m_arqSeqGiveUp, 
 	    QString m_device,
 	    QString m_ip,
 	    QString m_mac_address,

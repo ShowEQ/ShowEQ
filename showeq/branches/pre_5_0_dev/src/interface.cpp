@@ -138,11 +138,26 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_initialcount = 0;
    m_packetStartTime = 0;
 
+   QString fileName, fileName2;
+   QFileInfo fileInfo, fileInfo2;
+
    // Create the packet object
    section = "Network";
    QString vpsection = "VPacket";
 
-   m_packet = new EQPacket(pSEQPrefs->getPrefInt("ArqSeqGiveUp", section, 256),
+   fileName = pSEQPrefs->getPrefString("WorldOPCodes", section, 
+				       "worldopcodes.xml");
+
+   fileInfo = m_dataLocationMgr->findExistingFile(".", fileName);
+
+   fileName2 = pSEQPrefs->getPrefString("ZoneOPCodes", section, 
+					"zoneopcodes.xml");
+
+   fileInfo2 = m_dataLocationMgr->findExistingFile(".", fileName2);
+
+   m_packet = new EQPacket(fileInfo.absFilePath(),
+			   fileInfo2.absFilePath(),
+			   pSEQPrefs->getPrefInt("ArqSeqGiveUp", section, 256),
 			   pSEQPrefs->getPrefString("Device", section, "eth0"),
 			   pSEQPrefs->getPrefString("IP", section,
 						    AUTOMATIC_CLIENT_IP),
@@ -165,12 +180,12 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    section = "Interface";
 			      
    // Create the Spells object
-   QString fileName = pSEQPrefs->getPrefString("SpellsFile", section,
+   fileName = pSEQPrefs->getPrefString("SpellsFile", section,
 					       "spells_us.txt");
 
-   QFileInfo fileInfo = m_dataLocationMgr->findExistingFile(".", fileName);
+   fileInfo = m_dataLocationMgr->findExistingFile(".", fileName);
    
-   m_spells = new Spells(fileName);
+   m_spells = new Spells(fileInfo.absFilePath());
 
    // Create the date/time manager
    m_dateTimeMgr = new DateTimeMgr(this, "datetimemgr");
@@ -185,19 +200,19 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    if (pSEQPrefs->getPrefBool("Enabled", section, true))
    {
      // Create an instance of the ItemDB
-     m_itemDB = new EQItemDB;
+     m_itemDB = new EQItemDB(m_dataLocationMgr);
 
      // make it's parameters match those set via the config file and 
      // command line
      fileName = pSEQPrefs->getPrefString("DataDBFilename", section, 
-					 "itemdata");
+					 "itemdata2");
 
      fileInfo = m_dataLocationMgr->findWriteFile(".", fileName);
 
      m_itemDB->SetDBFile(EQItemDB::DATA_DB, fileInfo.absFilePath());
 
      fileName = pSEQPrefs->getPrefString("RawDataDBFilename", section, 
-					 "itemrawdata");
+					 "itemrawdata2");
 
      m_itemDB->SetDBFile(EQItemDB::RAW_DATA_DB, fileInfo.absFilePath());
      m_itemDB->SetEnabledDBTypes(pSEQPrefs->getPrefInt("DatabasesEnabled",

@@ -66,7 +66,7 @@ class ExperienceWindow : public SEQWindow
    Q_OBJECT
 
 public:
-   ExperienceWindow(DataLocationMgr* dataLocMgr, 
+   ExperienceWindow(const DataLocationMgr* dataLocMgr, 
 		    Player* player, GroupMgr* g, 
 		    QWidget* parent = 0, const char* name = 0 );
    ~ExperienceWindow();
@@ -96,7 +96,7 @@ private:
    void logexp(long xp_gained, int mob_level);
 
    // Need to grab xp totals from here
-   DataLocationMgr* m_dataLocMgr;
+   const DataLocationMgr* m_dataLocMgr;
    QString m_newExpLogFile;
    Player* m_player;
    GroupMgr* m_group;

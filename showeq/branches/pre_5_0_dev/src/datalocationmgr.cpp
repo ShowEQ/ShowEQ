@@ -53,7 +53,7 @@ bool DataLocationMgr::setupUserDirectory()
 QFileInfo DataLocationMgr::findExistingFile(const QString& subdir, 
 					  const QString& filename,
 					  bool caseSensitive, 
-					  bool preferUser)
+					  bool preferUser) const
 {
   // find the file using the preferred search ordering
   if (preferUser)
@@ -65,7 +65,7 @@ QFileInfo DataLocationMgr::findExistingFile(const QString& subdir,
 QFileInfo DataLocationMgr::findWriteFile(const QString& subdir, 
 				       const QString& filename,
 				       bool caseSensitive, 
-				       bool preferUser)
+				       bool preferUser) const
 {
   if (preferUser)
     return findWriteFile(m_userData, m_pkgData, subdir, filename, 
@@ -78,7 +78,7 @@ QFileInfo DataLocationMgr::findWriteFile(const QString& subdir,
 QFileInfo DataLocationMgr::findFile(const QString& dir1, const QString& dir2,
 				    const QString& subdir, 
 				    const QString& filename,
-				    bool caseSensitive)
+				    bool caseSensitive) const
 {
   // start out with an empty/invalid QFileInfo object
   QFileInfo fileInfo;
@@ -109,7 +109,7 @@ QFileInfo DataLocationMgr::findFile(const QString& dir1, const QString& dir2,
 
 
 QFileInfo DataLocationMgr::findFile(const QDir& dir, const QString& filename,
-				    bool caseSensitive, bool writable)
+				    bool caseSensitive, bool writable) const
 {
   // perform a case insensitive match if requested
   if (!caseSensitive)
@@ -151,7 +151,7 @@ QFileInfo DataLocationMgr::findWriteFile(const QString& dir1,
 					 const QString& dir2,
 					 const QString& subdir, 
 					 const QString& filename,
-					 bool caseSensitive)
+					 bool caseSensitive) const 
 {
   // start out with an empty/invalid QFileInfo object
   QFileInfo fileInfo;
@@ -224,7 +224,7 @@ QFileInfo DataLocationMgr::findWriteFile(const QString& dir1,
 }
 
 QDir DataLocationMgr::findOrMakeSubDir(const QString& dir,
-					    const QString& subdir)
+					    const QString& subdir) const
 {
   QDir dirDir(dir);
   

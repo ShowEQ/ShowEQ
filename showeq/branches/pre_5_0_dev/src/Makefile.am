@@ -1,4 +1,4 @@
-INCLUDES=$(QT_INCLUDES) $(X_INCLUDES) $(DB3_INCLUDES) -DPKGDATADIR=\"$(pkgdatadir)/\" -DMAPDIR=\"$(pkgdatadir)/maps\" -DLOGDIR=\"$(pkgdatadir)\" -I/usr/include/pcap $(USER_INCLUDES)
+INCLUDES=$(QT_INCLUDES) $(X_INCLUDES) $(DB3_INCLUDES) -DPKGDATADIR=\"$(pkgdatadir)/\" -I/usr/include/pcap $(USER_INCLUDES)
 
 QTLIB=-lqt-mt
 
@@ -38,7 +38,7 @@ drawmap_cgi_SOURCES=drawmap.cpp util.cpp cgiconv.cpp
 drawmap_cgi_LDADD=$(QT_LDFLAGS) $(QTLIB) -lgd $(LIBPTHREAD) $(SHOWEQ_RPATH) $(USER_LDFLAGS)
 sortitem_SOURCES=sortitem.cpp util.cpp 
 sortitem_LDADD=$(QT_LDFLAGS) $(QTLIB) $(LIBPTHREAD) $(SHOWEQ_RPATH) $(USER_LDFLAGS)
-showeqitemdbtool_SOURCES=itemdbtool.cpp util.cpp  $(ITEMDB_SRCS)
+showeqitemdbtool_SOURCES=itemdbtool.cpp util.cpp datalocationmgr.cpp $(ITEMDB_SRCS)
 showeqitemdbtool_LDADD=$(QT_LDFLAGS) $(DB3_LIBS) $(QTLIB) $(LIBPTHREAD) $(SHOWEQ_RPATH) $(USER_LDFLAGS)
 
 EXTRA_DIST=classes.h compass.h everquest.h interface.h main.h map.h filter.h vpacket.h editor.h packet.h packetcapture.h packetcommon.h packetformat.h packetstream.h packetfragment.h races.h skills.h spells.h util.h experiencelog.h combatlog.h msgdlg.h spawn.h spawnshell.h spawnlist.h spellshell.h spelllist.h languages.h weapons.h weapons27.h decode.h opcodes.h itemdb.h gdbmconv.h cgiconv.h skilllist.h statlist.h db3conv.h dbcommon.h deity.h player.h crctab.h filtermgr.h point.h mapcore.h category.h compassframe.h group.h guild.h fixpt.h weapons28.h weapons2b.h netdiag.h zones.h logger.h xmlconv.h xmlpreferences.h seqwindow.h seqlistview.h zonemgr.h spawnmonitor.h spawnpointlist.h typenames.h spawnlistcommon.h spawnlist2.h datetimemgr.h spawnlog.h packetlog.h datalocationmgr.h
