@@ -43,6 +43,7 @@ AddStruct(specialMessageStruct);
 AddStruct(guildMOTDStruct);
 AddStruct(corpseLocStruct);
 AddStruct(groupUpdateStruct);
+AddStruct(groupFullUpdateStruct);
 AddStruct(groupInviteStruct);
 AddStruct(groupDeclineStruct);
 AddStruct(groupFollowStruct);

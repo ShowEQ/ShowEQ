@@ -247,6 +247,19 @@ enum ChatColor
 };
 
 /*
+** Guild Update actions
+*/
+enum GuildUpdateAction
+{
+  GUA_Joined = 0,
+  GUA_Left = 1,
+  GUA_LastLeft = 6,
+  GUA_FullGroupInfo = 7,
+  GUA_Started = 9,
+};
+
+
+/*
 ** Compiler override to ensure
 ** byte aligned structures
 */
@@ -1120,6 +1133,22 @@ struct groupUpdateStruct
 /*0004*/ char     yourname[64];           // Player Name
 /*0068*/ char     membername[64];         // Goup Member Name
 /*0132*/ uint32_t unknown0132;            // ***Placeholder
+/*0136*/
+};
+
+
+/*
+** Grouping Infromation
+** Length: 452 Octets
+** OpCode: OP_GroupUpdate
+*/
+
+struct groupFullUpdateStruct
+{
+/*0000*/ int32_t  action;
+/*0004*/ char     membernames[MAX_GROUP_MEMBERS][64]; // Group Member Names
+/*0388*/ char     leader[64];                         // Goup Member Name
+/*0452*/
 };
 
 /*
@@ -1133,6 +1162,7 @@ struct groupInviteStruct
 /*0000*/ char     invitee[64];           // Invitee's Name
 /*0064*/ char     inviter[64];           // Inviter's Name
 /*0128*/ uint8_t  unknown0130[65];        // ***Placeholder
+/*0193*/
 };
 
 /*
@@ -1146,6 +1176,7 @@ struct groupDeclineStruct
 /*0000*/ char     yourname[64];           // Player Name
 /*0064*/ char     membername[64];         // Invited Member Name
 /*0128*/ uint8_t  reason;                 // Already in Group = 1, Declined Invite = 3
+/*0129*/
 };
 
 /*
@@ -1158,10 +1189,11 @@ struct groupFollowStruct
 {
 /*0000*/ char     inviter[64];           // Inviter's Name
 /*0064*/ char     invitee[64];           // Invitee's Member Name
+/*0128*/
 };
 
 /*
-** Grouping Removal
+** Group Disbanding
 ** Length 128 Octets
 ** Opcode 
 */
@@ -1170,6 +1202,7 @@ struct groupDisbandStruct
 {
 /*0000*/ char     yourname[64];           // Player Name
 /*0064*/ char     membername[64];         // Invited Member Name
+/*0128*/
 };
 
 

@@ -37,6 +37,7 @@ dohpaZ (12/?/03)
   latest updates.
 + Added Group opcodes to zoneopcodes.xml.  Updated group structures, and 
   updated group notification support in MessageShell.
++ Major revamp of the GroupMgr.  It now actually works.
 
 dohpaZ (12/7/03)
 ---------------------
