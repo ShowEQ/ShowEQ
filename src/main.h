@@ -24,19 +24,7 @@ class EQItemDB;
 #include "../conf.h"
 
 //----------------------------------------------------------------------
-// Macros
-#ifndef LOGDIR
-#define LOGDIR "../logs"
-#endif
-  
-#ifndef MAPDIR
-#define MAPDIR "../maps"
-#endif
-  
-#ifndef SPAWNFILE
-#define SPAWNFILE        LOGDIR "/spawn.db"
-#endif
-
+// bogus structure that should die soon
 struct ShowEQParams
 {
   bool           retarded_coords; // Verant style YXZ instead of XYZ

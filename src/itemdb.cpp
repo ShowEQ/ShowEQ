@@ -15,6 +15,7 @@ static char* itemdbid = "@(#) $Id$ $Name$";
 
 #include "itemdb.h"
 #include "util.h"
+#include "datalocationmgr.h"
 
 #ifdef USE_DB3
 #include "gdbmconv.h"
@@ -831,17 +832,26 @@ void EQItemDBEntryRawData_1::Init(void)
 
 ////////////////////////////////////////////////////////////////////
 // Implementation of the EQItemDB class
-EQItemDB::EQItemDB()
-  : QObject(NULL, "eqitemdb")
+EQItemDB::EQItemDB(const DataLocationMgr* dataLocMgr)
+  : QObject(NULL, "eqitemdb"),
+    m_dataLocMgr(dataLocMgr)
 {
   // What types of item data is saved
   m_dbTypesEnabled = (DATA_DB|RAW_DATA_DB);
   m_logItems = false;
   m_logItemPackets = false;
 
+  QFileInfo fileInfo;
+
+  fileInfo = m_dataLocMgr->findWriteFile("logs", "items.log");
+  m_itemsLog = fileInfo.absFilePath();
+
+  fileInfo = m_dataLocMgr->findWriteFile("logs", "itempackets.log");
+  m_itemPacketsLog = fileInfo.absFilePath();
+
   // construct item data file names
-  m_ItemDataDB = LOGDIR "/itemdata2";
-  m_ItemRawDataDB = LOGDIR "/itemrawdata2";
+  m_ItemDataDB = m_dataLocMgr->findWriteFile(".", "itemdata2").absFilePath();
+  m_ItemRawDataDB = m_dataLocMgr->findWriteFile(".", "itemrawdata2").absFilePath();
 }
 
 EQItemDB::~EQItemDB()
@@ -1836,7 +1846,7 @@ void EQItemDB::logItem(const char* serializedItem, size_t len)
   now = time (NULL);
   
   FILE *lh;
-  const char* filename = LOGDIR "/items.log";
+  const char* filename = (const char*)m_itemsLog;
   lh = fopen (filename, "a");
   
   if (lh == NULL)
@@ -1861,7 +1871,7 @@ void EQItemDB::item(const uint8_t* data, size_t size, uint8_t)
     now = time (NULL);
 
     FILE *lh;
-    const char* filename = LOGDIR "/itempackets.log";
+    const char* filename = (const char*)m_itemPacketsLog;
     lh = fopen (filename, "a");
     
     if (lh == NULL)
@@ -1921,7 +1931,7 @@ void EQItemDB::playerItem(const uint8_t* data, size_t size, uint8_t)
     now = time (NULL);
     ctimeStr = ctime(&now);
     
-    const char* filename = LOGDIR "/itempackets.log";
+    const char* filename = (const char*)m_itemPacketsLog;
     lh = fopen (filename, "a");
     
     if (!lh)
@@ -1960,7 +1970,7 @@ void EQItemDB::itemInfo(const uint8_t* data, size_t size, uint8_t)
     now = time (NULL);
     
     FILE *lh;
-    const char* filename = LOGDIR "/itempackets.log";
+    const char* filename = (const char*)m_itemPacketsLog;
     lh = fopen (filename, "a");
     
     if (!lh)

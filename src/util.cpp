@@ -138,65 +138,6 @@ language_name (uint8_t langId)
     return QString::number(langId);
 }
 
-/* Saves spawn to spawn DB */
-void spawndb (const dbSpawnStruct *dbSpawn)
-{
-   FILE *sdb;
-   struct dbSpawnStruct s;
-   int found=0;
-   char thisname[256];
-   char dbname[256];
-
-   /* Check if this is not a player or a corpse */
-   if (dbSpawn->spawn.NPC == 0 || dbSpawn->spawn.NPC == 2) {
-      return;
-   }
-
-   strcpy (thisname, dbSpawn->spawn.name);
-
-   /* Strip off number after spawn name */
-   size_t nameLen = strlen(dbSpawn->spawn.name);
-   for (size_t a=0; a < nameLen; a++)
-     if (thisname[a]<='9')
-       thisname[a]=0;
-
-   if ((sdb = fopen (SPAWNFILE, "r")) != NULL)
-   {
-      while (fread (&s, sizeof(dbSpawnStruct), 1, sdb))
-      {
-	 strcpy (dbname, s.spawn.name);
-	 size_t nameLen = strlen(s.spawn.name);
-	 for (size_t a=0; a < nameLen; a++)
-	   if (dbname[a]<='9')
-	     dbname[a]=0;
-	 if (	(!strcmp(dbname, thisname)) &&
-		(dbSpawn->spawn.level == s.spawn.level) &&
-		(!strcmp(dbSpawn->zoneName, s.zoneName)) )
-	 {
-	    found=1;
-	    break;
-	 }
-      }
-
-      fclose (sdb);
-   }
-   else {
-      puts("Error opening spawn file '" SPAWNFILE "'");
-   }
-
-   if (!found)
-   {
-      if ((sdb = fopen (SPAWNFILE, "a")) != NULL)
-      {
-	 fwrite (dbSpawn, sizeof(dbSpawnStruct), 1, sdb);
-	 fclose (sdb);
-      }
-      else {
-         puts("Error opening spawn file '" SPAWNFILE "'");
-      }
-   }
-}
-
 QString print_races (uint16_t races)
 {
   QString race_str;

@@ -120,7 +120,7 @@ class MapMgr : public QObject
    Q_OBJECT
 
  public:
-   MapMgr(DataLocationMgr* dataLocMgr, 
+   MapMgr(const DataLocationMgr* dataLocMgr, 
 	  SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
 	  QWidget* dialogParent, 
 	  QObject* parent = 0, const char* name = "mapmgr");
@@ -183,7 +183,7 @@ class MapMgr : public QObject
   void mapUpdated(void);
 
  private:
-  DataLocationMgr* m_dataLocMgr;
+  const DataLocationMgr* m_dataLocMgr;
   SpawnShell* m_spawnShell;
   Player* m_player;
   QWidget* m_dialogParent;

@@ -141,7 +141,7 @@ ExperienceWindow::~ExperienceWindow()
     ::fclose(m_log);
 }
 
-ExperienceWindow::ExperienceWindow(DataLocationMgr* dataLocMgr, 
+ExperienceWindow::ExperienceWindow(const DataLocationMgr* dataLocMgr, 
 				   Player* player, GroupMgr* groupMgr,
 				   QWidget* parent, const char* name) 
   : SEQWindow("Experience", "ShowEQ - Experience", parent, name),

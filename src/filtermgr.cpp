@@ -30,7 +30,7 @@
 
 //----------------------------------------------------------------------
 // FilterMgr
-FilterMgr::FilterMgr(DataLocationMgr* dataLocMgr, 
+FilterMgr::FilterMgr(const DataLocationMgr* dataLocMgr, 
 		     const QString filterFile, bool spawnfilter_case)
   : QObject(NULL, "filtermgr"),
     m_dataLocMgr(dataLocMgr),

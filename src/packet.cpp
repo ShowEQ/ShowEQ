@@ -96,7 +96,9 @@ bool validatePayloadSize(int len, int size, uint16_t code,
 
 ////////////////////////////////////////////////////
 // Constructor
-EQPacket::EQPacket(uint16_t arqSeqGiveUp, 
+EQPacket::EQPacket(const QString& worldopcodesxml,
+		   const QString& zoneopcodesxml,
+		   uint16_t arqSeqGiveUp, 
 		   QString device,
 		   QString ip,
 		   QString mac_address,
@@ -132,9 +134,9 @@ EQPacket::EQPacket(uint16_t arqSeqGiveUp,
   m_worldOPCodeDB = new EQPacketOPCodeDB(29);
 
   // load the world opcode db
-  if (!m_worldOPCodeDB->load(*m_packetTypeDB, LOGDIR "/worldopcodes.xml"))
+  if (!m_worldOPCodeDB->load(*m_packetTypeDB, worldopcodesxml))
   {
-    fprintf(stderr, "Error loading 'worldopcodes.xml!\n");
+    fprintf(stderr, "Error loading '%s'!\n", (const char*)worldopcodesxml);
     exit(-1);
   }
   
@@ -142,15 +144,15 @@ EQPacket::EQPacket(uint16_t arqSeqGiveUp,
   m_worldOPCodeDB->list();
 #endif
 
-  m_worldOPCodeDB->save("/tmp/worldopcodes.xml");
+  //m_worldOPCodeDB->save("/tmp/worldopcodes.xml");
 
   // create the zone opcode db (with hash size of 211)
   m_zoneOPCodeDB = new EQPacketOPCodeDB(211);
   
   // load the zone opcode db
-  if (!m_zoneOPCodeDB->load(*m_packetTypeDB, LOGDIR "/zoneopcodes.xml"))
+  if (!m_zoneOPCodeDB->load(*m_packetTypeDB, zoneopcodesxml))
   {
-    fprintf(stderr, "Error loading 'zoneopcodes.xml!\n");
+    fprintf(stderr, "Error loading '%s'!\n", (const char*)zoneopcodesxml);
     exit(-1);
   }
 
@@ -158,8 +160,8 @@ EQPacket::EQPacket(uint16_t arqSeqGiveUp,
   m_zoneOPCodeDB->list();
 #endif
 
-  m_zoneOPCodeDB->save("/tmp/zoneopcodes.xml");
-
+  //m_zoneOPCodeDB->save("/tmp/zoneopcodes.xml");
+  
   // Setup the data streams
 
   // Setup client -> world stream

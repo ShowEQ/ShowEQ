@@ -257,7 +257,7 @@ int main (int argc, char **argv)
    showeq_params->restorePlayerState = false;
    showeq_params->restoreZoneState = false;
    showeq_params->restoreSpawns = false;
-   showeq_params->saveRestoreBaseFilename = pSEQPrefs->getPrefString("BaseFilename", section, LOGDIR "/last");
+   showeq_params->saveRestoreBaseFilename = dataLocMgr.findWriteFile("tmp", pSEQPrefs->getPrefString("BaseFilename", section, "last")).absFilePath();
 
    /* Parse the commandline for commandline parameters */
    while ((opt = getopt_long( argc,

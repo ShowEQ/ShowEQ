@@ -37,9 +37,13 @@
    <bool value="false" />
    <comment>enable/disable session tracking</comment>
   </property>
-  <property name="BrokenDecode" >
-   <bool value="false" />
-   <comment>set to true to skip decoding of spawn packets</comment>
+  <property name="WorldOPCodes" >
+   <string value="worldopcodes.xml" />
+   <comment>Name of the file containing data about world opcodes</comment>
+  </property>
+  <property name="ZoneOPCodes" >
+   <string value="zoneopcodes.xml" />
+   <comment>Name of the file containing data about zone opcodes</comment>
   </property>
  </section>
 <!-- ============================================================= -->
@@ -2518,7 +2522,7 @@
    <comment>number of milliseconds between spawn list saves</comment>
   </property>
   <property name="BaseFilename" >
-   <string value="/usr/local/share/showeq/last" />
+   <string value="last" />
    <comment>Base filename used to construct the others, so for example the DecodeKey would be in /usr/local/share/showeq/lastKey.dat using the default location</comment>
   </property>
  </section>

@@ -225,7 +225,7 @@ void MapLabel::mousePressEvent(QMouseEvent*)
 
 //----------------------------------------------------------------------
 // MapMgr
-MapMgr::MapMgr(DataLocationMgr* dataLocMgr, 
+MapMgr::MapMgr(const DataLocationMgr* dataLocMgr, 
 	       SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
 	       QWidget* dialogParent, QObject* parent, const char* name)
   : QObject(parent, name),
@@ -640,7 +640,7 @@ void MapMgr::convertMap (bool direction)
 
   if (direction)
   {
-    inFileName = QFileDialog::getOpenFileName(MAPDIR, "*.map");
+    inFileName = QFileDialog::getOpenFileName(PKGDATADIR, "*.map");
     if (inFileName.isEmpty ())
       return;
     outFileName = QFileDialog::getSaveFileName(QString::null, "*.txt");
@@ -652,7 +652,7 @@ void MapMgr::convertMap (bool direction)
     inFileName = QFileDialog::getOpenFileName(QString::null, "*.txt");
     if (inFileName.isEmpty ())
       return;
-    outFileName = QFileDialog::getSaveFileName(MAPDIR, "*.map");
+    outFileName = QFileDialog::getSaveFileName(PKGDATADIR, "*.map");
     if (outFileName.isEmpty ())
       return;
   }
