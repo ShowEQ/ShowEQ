@@ -1,8 +1,11 @@
 /*
- * spawnshell.h
+ * spellshell.h
  *
  * ShowEQ Distributed under GPL
  * http://sourceforge.net/projects/seq/
+ * 
+ * Portions Copyright 2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 /*

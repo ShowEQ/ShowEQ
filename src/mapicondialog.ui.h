@@ -1,3 +1,13 @@
+/*
+ * mapicondialog.ui.h
+ *
+ *  ShowEQ Distributed under GPL
+ *  http://seq.sourceforge.net/
+ * 
+ * Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
+ */
+
 /****************************************************************************
 ** ui.h extension file, included from the uic-generated form implementation.
 **
@@ -106,11 +116,12 @@ void MapIconDialog::init()
     QPoint point(size, size);
     // setup the image styles
     QPixmap pix(QSize(sizeWH+1, sizeWH+1));
+    QPen pen(black, 0, SolidLine, SquareCap, BevelJoin);
     for (int i = tIconStyleNone; i <= tIconStyleMax; i++)
     {
 	pix.fill(white);
 	QPainter p(&pix);
-	p.setPen(QPen(black));
+	p.setPen(pen);
 	p.setBrush(QBrush(gray));
 	MapIcon::paintIconImage(MapIconStyle(i), p, point, size, sizeWH);
 	p.end();
@@ -139,7 +150,7 @@ void MapIconDialog::init()
     };
     
     // setup pen style names
-    QPen pen(black);
+    pen = QPen(black, 0, SolidLine, SquareCap, BevelJoin);
     for (int i = NoPen; i <= DashDotDotLine; i++)
     {
 	pix.fill(white);

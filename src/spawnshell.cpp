@@ -3,6 +3,9 @@
  *
  * ShowEQ Distributed under GPL
  * http://seq.sourceforge.net/
+ * 
+ * Portions Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 /*
@@ -256,9 +259,6 @@ void SpawnShell::deleteItem(spawnItemType type, int id)
 
    if (item != NULL)
    {
-     if (item->filterFlags() & FILTER_FLAG_ALERT)
-       emit handleAlert(item, tDelSpawn);
-     
      emit delItem(item);
      theMap.remove(id);
 
@@ -364,9 +364,6 @@ void SpawnShell::newGroundItem(const uint8_t* data, size_t, uint8_t dir)
     m_drops.insert(d->dropId, item);
     emit addItem(item);
   }
-
-  if (item->filterFlags() & FILTER_FLAG_ALERT)
-    emit handleAlert(item, tNewSpawn);
 }
 
 void SpawnShell::removeGroundItem(const uint8_t* data, size_t, uint8_t dir)
@@ -425,9 +422,6 @@ void SpawnShell::newDoorSpawn(const doorStruct& d, size_t len, uint8_t dir)
      m_doors.insert(d.doorId, item);
      emit addItem(item);
    }
-
-   if (item->filterFlags() & FILTER_FLAG_ALERT)
-     emit handleAlert(item, tNewSpawn);
 }
 
 void SpawnShell::zoneSpawns(const uint8_t* data, size_t len)
@@ -515,9 +509,6 @@ void SpawnShell::newSpawn(const spawnStruct& s)
      // send notification of new spawn count
      emit numSpawns(m_spawns.count());
    }
-
-   if (item->filterFlags() & FILTER_FLAG_ALERT)
-     emit handleAlert(item, tNewSpawn);
 }
 
 void SpawnShell::playerUpdate(const uint8_t* data, size_t, uint8_t dir)
@@ -809,10 +800,6 @@ void SpawnShell::killSpawn(const uint8_t* data)
      Item* killer;
      killer = m_spawns.find(deadspawn->killerId);
      emit killSpawn(item, killer, deadspawn->killerId);
-
-
-     if (item->filterFlags() & FILTER_FLAG_ALERT)
-       emit handleAlert(item, tKillSpawn);
    }
 }
 

@@ -3,6 +3,9 @@
  *
  *  ShowEQ Distributed under GPL
  *  http://seq.sf.net/
+ * 
+ * Portions Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). 
+ * 
  */
 
 // Author: Zaphod (dohpaz@users.sourceforge.net)

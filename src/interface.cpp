@@ -45,6 +45,7 @@
 #include "filteredspawnlog.h"
 #include "messagefilterdialog.h"
 #include "diagnosticmessages.h"
+#include "filternotifications.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -112,6 +113,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_messageShell(0),
     m_terminal(0),
     m_filteredSpawnLog(0),
+    m_filterNotifications(0),
     m_spawnLogger(0),
     m_globalLog(0),
     m_worldLog(0),
@@ -311,6 +313,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 				     m_zoneMgr, m_spawnShell, m_player,
 				     this, "messageshell");
 
+   // Create the Filter Notifications object
+   m_filterNotifications = new FilterNotifications(this, "filternotifications");
+   
    // Create log objects as necessary
    if (pSEQPrefs->getPrefBool("LogAllPackets", "PacketLogging", false))
      createGlobalLog();
@@ -1007,8 +1012,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    x = filterMenu->insertItem("&Display Alert Info", this, SLOT(toggle_filter_AlertInfo(int)));
    filterMenu->setItemChecked(x, 
 			      pSEQPrefs->getPrefBool("AlertInfo", "Filters"));
-   x = filterMenu->insertItem("&Use Audio Device", this, SLOT(toggle_filter_Audio(int)));
-   filterMenu->setItemChecked(x, showeq_params->spawnfilter_audio);
+   x = filterMenu->insertItem("&Use System Beep", this, SLOT(toggle_filter_UseSystemBeep(int)));
+   filterMenu->setItemChecked(x, m_filterNotifications->useSystemBeep());
+   x = filterMenu->insertItem("Use &Commands", this, SLOT(toggle_filter_UseCommands(int)));
+   filterMenu->setItemChecked(x, m_filterNotifications->useCommands());
 
    // Filter -> Log
    QPopupMenu* filterLogMenu = new QPopupMenu;
@@ -1669,6 +1676,19 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 #endif // ZBTEMP
    }
 
+   if (m_filterNotifications)
+   {
+     connect(m_spawnShell, SIGNAL(addItem(const Item*)),
+	     m_filterNotifications, SLOT(addItem(const Item*)));
+     connect(m_spawnShell, SIGNAL(delItem(const Item*)),
+	     m_filterNotifications, SLOT(delItem(const Item*)));
+     connect(m_spawnShell, SIGNAL(killSpawn(const Item*, const Item*, uint16_t)),
+	     m_filterNotifications, SLOT(killSpawn(const Item*)));
+     connect(m_spawnShell, SIGNAL(changeItem(const Item*, uint32_t)),
+	     m_filterNotifications, 
+	     SLOT(changeItem(const Item*, uint32_t)));
+   }
+
    // connect interface slots to Packet signals
    m_packet->connect2("OP_TargetMouse", SP_Zone, DIR_Client|DIR_Server,
 		      "clientTargetStruct", SZC_Match,
@@ -1716,8 +1736,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 	   this, SLOT(killSpawn(const Item*)));
    connect(m_spawnShell, SIGNAL(changeItem(const Item*, uint32_t)),
 	   this, SLOT(changeItem(const Item*)));
-   connect(m_spawnShell, SIGNAL(handleAlert(const Item*, alertType)),
-	   this, SLOT(handleAlert(const Item*, alertType)));
    connect(m_spawnShell, SIGNAL(spawnConsidered(const Item*)),
 	   this, SLOT(spawnConsidered(const Item*)));
 
@@ -2734,12 +2752,16 @@ void EQInterface::toggle_filter_AlertInfo(int id)
 			    pSEQPrefs->getPrefBool("AlertInfo", "Filters"));
 }
 
-void EQInterface::toggle_filter_Audio(int id)
+void EQInterface::toggle_filter_UseSystemBeep(int id)
 {
-  showeq_params->spawnfilter_audio = !showeq_params->spawnfilter_audio;
-  menuBar()->setItemChecked(id, showeq_params->spawnfilter_audio);
-  pSEQPrefs->setPrefBool("Audio", "Filters", 
-			 showeq_params->spawnfilter_audio);
+  m_filterNotifications->setUseSystemBeep(!m_filterNotifications->useSystemBeep());
+  menuBar()->setItemChecked(id, m_filterNotifications->useSystemBeep());
+}
+
+void EQInterface::toggle_filter_UseCommands(int id)
+{
+  m_filterNotifications->setUseCommands(!m_filterNotifications->useCommands());
+  menuBar()->setItemChecked(id, m_filterNotifications->useCommands());
 }
 
 void EQInterface::toggle_filter_Log(int id)
@@ -4001,10 +4023,6 @@ void EQInterface::addItem(const Item* item)
 
   if (filterFlags & FILTER_FLAG_LOCATE)
   {
-    // Deside how to handle audio alerts
-    //
-    makeNoise(item, "LocateSpawnAudioCommand", "Locate Spawned");
-    
     // note the new selection
     m_selectedSpawn = item;
     
@@ -4014,29 +4032,6 @@ void EQInterface::addItem(const Item* item)
     // update the spawn status
     updateSelectedSpawnStatus(m_selectedSpawn);
   } // End LOCATE Filter alerting
-  
-  if (filterFlags & FILTER_FLAG_CAUTION)
-  {
-    // Deside how to handle audio alerts
-    //
-    makeNoise(item, "CautionSpawnAudioCommand", "Caution Spawned");
-
-  } // End CAUTION Filter alerting
-  
-  if (filterFlags & FILTER_FLAG_HUNT)
-  {
-    // Deside how to handle audio alerts
-    //
-    makeNoise(item, "HuntSpawnAudioCommand", "Hunt Spawned");
-
-  } // End HUNT Filter alerting
-  
-  if (filterFlags & FILTER_FLAG_DANGER)
-  {
-    // Deside how to handle audio alerts
-    //
-    makeNoise(item, "DangerSpawnAudioCommand", "Danger Spawned");
-  } // End DANGER Filter alerting
 }
 
 
@@ -4070,84 +4065,6 @@ void EQInterface::changeItem(const Item* item)
     return;
 
   updateSelectedSpawnStatus(item);
-}
-
-void EQInterface::handleAlert(const Item* item, 
-			      alertType type)
-{
-  // Gereric system beep for those without a soundcard
-  //
-  if (!pSEQPrefs->getPrefBool("Audio", "Filters"))
-  {
-    fprintf( stderr, "\a");
-    fflush( stderr);
-  }
-  else
-  {
-    // execute a command
-    QString command;
-    QString audioCmd;
-    QString audioCue;
-    switch (type)
-    {
-    case tNewSpawn:
-      audioCmd = "SpawnAudioCommand";
-      audioCue = "Spawned";
-      break;
-    case tKillSpawn:
-      audioCmd = "DeathAudioCommand";
-      audioCue = "Died";
-      break;
-    case tDelSpawn:
-      audioCmd = "DeSpawnAudioCommand";
-      audioCue = "Despawned";
-      break;
-    }
-    
-    doAlertCommand(item, pSEQPrefs->getPrefString(audioCmd, "Filters"),
-		   audioCue);
-  }
-}
-
-// Deside how to handle audio alerts
-//
-void EQInterface::makeNoise( const Item* item, 
-			     char* szAudioCmd, 
-			     char* szSoundType)
-{
-  if (!showeq_params->spawnfilter_audio)
-  {
-    fprintf(stderr,"\a");
-    fflush(stderr);
-  }
-  else
-    doAlertCommand(item, 
-		   pSEQPrefs->getPrefString(szAudioCmd, "Filters"),
-		   szSoundType);
-}
-
-void EQInterface::doAlertCommand(const Item* item, 
-				 const QString& rawCommand, 
-				 const QString& audioCue)
-{
-  if (rawCommand.isEmpty())
-    return;
-
-  // time to cook the command line
-  QString command = rawCommand;
-
-  QRegExp nameExp("%n");
-  QRegExp cueExp("%c");
-  
-  // get the name, and replace all occurrances of %n with the name
-  QString name = item->transformedName();
-  command.replace(nameExp, name);
-  
-  // now, replace all occurrances of %c with the audio cue
-  command.replace(cueExp, audioCue);
-  
-  // fire off the command
-  system ((const char*)command);
 }
 
 void EQInterface::updateSelectedSpawnStatus(const Item* item)

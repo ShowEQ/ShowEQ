@@ -53,6 +53,7 @@ class GroupMgr;
 class SpawnMonitor;
 class SpawnLog;
 class FilteredSpawnLog;
+class FilterNotifications;
 class Item;
 class CompassFrame;
 class MapFrame;
@@ -144,7 +145,6 @@ class EQInterface:public QMainWindow
    void killSpawn(const Item* item);
    void changeItem(const Item* item);
 
-   void handleAlert(const Item* item, alertType type);
    void updateSelectedSpawnStatus(const Item* item);
 
    void savePrefs(void);
@@ -249,7 +249,8 @@ class EQInterface:public QMainWindow
    void save_as_filter_file();
    void toggle_filter_Case(int id);
    void toggle_filter_AlertInfo(int id);
-   void toggle_filter_Audio(int id);
+   void toggle_filter_UseSystemBeep(int id);
+   void toggle_filter_UseCommands(int id);
    void toggle_filter_Log(int id);
    void set_filter_AudioCommand(int id);
    void toggle_view_menubar();
@@ -289,10 +290,6 @@ class EQInterface:public QMainWindow
    bool getMonitorOpCodeList(const QString& title, QString& opcodeList);
    int setTheme(int id);
    void loadFormatStrings();
-   void makeNoise( const Item* item, char* szAudioCmd, char* szSoundType);
-   void doAlertCommand(const Item* item, 
-		       const QString& command,
-		       const QString& audioCue);
    void showMap(int mapNum);
    void showMessageWindow(int winNum);
    void showSpawnList(void);
@@ -342,6 +339,7 @@ class EQInterface:public QMainWindow
    MessageShell* m_messageShell;
    Terminal* m_terminal;
    FilteredSpawnLog* m_filteredSpawnLog;
+   FilterNotifications* m_filterNotifications;
    SpawnLog *m_spawnLogger;
 
    PacketLog* m_globalLog;
