@@ -45,7 +45,7 @@
     <opcode id="0034" name="OP_TradeRequestAck" updated="11/05/03">
         <comment>Trade request recipient is acknowledging they are able to trade</comment>
     </opcode>
-    <opcode id=0039" name="OP_GuildPublicNote" updated="11/05/03">
+    <opcode id="0039" name="OP_GuildPublicNote" updated="11/05/03">
         <comment></comment>
     </opcode>
     <opcode id="003b" name="OP_MobUpdate" implicitlen="12" updated="11/05/03">
