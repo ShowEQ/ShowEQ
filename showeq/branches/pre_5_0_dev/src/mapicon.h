@@ -191,8 +191,8 @@ class MapIcon
   bool showWalkPath() const { return m_showWalkPath; }
   bool showName() const { return m_showName; }
 
-  void paintIconImage(MapIconStyle style, QPainter&p, const QPoint& point, 
-		      int size, int sizeWH) const;
+  static void paintIconImage(MapIconStyle style, QPainter&p, const QPoint& point, 
+			     int size, int sizeWH);
 
   // static convenience methods
   static const QString& iconSizeName(MapIconSize size);
@@ -255,7 +255,7 @@ class MapIcon
 
 inline void MapIcon::paintIconImage(MapIconStyle style, QPainter& p, 
 				    const QPoint& point, 
-				    int size, int sizeWH) const
+				    int size, int sizeWH)
 {
   (*s_iconImageFunctions[style])(p, point, size, sizeWH);
 }

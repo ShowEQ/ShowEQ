@@ -76,6 +76,22 @@
                 <string>Revert</string>
             </property>
         </widget>
+        <widget class="QPushButton">
+            <property name="name">
+                <cstring>m_apply</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>171</x>
+                    <y>231</y>
+                    <width>60</width>
+                    <height>22</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>Apply</string>
+            </property>
+        </widget>
         <widget class="QTabWidget">
             <property name="name">
                 <cstring>m_tabWidget</cstring>
@@ -421,7 +437,7 @@
                             <rect>
                                 <x>280</x>
                                 <y>20</y>
-                                <width>150</width>
+                                <width>170</width>
                                 <height>22</height>
                             </rect>
                         </property>
@@ -597,19 +613,6 @@
                             <string>Use Spawn Color</string>
                         </property>
                     </widget>
-                    <widget class="QComboBox">
-                        <property name="name">
-                            <cstring>m_highlightBrushStyle</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>280</x>
-                                <y>20</y>
-                                <width>150</width>
-                                <height>22</height>
-                            </rect>
-                        </property>
-                    </widget>
                     <widget class="QLabel">
                         <property name="name">
                             <cstring>TextLabel3_2_2_2</cstring>
@@ -662,6 +665,19 @@
                         </property>
                         <property name="frameShadow">
                             <enum>Raised</enum>
+                        </property>
+                    </widget>
+                    <widget class="QComboBox">
+                        <property name="name">
+                            <cstring>m_highlightBrushStyle</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>280</x>
+                                <y>20</y>
+                                <width>170</width>
+                                <height>22</height>
+                            </rect>
                         </property>
                     </widget>
                 </widget>
@@ -1435,22 +1451,6 @@
                 </widget>
             </widget>
         </widget>
-        <widget class="QPushButton">
-            <property name="name">
-                <cstring>m_apply</cstring>
-            </property>
-            <property name="geometry">
-                <rect>
-                    <x>171</x>
-                    <y>231</y>
-                    <width>60</width>
-                    <height>22</height>
-                </rect>
-            </property>
-            <property name="text">
-                <string>Apply</string>
-            </property>
-        </widget>
     </widget>
     <widget class="QComboBox">
         <property name="name">
@@ -1609,6 +1609,7 @@
 <includes>
     <include location="local" impldecl="in declaration">mapicon.h</include>
     <include location="global" impldecl="in implementation">qcolordialog.h</include>
+    <include location="global" impldecl="in implementation">qpainter.h</include>
     <include location="local" impldecl="in implementation">mapicondialog.ui.h</include>
 </includes>
 <variables>

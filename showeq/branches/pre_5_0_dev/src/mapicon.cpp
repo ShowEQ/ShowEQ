@@ -480,7 +480,7 @@ void MapIcon::paintUpTriangle(QPainter&p, const QPoint& point,
 			      int size, int sizeWH)
 {
   QPointArray atri(3);
-  atri.setPoint(0, point.x(), point.y() - sizeWH);
+  atri.setPoint(0, point.x(), point.y() - size);
   atri.setPoint(1, point.x() + size, point.y() + size);
   atri.setPoint(2, point.x() - size, point.y() + size);
   p.drawPolygon(atri);
@@ -490,7 +490,7 @@ void MapIcon::paintRightTriangle(QPainter&p, const QPoint& point,
 				 int size, int sizeWH)
 {
   QPointArray atri(3);
-  atri.setPoint(0, point.x() + sizeWH, point.y());
+  atri.setPoint(0, point.x() + size, point.y());
   atri.setPoint(1, point.x() - size,  point.y() + size);
   atri.setPoint(2, point.x() - size,  point.y() - size);
   p.drawPolygon(atri);
@@ -500,7 +500,7 @@ void MapIcon::paintDownTriangle(QPainter&p, const QPoint& point,
 				int size, int sizeWH)
 {
   QPointArray atri(3);
-  atri.setPoint(0, point.x(), point.y() + sizeWH);
+  atri.setPoint(0, point.x(), point.y() + size);
   atri.setPoint(1, point.x() + size, point.y() - size);
   atri.setPoint(2, point.x() - size, point.y() - size);
   p.drawPolygon(atri);
@@ -510,7 +510,7 @@ void MapIcon::paintLeftTriangle(QPainter&p, const QPoint& point,
 				int size, int sizeWH)
 {
   QPointArray atri(3);
-  atri.setPoint(0, point.x() - sizeWH, point.y());
+  atri.setPoint(0, point.x() - size, point.y());
   atri.setPoint(1, point.x() + size, point.y() + size);
   atri.setPoint(2, point.x() + size, point.y() - size);
   p.drawPolygon(atri);
