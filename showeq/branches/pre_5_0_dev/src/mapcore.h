@@ -76,7 +76,6 @@ class MapParameters
   // q format used for map fixed point math
   enum { qFormat = 14 };
 
-
  public:
   MapParameters(const MapData& mapData);
   ~MapParameters();
@@ -462,17 +461,23 @@ class MapLineM : public MapCommon, public MapPointArray
 
 //----------------------------------------------------------------------
 // MapLocation
-class MapLocation : public MapCommon, public QPoint
+class MapLocation : public MapCommon, public MapPoint
 {
  public:
   MapLocation();
   MapLocation(const QString& name, const QString& color, const QPoint& point);
+  MapLocation(const QString& name, const QString& color, const MapPoint& point);
   MapLocation(const QString& name, const QString& color, 
 	      int16_t x, int16_t y);
+  MapLocation(const QString& name, const QString& color, 
+	      int16_t x, int16_t y, int16_t z);
   MapLocation(const QString& name, const QColor& color, 
-	      int16_t x, int16_t y);
+	      int16_t x, int16_t y, int16_t z);
   virtual ~MapLocation();
+  bool heightSet() const { return m_heightSet; }
+
  private:
+  bool m_heightSet;
 };
 
 //----------------------------------------------------------------------
@@ -508,6 +513,7 @@ class MapData
   void loadMap(const QString& fileName);
   void loadSOEMap(const QString& fileName);
   void saveMap(const QString& fileName) const;
+  void saveSOEMap(const QString& fileName) const;
 
   // accessors
   const QString& fileName() const { return m_fileName; }

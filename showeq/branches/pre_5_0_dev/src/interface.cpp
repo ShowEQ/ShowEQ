@@ -427,6 +427,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    pFileMenu->insertItem("&Save Preferences", this, SLOT(savePrefs()), CTRL+Key_S);
    pFileMenu->insertItem("Open &Map", m_mapMgr, SLOT(loadMap()), Key_F1);
    pFileMenu->insertItem("Sa&ve Map", m_mapMgr, SLOT(saveMap()), Key_F2);
+   pFileMenu->insertItem("Save SOE Map", m_mapMgr, SLOT(saveSOEMap()));
    pFileMenu->insertItem("Reload Guilds File", m_guildmgr, SLOT(readGuildList()));
    pFileMenu->insertItem("Add Spawn Category", this, SLOT(addCategory()) , ALT+Key_C);
    pFileMenu->insertItem("Rebuild SpawnList", this, SLOT(rebuildSpawnList()) , ALT+Key_R);
@@ -1181,20 +1182,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    pDebugMenu->insertItem("Dump SpellBook Info", this , SLOT(dumpSpellBook()));
    pDebugMenu->insertItem("List &Filters", m_filterMgr, SLOT(listFilters()), ALT+CTRL+Key_F);
    pDebugMenu->insertItem("List &Zone Filters", m_filterMgr, SLOT(listZoneFilters()));
-
-   // Tools menu
-   QPopupMenu* pToolsMenu = new QPopupMenu;
-   menuBar()->insertItem("&Tools", pToolsMenu);
-
-   // Map conversions submenu
-   QPopupMenu* pConversionsMenu = new QPopupMenu;
-   pToolsMenu->insertItem( "&Map Conversions", pConversionsMenu);
-   pToolsMenu->setCheckable(TRUE);
-
-   // SOE->SEQ
-   pConversionsMenu->insertItem("S&OE to SEQ", m_mapMgr, SLOT(convertSOE()));
-   // SEQ->SOE
-   pConversionsMenu->insertItem("SE&Q to SOE", m_mapMgr, SLOT(convertSEQ()));
 
 ////////////////////
 // QStatusBar creation
