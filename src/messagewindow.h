@@ -50,13 +50,15 @@ class MessageWindow : public SEQWindow
   
  public slots:
   void newMessage(const MessageEntry& message);
+  void refreshMessages();
 
   void toggleTypeFilter(int);
+  void toggleLockedText(int);
   void toggleDisplayType(int);
   void toggleDisplayTime(int);
   void toggleEQDisplayTime(int);
   void toggleUseColor(int);
-  void refreshMessages();
+  void toggleWrapText(int);
 
   void mousePressEvent(QMouseEvent* e);
 
@@ -69,10 +71,12 @@ class MessageWindow : public SEQWindow
   QColor m_defaultColor;
   QString m_dateTimeFormat;
   QString m_eqDateTimeFormat;
+  bool m_lockedText;
   bool m_displayType;
   bool m_displayDateTime;
   bool m_displayEQDateTime;
   bool m_useColor;
+  bool m_wrapText;
 };
 
 #endif // _MESSAGEWINDOW_H_
