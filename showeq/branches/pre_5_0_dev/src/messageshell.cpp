@@ -148,7 +148,7 @@ void MessageShell::specialMessage(const uint8_t* data, size_t, uint8_t dir)
 			   .arg(message));
   else
     m_messages->addMessage(MT_General,
-			   QString("Formatted:Special: '%1' - %2")
+			   QString("Special: '%1' - %2")
 			   .arg(smsg->source)
 			   .arg(message));
 }
@@ -293,7 +293,7 @@ void MessageShell::zoneEntryServer(const ServerZoneEntryStruct* zsentry)
 {
   QString tempStr;
 
-  tempStr = "Zone: EntryCode: Server, Zone: ";
+  tempStr = "EntryCode: Server, Zone: ";
   tempStr += m_zoneMgr->zoneNameFromID(zsentry->zoneId);
   m_messages->addMessage(MT_Zone, tempStr);
 }
@@ -304,12 +304,12 @@ void MessageShell::zoneChanged(const zoneChangeStruct* zoneChange, size_t, uint8
 
   if (dir == DIR_Client)
   {
-    tempStr = "Zone: ChangeCode: Client, Zone: ";
+    tempStr = "ChangeCode: Client, Zone: ";
     tempStr += m_zoneMgr->zoneNameFromID(zoneChange->zoneId);
   }
   else
   {
-    tempStr = "Zone: ChangeCode: Server, Zone:";
+    tempStr = "ChangeCode: Server, Zone:";
     tempStr += m_zoneMgr->zoneNameFromID(zoneChange->zoneId);
   }
   
@@ -320,7 +320,7 @@ void MessageShell::zoneNew(const uint8_t* data, size_t, uint8_t dir)
 {
   const newZoneStruct* zoneNew = (const newZoneStruct*)data;
   QString tempStr;
-  tempStr = "Zone: NewCode: Zone: ";
+  tempStr = "NewCode: Zone: ";
   tempStr += QString(zoneNew->shortName) + " ("
     + zoneNew->longName + ")";
   m_messages->addMessage(MT_Zone, tempStr);
@@ -329,7 +329,7 @@ void MessageShell::zoneNew(const uint8_t* data, size_t, uint8_t dir)
 void MessageShell::zoneBegin(const QString& shortZoneName)
 {
   QString tempStr;
-  tempStr = QString("Zone: Zoning, Please Wait...\t(Zone: '")
+  tempStr = QString("Zoning, Please Wait...\t(Zone: '")
     + shortZoneName + "')";
   m_messages->addMessage(MT_Zone, tempStr);
 }
@@ -338,7 +338,7 @@ void MessageShell::zoneEnd(const QString& shortZoneName,
 			   const QString& longZoneName)
 {
   QString tempStr;
-  tempStr = QString("Zone: Entered: ShortName = '") + shortZoneName +
+  tempStr = QString("Entered: ShortName = '") + shortZoneName +
                     "' LongName = " + longZoneName;
 
   m_messages->addMessage(MT_Zone, tempStr);
@@ -347,7 +347,7 @@ void MessageShell::zoneEnd(const QString& shortZoneName,
 void MessageShell::zoneChanged(const QString& shortZoneName)
 {
   QString tempStr;
-  tempStr = QString("Zone: Zoning, Please Wait...\t(Zone: '")
+  tempStr = QString("Zoning, Please Wait...\t(Zone: '")
     + shortZoneName + "')";
   m_messages->addMessage(MT_Zone, tempStr);
 }
@@ -653,7 +653,7 @@ void MessageShell::updateLevel(const uint8_t* data)
 {
   const levelUpUpdateStruct *levelup = (const levelUpUpdateStruct *)data;
   QString tempStr;
-  tempStr.sprintf("Player: NewLevel: %d\n", levelup->level);
+  tempStr.sprintf("NewLevel: %d\n", levelup->level);
   m_messages->addMessage(MT_Player, tempStr);
 }
   
