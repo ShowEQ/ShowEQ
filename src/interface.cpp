@@ -111,7 +111,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_combatWindow(NULL),
     m_netDiag(NULL)
 {
+  // disable the dock menu
   setDockMenuEnabled(false);
+
   for (int l = 0; l < maxNumMaps; l++)
     m_map[l] = NULL;
 
@@ -3838,7 +3840,7 @@ void EQInterface::channelMessage(const uint8_t* data, size_t, uint8_t dir)
     break;
     
   case 11:
-    tempStr.sprintf("GMSAY");
+    tempStr.sprintf("GM-SAY");
     target = true;
     break;
 

@@ -238,6 +238,11 @@ enum ChatColor
   CC_User_EchoChat8        = 322,
   CC_User_EchoChat9        = 323,
   CC_User_EchoChat10       = 324,
+  CC_User_UnusedAtThisTime = 325,
+  CC_User_ItemTags         = 326,
+  CC_User_RaidSay          = 327,
+  CC_User_MyPet            = 328,
+  CC_User_DamageShield     = 329,
 };
 
 /*
