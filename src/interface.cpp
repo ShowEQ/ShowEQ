@@ -33,6 +33,7 @@
 #include "category.h"
 #include "itemdb.h"
 #include "guild.h"
+#include "guildshell.h"
 #include "spells.h"
 #include "datetimemgr.h"
 #include "datalocationmgr.h"
@@ -106,6 +107,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_spawnMonitor(0),
     m_itemDB(0),
     m_guildmgr(0),
+    m_guildShell(0),
     m_dateTimeMgr(0),
     m_eqStrings(0),
     m_messageFilters(0),
@@ -292,6 +294,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    m_guildmgr = new GuildMgr(fileInfo.absFilePath(), 
 			     this, "guildmgr");
+
+   m_guildShell = new GuildShell(m_zoneMgr, this, "GuildShell");
+
    // Create the spawn shell
    m_spawnShell = new SpawnShell(*m_filterMgr, m_zoneMgr, m_player, m_guildmgr);
 
@@ -1601,6 +1606,18 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
      connect(this, SIGNAL(guildList2text(QString)),
 	     m_guildmgr, SLOT(guildList2text(QString)));
+   }
+
+   if (m_guildShell)
+   {
+     m_packet->connect2("OP_GuildMemberList", SP_Zone, DIR_Server,
+			"uint8_t", SZC_None,
+			m_guildShell,
+			SLOT(guildMemberList(const uint8_t*, size_t)));
+     m_packet->connect2("OP_GuildMemberUpdate", SP_Zone, DIR_Server,
+			"GuildMemberUpdate", SZC_Match,
+			m_guildShell,
+			SLOT(guildMemberUpdate(const uint8_t*, size_t)));
    }
 
    if (m_messageShell)

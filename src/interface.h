@@ -75,6 +75,7 @@ class MessageShell;
 class MessageWindow;
 class Terminal;
 class MessageFilterDialog;
+class GuildShell;
 
 //--------------------------------------------------
 // typedefs
@@ -335,7 +336,8 @@ class EQInterface:public QMainWindow
    GroupMgr* m_groupMgr;
    SpawnMonitor* m_spawnMonitor;
    EQItemDB* m_itemDB;
-   GuildMgr* m_guildmgr;
+   GuildMgr* m_guildmgr; 
+   GuildShell* m_guildShell;
    DateTimeMgr* m_dateTimeMgr;
    EQStr* m_eqStrings;
    MessageFilters* m_messageFilters;

@@ -23,15 +23,15 @@ class NetStream
   const uint8_t* data() { return m_data; }
   size_t length() { return m_length; }
   void reset();
-  bool endOfStream() { return (m_pos == m_lastPos); }
+  bool end() { return (m_pos >= m_lastPos); }
 
-  uint8_t uint8();
-  int8_t int8();
-  uint16_t uint16();
-  int16_t int16();
-  uint32_t uint32();
-  int32_t int32();
-  QString text();
+  uint8_t readUInt8();
+  int8_t readInt8();
+  uint16_t readUInt16();
+  int16_t readInt16();
+  uint32_t readUInt32();
+  int32_t readInt32();
+  QString readText();
 
  protected:
   const uint8_t* m_data;

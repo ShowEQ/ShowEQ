@@ -1,4 +1,4 @@
-#/*
+/*
  * netstream.h
  *
  *  ShowEQ Distributed under GPL
@@ -30,7 +30,7 @@ void NetStream::reset()
   m_pos = m_data;
 }
 
-uint8_t NetStream::uint8()
+uint8_t NetStream::readUInt8()
 {
   uint8_t val;
 
@@ -47,7 +47,7 @@ uint8_t NetStream::uint8()
   return val;
 }
 
-int8_t NetStream::int8()
+int8_t NetStream::readInt8()
 {
   int8_t val;
 
@@ -64,7 +64,7 @@ int8_t NetStream::int8()
   return val;
 }
 
-uint16_t NetStream::uint16()
+uint16_t NetStream::readUInt16()
 {
   uint16_t val;
 
@@ -81,7 +81,7 @@ uint16_t NetStream::uint16()
   return val;
 }
 
-int16_t NetStream::int16()
+int16_t NetStream::readInt16()
 {
   int16_t val;
 
@@ -98,7 +98,7 @@ int16_t NetStream::int16()
   return val;
 }
 
-uint32_t NetStream::uint32()
+uint32_t NetStream::readUInt32()
 {
   uint32_t val;
 
@@ -115,7 +115,7 @@ uint32_t NetStream::uint32()
   return val;
 }
 
-int32_t NetStream::int32()
+int32_t NetStream::readInt32()
 {
   uint32_t val;
 
@@ -132,7 +132,7 @@ int32_t NetStream::int32()
   return val;
 }
 
-QString NetStream::text()
+QString NetStream::readText()
 {
   // make sure there is data left
   if (m_pos < m_lastPos)
@@ -144,11 +144,14 @@ QString NetStream::text()
     while ((*m_pos != '\0') && (m_pos < m_lastPos))
       m_pos++;
     
+    size_t len = m_pos - startPos;
+
     // skip over trailing null
-    m_pos++;
+    if (m_pos < m_lastPos)
+      m_pos++;
     
     // return the result as a QString
-    return QString::fromUtf8((const char*)startPos, m_lastPos - startPos);
+    return QString::fromUtf8((const char*)startPos, len);
   }
   else
     return QString();

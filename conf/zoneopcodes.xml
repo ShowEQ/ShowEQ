@@ -66,6 +66,7 @@
     </opcode>
     <opcode id="005a" name="OP_GuildMemberList" updated="12/18/03">
         <comment></comment>
+        <payload dir="server" typename="uint8_t" sizechecktype="none"/>
     </opcode>
     <opcode id="0065" name="OP_SkillUpdate" updated="12/18/03">
         <comment>old SkillIncCode</comment>
@@ -616,6 +617,7 @@
     </opcode>
     <opcode id="025e" name="OP_GuildMemberUpdate" updated="12/18/03">
         <comment></comment>
+        <payload dir="server" typename="GuildMemberUpdate" sizechecktype="match"/>
     </opcode>
     <opcode id="0260" name="OP_LFGCommand" updated="12/18/03">
         <comment>old LFGReqCode</comment>
