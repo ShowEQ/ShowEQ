@@ -14,6 +14,7 @@
 
 
 #include "map.h"
+#include "ui_mapicondialog.h"
 #include "util.h"
 #include "main.h"
 #include "filtermgr.h"
@@ -853,6 +854,8 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
 				    this, SLOT(select_backgroundColor(int)));
   m_id_font = insertItem("Font...",
 			 this, SLOT(select_font(int)));
+  insertItem("Edit Map Icons...",
+	     m_map, SLOT(showMapIconDialog()));
 
   subMenu = new QPopupMenu;
   m_drawSizeSpinBox = new QSpinBox(1, 6, 1, subMenu);
@@ -1317,7 +1320,8 @@ Map::Map(MapMgr* mapMgr,
     m_mapMgr(mapMgr),
     m_mapCache(mapMgr->mapData()),
     m_menu(NULL),
-    m_mapIcons(player, preferenceName + "Icons", this, "mapicons"),
+    m_mapIcons(0),
+    m_mapIconDialog(0),
     m_runtimeFilterFlagMask(runtimeFilterFlagMask),
     m_player(player),
     m_spawnShell(spawnshell),
@@ -1334,8 +1338,12 @@ Map::Map(MapMgr* mapMgr,
   QString tmpDefault;
   QString tmp;
 
+  // create the map icons object
+  m_mapIcons = new MapIcons(player, preferenceName + "Icons", 
+			    this, "mapicons");
+
   // load the map icon information
-  m_mapIcons.load();
+  m_mapIcons->load();
 
   // setup filter check ordering
   m_filterCheckOrdering[0] = 
@@ -1597,7 +1605,7 @@ void Map::savePrefs(void)
 {
   QString prefString = preferenceName();
   QString tmpPrefString;
-  m_mapIcons.save();
+  m_mapIcons->save();
 }
 
 MapMenu* Map::menu()
@@ -2117,7 +2125,7 @@ void Map::setFrameRate(int val)
 
 void Map::setDrawSize(int val) 
 { 
-  m_mapIcons.setDrawSize(val);
+  m_mapIcons->setDrawSize(val);
   
   if(!m_cacheChanges)
     refreshMap ();
@@ -2125,7 +2133,7 @@ void Map::setDrawSize(int val)
 
 void Map::setFOVDistance(int val) 
 { 
-  m_mapIcons.setFOVDistance(val);
+  m_mapIcons->setFOVDistance(val);
 
   reAdjust();
 
@@ -2269,7 +2277,7 @@ void Map::setShowDoors(bool val)
 
 void Map::setShowSpawnNames(bool val) 
 { 
-  m_mapIcons.setShowSpawnNames(val); 
+  m_mapIcons->setShowSpawnNames(val); 
 
   if(!m_cacheChanges)
     refreshMap ();
@@ -2382,7 +2390,7 @@ void Map::setWalkPathShowSelect(bool val)
 
 void Map::setShowNPCWalkPaths(bool val) 
 { 
-  m_mapIcons.setShowNPCWalkPaths(val);
+  m_mapIcons->setShowNPCWalkPaths(val);
   
   if(!m_cacheChanges)
     refreshMap ();
@@ -2689,7 +2697,7 @@ void Map::dumpInfo(QTextStream& out)
   out << "OptimizeMethod: " << (int)m_param.mapOptimizationMethod() << endl;
 
   out << endl;
-  m_mapIcons.dumpInfo(out);
+  m_mapIcons->dumpInfo(out);
 
   out << "[" << preferenceName() << " State]" << endl;
   out << "screenLength: width(" << m_param.screenLength().width()
@@ -2745,6 +2753,22 @@ void Map::dumpInfo(QTextStream& out)
       << " milliseconds " << endl;
   out << endl;
 #endif // DEBUG
+}
+
+void Map::showMapIconDialog()
+{
+  if (!m_mapIconDialog)
+  {
+    // first create the dialog
+    m_mapIconDialog = new MapIconDialog(this, caption() + " Icon Dialog",
+					false);
+    
+    // then pass it this objects map icons object
+    m_mapIconDialog->setMapIcons(m_mapIcons);
+  }
+
+  // show the dialog
+  m_mapIconDialog->show();
 }
 
 void Map::resizeEvent (QResizeEvent *qs)
@@ -2814,13 +2838,13 @@ void Map::reAdjust ()
     // scaled FOV Distance (m_fovDistance * scale)
     m_scaledFOVDistance = fixPtMulII(m_param.ratioIFixPt(), 
 				     MapParameters::qFormat,
-				     m_mapIcons.fovDistance());
+				     m_mapIcons->fovDistance());
     break;
   case tFOVScaledClassic:
-    m_scaledFOVDistance = m_mapIcons.fovDistance() * m_param.zoom();
+    m_scaledFOVDistance = m_mapIcons->fovDistance() * m_param.zoom();
     break;
   case tFOVClassic:
-    m_scaledFOVDistance = m_mapIcons.fovDistance();
+    m_scaledFOVDistance = m_mapIcons->fovDistance();
     break;
   }
 }
@@ -3183,7 +3207,7 @@ void Map::paintDrops(MapParameters& param,
 	(!m_showFiltered && (filterFlags & FILTER_FLAG_FILTERED)))
       continue;
 
-    mapIcon = m_mapIcons[tIconTypeDrop];
+    mapIcon = m_mapIcons->icon(tIconTypeDrop);
     
     // only bother checking for specific flags if any are set...
     if (filterFlags != 0)
@@ -3192,16 +3216,16 @@ void Map::paintDrops(MapParameters& param,
       {
  	flag = m_filterCheckOrdering[i];
  	if (filterFlags & (1 << flag))
- 	  mapIcon.combine(m_mapIcons[tIconTypeFilterFlagBase + flag]);
+ 	  mapIcon.combine(m_mapIcons->icon(tIconTypeFilterFlagBase + flag));
       }
     }
     
     // check runtime filter flags
     if(item->runtimeFilterFlags() & m_runtimeFilterFlagMask)
-      mapIcon.combine(m_mapIcons[tIconTypeRuntimeFiltered]);
+      mapIcon.combine(m_mapIcons->icon(tIconTypeRuntimeFiltered));
     
     // paint the icon
-    m_mapIcons.paintIcon(param, p, mapIcon, item,
+    m_mapIcons->paintIcon(param, p, mapIcon, item,
 			 QPoint(param.calcXOffsetI(item->x()),
 				param.calcYOffsetI(item->y())));
   }
@@ -3240,7 +3264,7 @@ void Map::paintDoors(MapParameters& param,
 	(!m_showFiltered && (filterFlags & FILTER_FLAG_FILTERED)))
       continue;
 
-    mapIcon = m_mapIcons[tIconTypeDoor];
+    mapIcon = m_mapIcons->icon(tIconTypeDoor);
 
     // only bother checking for specific flags if any are set...
     if (filterFlags != 0)
@@ -3249,16 +3273,16 @@ void Map::paintDoors(MapParameters& param,
       {
 	flag = m_filterCheckOrdering[i];
 	if (filterFlags & (1 << flag))
-	  mapIcon.combine(m_mapIcons[tIconTypeFilterFlagBase + flag]);
+	  mapIcon.combine(m_mapIcons->icon(tIconTypeFilterFlagBase + flag));
       }
     }
 
     // check runtime filter flags
     if(item->runtimeFilterFlags() & m_runtimeFilterFlagMask)
-      mapIcon.combine(m_mapIcons[tIconTypeRuntimeFiltered]);
+      mapIcon.combine(m_mapIcons->icon(tIconTypeRuntimeFiltered));
 
     // paint the icon
-    m_mapIcons.paintIcon(param, p, mapIcon, item, 
+    m_mapIcons->paintIcon(param, p, mapIcon, item, 
 			 QPoint(param.calcXOffsetI(item->x()),
 				param.calcYOffsetI(item->y())));
   }
@@ -3495,7 +3519,7 @@ void Map::paintSpawns(MapParameters& param,
     // handle regular NPC's first, since they are generally the most common
     if (spawn->isNPC())
     {
-      mapIcon = m_mapIcons[tIconTypeSpawnNPC];
+      mapIcon = m_mapIcons->icon(tIconTypeSpawnNPC);
       
       // retrieve the spawns aggro range
       range = m_mapMgr->spawnAggroRange(spawn);
@@ -3519,20 +3543,20 @@ void Map::paintSpawns(MapParameters& param,
     else if (spawn->isOtherPlayer())
     {
       if (!up2date)
- 	mapIcon = m_mapIcons[tIconTypeSpawnPlayerOld];
+ 	mapIcon = m_mapIcons->icon(tIconTypeSpawnPlayerOld);
       else
- 	mapIcon = m_mapIcons[tIconTypeSpawnPlayer];
+ 	mapIcon = m_mapIcons->icon(tIconTypeSpawnPlayer);
     }
     else if (spawn->NPC() == SPAWN_NPC_CORPSE) // x for NPC corpse
-      mapIcon = m_mapIcons[tIconTypeSpawnNPCCorpse];
+      mapIcon = m_mapIcons->icon(tIconTypeSpawnNPCCorpse);
     else if (spawn->NPC() == SPAWN_PC_CORPSE) // x for PC corpse
-      mapIcon = m_mapIcons[tIconTypeSpawnPlayerCorpse];
+      mapIcon = m_mapIcons->icon(tIconTypeSpawnPlayerCorpse);
     else if (spawn->isUnknown())
-      mapIcon = m_mapIcons[tIconTypeSpawnUnknown];
+      mapIcon = m_mapIcons->icon(tIconTypeSpawnUnknown);
     
     // if the spawn was considered, note it.
     if (m_highlightConsideredSpawns && spawn->considered())
-      mapIcon.combine(m_mapIcons[tIconTypeSpawnConsidered]);
+      mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnConsidered));
     
      // only bother checking for specific flags if any are set...
     if (filterFlags != 0)
@@ -3541,19 +3565,19 @@ void Map::paintSpawns(MapParameters& param,
       {
 	flag = m_filterCheckOrdering[i];
 	if (filterFlags & (1 << flag))
-	  mapIcon.combine(m_mapIcons[tIconTypeFilterFlagBase + flag]);
+	  mapIcon.combine(m_mapIcons->icon(tIconTypeFilterFlagBase + flag));
       }
     }
     
     // check runtime filter flags
     if(spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask)
-      mapIcon.combine(m_mapIcons[tIconTypeRuntimeFiltered]);
+      mapIcon.combine(m_mapIcons->icon(tIconTypeRuntimeFiltered));
      
     // if PvP is not enabled, don't try to do it, 
     // paint the current spawn and continue to the next
     if (!m_racePvP && !m_deityPvP)
     {
-      m_mapIcons.paintSpawnIcon(param, p, mapIcon, spawn, location, point);
+      m_mapIcons->paintSpawnIcon(param, p, mapIcon, spawn, location, point);
       continue;
     }
     
@@ -3575,13 +3599,13 @@ void Map::paintSpawns(MapParameters& param,
     {
       if (spawn->isOtherPlayer())
       {
-	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamBase -1 +
- 				   spawn->raceTeam() ]);
+	mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnPlayerTeamBase -1 +
+					 spawn->raceTeam()));
  	
  	// if not the same team as us
  	if (!m_player->isSameRaceTeam(spawn))
 	{
-	  mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherRace]);
+	  mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnPlayerTeamOtherRace));
 	  QPen p2(mapIcon.highlightPen());
 	  p2.setColor(raceTeamHighlightColor(spawn));
 	  mapIcon.setHighlightPen(p2);
@@ -3589,19 +3613,19 @@ void Map::paintSpawns(MapParameters& param,
       } // if decorate pvp
       // circle around pvp pets
       else if ((owner != NULL) && !m_player->isSameRaceTeam(owner))
- 	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherRacePet]);
+ 	mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnPlayerTeamOtherRacePet));
     } // end racePvp
     else if (m_deityPvP)
     {
       if (spawn->isOtherPlayer())
       {
- 	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamBase -1 + 
- 				   spawn->deityTeam()]);
+ 	mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnPlayerTeamBase -1 + 
+					 spawn->deityTeam()));
  	
  	// if not the same team as us
  	if (!m_player->isSameDeityTeam(spawn))
  	{
- 	  mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeity]);
+ 	  mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnPlayerTeamOtherDeity));
 	  QPen p2(mapIcon.highlightPen());
 	  p2.setColor(deityTeamHighlightColor(spawn));
  	  mapIcon.setHighlightPen(p2);
@@ -3609,11 +3633,11 @@ void Map::paintSpawns(MapParameters& param,
       } // if decorate pvp
  	// circle around deity pvp pets
       else if ((owner != NULL) && !m_player->isSameDeityTeam(owner))
- 	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeityPet]);
+ 	mapIcon.combine(m_mapIcons->icon(tIconTypeSpawnPlayerTeamOtherDeityPet));
     } // end if deityPvP
     
     // paint the spawn icon
-    m_mapIcons.paintSpawnIcon(param, p, mapIcon, spawn, location, point);
+    m_mapIcons->paintSpawnIcon(param, p, mapIcon, spawn, location, point);
   } // end for spawns
 
   //----------------------------------------------------------------------
@@ -3638,20 +3662,20 @@ void Map::paintSelectedSpawnSpecials(MapParameters& param, QPainter& p,
     ((const Spawn*)m_selectedItem)->approximatePosition(m_animate, 
 							drawTime, 
 							location);
-    m_mapIcons.paintSpawnIcon(param, p, m_mapIcons[tIconTypeItemSelected], 
+    m_mapIcons->paintSpawnIcon(param, p, m_mapIcons->icon(tIconTypeItemSelected), 
 			      (Spawn*)m_selectedItem, location, 
 			      QPoint(m_param.calcXOffsetI(location.x()), 
 				     m_param.calcYOffsetI(location.y())));
   }
   else if (m_selectedItem->type() == tPlayer)
   {
-    m_mapIcons.paintSpawnIcon(param, p, m_mapIcons[tIconTypeItemSelected], 
+    m_mapIcons->paintSpawnIcon(param, p, m_mapIcons->icon(tIconTypeItemSelected), 
 			      (Spawn*)m_selectedItem, *m_selectedItem, 
 			      QPoint(m_param.calcXOffsetI(m_selectedItem->x()), 
 				     m_param.calcYOffsetI(m_selectedItem->y())));
   }
   else
-    m_mapIcons.paintIcon(param, p, m_mapIcons[tIconTypeItemSelected], 
+    m_mapIcons->paintIcon(param, p, m_mapIcons->icon(tIconTypeItemSelected), 
 			 m_selectedItem, 
 			 QPoint(param.calcXOffsetI(m_selectedItem->x()),
 				param.calcYOffsetI(m_selectedItem->y())));
@@ -3671,8 +3695,8 @@ void Map::paintSelectedSpawnPointSpecials(MapParameters& param,
   if (sp == NULL)
     return;
 
-  m_mapIcons.paintSpawnPointIcon(m_param, p, 
-				 m_mapIcons[tIconTypeSpawnPointSelected], sp,
+  m_mapIcons->paintSpawnPointIcon(m_param, p, 
+				 m_mapIcons->icon(tIconTypeSpawnPointSelected), sp,
 				 QPoint(param.calcXOffsetI(sp->x()),
 					param.calcYOffsetI(sp->y())));
 }
@@ -3691,7 +3715,7 @@ void Map::paintSpawnPoints( MapParameters& param, QPainter& p )
   QAsciiDictIterator<SpawnPoint> it( m_spawnMonitor->spawnPoints() );
   const SpawnPoint* sp;
 
-  const MapIcon& mapIcon = m_mapIcons[tIconTypeSpawnPoint];
+  const MapIcon& mapIcon = m_mapIcons->icon(tIconTypeSpawnPoint);
 
   // iterate over the list of spawn points
   while ((sp = it.current()))
@@ -3705,7 +3729,7 @@ void Map::paintSpawnPoints( MapParameters& param, QPainter& p )
 	  (sp->z() < m_param.playerFloorRoom()))))
       continue;
 
-    m_mapIcons.paintSpawnPointIcon(m_param, p, mapIcon, sp,
+    m_mapIcons->paintSpawnPointIcon(m_param, p, mapIcon, sp,
 				   QPoint(param.calcXOffsetI(sp->x()),
 					  param.calcYOffsetI(sp->y())));
   }

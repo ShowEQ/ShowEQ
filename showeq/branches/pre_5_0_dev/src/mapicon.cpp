@@ -18,11 +18,37 @@
 
 //----------------------------------------------------------------------
 // constants
-static const char* iconTypePrefBaseNames[] = 
+static const QString iconSizeNames[] = 
+{
+  "None",
+  "Tiny",
+  "Small",
+  "Medium",
+  "Large",
+  "X Large",
+  "XX Large",
+};
+
+static const QString iconStyleNames[] = 
+{
+  "None",
+  "Circle",
+  "Square",
+  "Plus",
+  "X",
+  "Up Triangle",
+  "Right Triangle",
+  "Down Triangle",
+  "Left Triangle",
+  "Star",
+  "Diamond",
+};
+
+static const QString iconTypePrefBaseNames[] = 
 {
   "Unknown",
   "Drop",
-  "Doors",
+  "Door",
   "SpawnNPC",
   "SpawnNPCCorpse",
   "SpawnPlayer",
@@ -52,6 +78,40 @@ static const char* iconTypePrefBaseNames[] =
   "SpawnPointSelected",
 };
 
+static const QString iconTypeNames[] = 
+{
+  "Unknown",
+  "Drop",
+  "Door",
+  "Spawn NPC",
+  "Spawn NPC Corpse",
+  "Spawn Player",
+  "Spawn Player Corpse",
+  "Spawn Unknown",
+  "Spawn Considered",
+  "Spawn Player Team 1",
+  "Spawn Player Team 2",
+  "Spawn Player Team 3",
+  "Spawn Player Team 4",
+  "Spawn Player Team 5",
+  "Spawn Player Team Other Deity",
+  "Spawn Player Team Other Race",
+  "Spawn Player Team Other Deity Pet",
+  "Spawn Player Team Other Race Pet",
+  "Spawn Player Old",
+  "Selected Spawn Item",
+  "Hunt Filter",
+  "Caution Filter",
+  "Danger Filter",
+  "Locate Filter",
+  "Alert Filter",
+  "Filtered",
+  "Tracer Filter",
+  "Runtime Filtered",
+  "Spawn Point",
+  "Selected Spawn Point",
+};
+
 //----------------------------------------------------------------------
 // MapIcon
 MapIcon::IconImageFunction MapIcon::s_iconImageFunctions[] = 
@@ -74,6 +134,10 @@ MapIcon::IconImageFunction MapIcon::s_iconImageFunctions[] =
 MapIcon::MapIcon()
   : m_line1Distance(0),
     m_line2Distance(0),
+    m_imageStyle(tIconStyleNone),
+    m_imageSize(tIconSizeNone),
+    m_highlightStyle(tIconStyleNone),
+    m_highlightSize(tIconSizeNone),
     m_image(false),
     m_imageUseSpawnColorPen(false),
     m_imageUseSpawnColorBrush(false),
@@ -315,6 +379,7 @@ void MapIcon::setImage(const QBrush& brush, const QPen& pen,
 		       bool useSpawnColorPen, bool useSpawnColorBrush, 
 		       bool flash)
 {
+  // set all the image characteristics
   m_imageBrush = brush;
   m_imagePen = pen;
   m_imageStyle = style;
@@ -330,6 +395,7 @@ void MapIcon::setHighlight(const QBrush& brush, const QPen& pen,
 			   bool useSpawnColorPen, bool useSpawnColorBrush, 
 			   bool flash)
 {
+  // set all the highlight characteristics
   m_highlightBrush = brush;
   m_highlightPen = pen;
   m_highlightStyle = style;
@@ -342,22 +408,43 @@ void MapIcon::setHighlight(const QBrush& brush, const QPen& pen,
 
 void MapIcon::setLine0(bool show, const QPen& pen)
 {
+  // set the line 0 characteristics
   m_showLine0 = show;
   m_line0Pen = pen;
 }
 
 void MapIcon::setLine1(uint32_t distance, const QPen& pen)
 {
+  // set the line 1 characteristics
   m_line1Distance = distance;
-  m_line0Pen = pen;
+  m_line1Pen = pen;
 }
 
 void MapIcon::setLine2(uint32_t distance, const QPen& pen)
 {
+  // set the line 2 characteristics
   m_line2Distance = distance;
   m_line2Pen = pen;
 }
 
+  // convenience static methods
+const QString& MapIcon::iconSizeName(MapIconSize size)
+{
+  if ((size > tIconSizeNone) && (size <= tIconSizeMax))
+    return iconSizeNames[size];
+
+  return iconSizeNames[tIconSizeNone];
+}
+
+const QString& MapIcon::iconStyleName(MapIconStyle style)
+{
+  if ((style > tIconStyleNone) && (style <= tIconStyleMax)) 
+    return iconStyleNames[style];
+  
+  return iconStyleNames[tIconStyleNone];
+}
+
+// static paint methods
 void MapIcon::paintNone(QPainter&p, const QPoint& point, 
 			int size, int sizeWH)
 {
@@ -624,6 +711,11 @@ MapIcons::~MapIcons()
 
 void MapIcons::load()
 {
+  // load map icon preferences
+  for (int k = 0; k <= tIconTypeMax; k++)
+    m_mapIcons[k].load(iconTypePrefBaseNames[k], preferenceName());
+
+  // load the other preferences
   m_showNPCWalkPaths = pSEQPrefs->getPrefBool("ShowNPCWalkPaths", 
 					      preferenceName(), false);
   m_showSpawnNames = pSEQPrefs->getPrefBool("ShowSpawnNames", preferenceName(),
@@ -631,9 +723,9 @@ void MapIcons::load()
   m_fovDistance = pSEQPrefs->getPrefInt("FOVDistance", preferenceName(), 
 					200);
 
-
-
   int val = pSEQPrefs->getPrefInt("DrawSize", preferenceName(), 3);
+
+  // calculate the icon sizes
   m_drawSize = val; 
   m_drawSizeWH = val << 1; // 2 x size
   m_marker1Size = val + 1;
@@ -652,10 +744,6 @@ void MapIcons::load()
   else
     m_markerNSize = 1;
   m_markerNSizeWH = m_markerNSize << 1; // 2 x size
-
-  // setup map icons
-  for (int k = 0; k <= tIconTypeMax; k++)
-    m_mapIcons[k].load(iconTypePrefBaseNames[k], preferenceName());
 }
 
 void MapIcons::save()
@@ -674,11 +762,21 @@ void MapIcons::dumpInfo(QTextStream& out)
   out << endl;
 }
 
+const QString& MapIcons::iconTypeName(MapIconType type)
+{
+  if ((type > tIconTypeUnknown) && (type <= tIconTypeMax))
+    return iconTypeNames[type];
+
+  return iconTypeNames[tIconTypeUnknown];
+}
+
 void MapIcons::setDrawSize(int val)
 {
+  // validate the input sizes
   if ((val < 1) || (val > 6))
     return;
 
+  // store and calculate the new sizes
   m_drawSize = val; 
   m_drawSizeWH = val << 1; // 2 x size
   m_marker1Size = val + 1;
@@ -698,35 +796,63 @@ void MapIcons::setDrawSize(int val)
     m_markerNSize = 1;
   m_markerNSizeWH = m_markerNSize << 1; // 2 x size
 
+  // set the preference
   pSEQPrefs->setPrefInt("DrawSize", preferenceName(), m_drawSize);
+
+  // signal that the settings have changed
+  emit changed();
 }
 
 void MapIcons::setShowNPCWalkPaths(bool val) 
 { 
+  // set the value
   m_showNPCWalkPaths = val; 
 
+  // save the preference
   pSEQPrefs->setPrefBool("ShowNPCWalkPaths", preferenceName(), 
 			 m_showNPCWalkPaths);
+
+  // signal that the settings have changed
+  emit changed();
 }
 
 
 void MapIcons::setShowSpawnNames(bool val) 
 { 
+  // set the value
   m_showSpawnNames = val; 
 
-  QString tmpPrefString = "ShowSpawnNames";
-  pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_showSpawnNames);
+  // save the preference
+  pSEQPrefs->setPrefBool("ShowSpawnNames", preferenceName(), m_showSpawnNames);
+
+  // signal that the settings have changed
+  emit changed();
 }
 
 void MapIcons::setFOVDistance(int val) 
 { 
+  // validate the input
   if ((val < 1) || (val > 1200))
     return;
 
+  // set the value
   m_fovDistance = val; 
 
-  QString tmpPrefString = "FOVDistance";
-  pSEQPrefs->setPrefInt(tmpPrefString, preferenceName(), m_fovDistance);
+  // save the preference
+  pSEQPrefs->setPrefInt("FOVDistance", preferenceName(), m_fovDistance);
+
+  // signal that the settings have changed
+  emit changed();
+}
+
+void MapIcons::setIcon(int iconType, const MapIcon& icon)
+{
+  // if a valid map icon was passed in, use it
+  if ((iconType <= tIconTypeMax) && (iconType >= tIconTypeUnknown))
+    m_mapIcons[iconType] = icon;
+
+  // signal that the settings have changed
+  emit changed();
 }
 
 void MapIcons::paintIcon(MapParameters& param, 
@@ -1075,24 +1201,25 @@ void MapIcons::flashTick()
 QColor MapIcons::pickSpawnPointColor(const SpawnPoint* sp, 
 				     const QColor& defColor)
 {
-  QColor color;
-  // calculate the pen color
+  // if no time to go on, just use the default
   if ((sp->diffTime() == 0) || (sp->deathTime() == 0))
-    color = defColor;
-  else
+    return defColor;
+
+  QColor color = defColor;
+
+  // calculate the pen color
+  unsigned char age = sp->age();
+  
+  if ( age == 255 )
+    return darkRed;
+
+  if ( age > 220 )
   {
-    unsigned char age = sp->age();
-    
-    if ( age == 255 )
-      color = darkRed;
-    else if ( age > 220 )
-    {
-      if (m_flash)
-	color = red;
-    }
-    else
-      color = QColor(age, age, 0);
+    if (m_flash)
+      return red;
   }
+  else
+    color = QColor(age, age, 0);
 
   return color;
 }
