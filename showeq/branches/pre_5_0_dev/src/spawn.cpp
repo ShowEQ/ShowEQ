@@ -780,18 +780,7 @@ uint8_t Spawn::classVal() const
 
 QString Spawn::classString() const
 {
-  // a non-sparse array of class names
-  static const char*  classnames[] = 
-  {
-#include "classes.h"
-  };
-
-  // return class name from list if it's within range
-  if ((classVal() < (sizeof(classnames) / sizeof (char*))) && 
-      (classnames[classVal()] != NULL))
-    return classnames[classVal()];
-  else
-    return QString::number(classVal());
+  return ::classString(classVal());
 }
 
 QString Spawn::info() const
