@@ -1,5 +1,19 @@
 Version: $Id$ $Name$
 
+dohpaZ (12/?/03)
+---------------------
++ Updated version to 5.0.0.4
++ More updates to work with 12/19/03 EQLive 
++ Fix border cases in SpellShell that would cause ShowEQ to crash.
++ Added a workaround for ISO/ANSI/IEC C++ and C conformance regressions
+  in gcc 3.3.
++ Minor fix in h2info.pl that fixes the comment and operation with certain
+  versions of perl.
++ Integrated patch #861374 "Fix-three options aren't saved".
++ Integrated patch #864328 "Nedaria's Landing Map".
++ Integrated patch #864329 "Map: JaggedPine touchups".
++ Integrated patch #868227 "Restore light sources".
+
 dohpaZ (12/19/03)
 ---------------------
 + Updated version to 5.0.0.3
@@ -19,6 +33,7 @@ dohpaZ (12/13/03)
 + Removed some more cruft from ShowEQParams.
 + Minor tweak to map spawn color selection to deal with properly with traps,
   event-triggers, and timers.
+
 + Many SpellShell improvements
   + Made it delete expired spells faster (after up to 6 seconds of 0, 
     rather then 20).  
