@@ -2,6 +2,7 @@ Version: $Id$ $Name$
 
 dohpaZ (02/14/04)
 ---------------------
++ Updated version to 5.0.0.6
 + Patch to fix QCursor issue.
 + More updates to work with 02/10/04 EQLive
 
