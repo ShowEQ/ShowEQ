@@ -54,7 +54,6 @@ const int MAX_DEAD_SPAWNIDS = 50;
 enum alertType
 {
   tNewSpawn,
-  tFilledSpawn,
   tKillSpawn,
   tDelSpawn,
 };

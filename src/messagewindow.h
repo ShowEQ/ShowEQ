@@ -117,7 +117,7 @@ class MessageWindow : public SEQWindow
   QPopupMenu* m_typeFilterMenu;
   int m_id_lockText;
   MessageFindDialog* m_findDialog;
-  uint32_t m_enabledTypes;
+  uint64_t m_enabledTypes;
   QColor m_defaultColor;
   QColor m_defaultBGColor;
   QString m_dateTimeFormat;

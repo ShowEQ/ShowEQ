@@ -17,6 +17,7 @@
 #include "spawnshell.h"
 #include "player.h"
 #include "packetcommon.h"
+#include "filtermgr.h"
 #include "util.h"
 
 MessageShell::MessageShell(Messages* messages, EQStr* eqStrings,
@@ -807,4 +808,85 @@ void MessageShell::newAltExp(uint32_t newExp, uint32_t totalExp,
   m_messages->addMessage(MT_Player, tempStr);
 }
 
+void MessageShell::addItem(const Item* item)
+{
+  uint32_t filterFlags = item->filterFlags();
+
+  if (filterFlags == 0)
+    return;
+
+  QString prefix("Spawn");
+
+  // first handle alert
+  if (filterFlags & FILTER_FLAG_ALERT)
+    filterMessage(prefix, MT_Alert, item);
+
+  if (filterFlags & FILTER_FLAG_DANGER)
+    filterMessage(prefix, MT_Danger, item);
+
+  if (filterFlags & FILTER_FLAG_CAUTION)
+    filterMessage(prefix, MT_Caution, item);
+
+  if (filterFlags & FILTER_FLAG_HUNT)
+    filterMessage(prefix, MT_Hunt, item);
+
+  if (filterFlags & FILTER_FLAG_LOCATE)
+    filterMessage(prefix, MT_Locate, item);
+}
+
+void MessageShell::delItem(const Item* item)
+{
+  // if it's an alert log the despawn
+  if (item->filterFlags() & FILTER_FLAG_ALERT)
+    filterMessage("DeSpawn", MT_Alert, item);
+}
+
+void MessageShell::killSpawn(const Item* item)
+{
+  // if it's an alert log the kill
+  if (item->filterFlags() & FILTER_FLAG_ALERT)
+    filterMessage("Died", MT_Alert, item);
+
+  // if this is the player spawn, note the place of death
+  if (item->id() != m_player->id())
+    return;
+
+  QString message;
+  
+  // use appropriate format depending on coordinate ordering
+  if (!showeq_params->retarded_coords)
+    message = "Died in zone '%1' at %2,%3,%4";
+  else
+    message = "Died in zone '%1' at %3,%2,%4";
+  
+  m_messages->addMessage(MT_Player, 
+			 message.arg(m_zoneMgr->shortZoneName())
+			 .arg(item->x()).arg(item->y()).arg(item->z()));
+}
+
+void MessageShell::filterMessage(const QString& prefix, MessageType type,
+				 const Item* item)
+{
+  QString message;
+  QString spawnInfo;
+
+  // try to get a Spawn
+  const Spawn* spawn = spawnType(item);
+
+  // extra info if it is a spawn
+  if (spawn)
+    spawnInfo.sprintf(" LVL %d, HP %d/%d", 
+		      spawn->level(), spawn->HP(), spawn->maxHP());
+
+  // use appropriate format depending on coordinate ordering
+  if (!showeq_params->retarded_coords)
+    message = "%1: %2/%3/%4 at %5,%6,%7%8";
+  else
+    message = "%1: %2/%3/%4 at %6,%5,%7%8";
+  
+  m_messages->addMessage(type, message.arg(prefix).arg(item->transformedName())
+			 .arg(item->raceString()).arg(item->classString())
+			 .arg(item->x()).arg(item->y()).arg(item->z())
+			 .arg(spawnInfo));
+}
 

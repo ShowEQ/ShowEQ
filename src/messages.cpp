@@ -66,9 +66,13 @@ Messages::Messages(DateTimeMgr* dateTimeMgr, QObject* parent,
   m_messageTypeStrings[MT_Spell] = "Spell";
   m_messageTypeStrings[MT_Zone] = "Zone";
   m_messageTypeStrings[MT_Inspect] = "Inspect";
-  m_messageTypeStrings[MT_Alert] = "Alert";
   m_messageTypeStrings[MT_Player] = "Player";
   m_messageTypeStrings[MT_Consider] = "Consider";
+  m_messageTypeStrings[MT_Alert] = "Alert";
+  m_messageTypeStrings[MT_Danger] = "Danger";
+  m_messageTypeStrings[MT_Caution] = "Caution";
+  m_messageTypeStrings[MT_Hunt] = "Hunt";
+  m_messageTypeStrings[MT_Locate] = "Locate";
 }
 
 Messages::~Messages()

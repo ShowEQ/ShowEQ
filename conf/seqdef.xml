@@ -2798,8 +2798,20 @@ If any argument is left blank, it is filled in with its default...
   <property name="RaidColor">
    <color name="darkCyan" />
   </property>
-  <property name="AlertColor">
+  <property name="AlertBGColor">
+   <color name="magenta" />
+  </property>
+  <property name="DangerBGColor">
    <color name="red" />
+  </property>
+  <property name="CautionBGColor">
+   <color name="yellow" />
+  </property>
+  <property name="HuntBGColor">
+   <color name="cyan" />
+  </property>
+  <property name="LocateBGColor">
+   <color name="blue" />
   </property>
  </section>
 <!-- Message Box 1 Options -->
