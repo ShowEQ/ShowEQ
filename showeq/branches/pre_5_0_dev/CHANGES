@@ -10,6 +10,8 @@ dohpaZ (12/?/03)
   previous one.
 + Removed some extraneous command line options.
 + Removed some more cruft from ShowEQParams.
++ Minor tweak to map spawn color selection to deal with properly with traps,
+  event-triggers, and timers.
 
 dohpaZ (12/7/03)
 ---------------------
