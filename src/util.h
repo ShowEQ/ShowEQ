@@ -39,8 +39,6 @@ QString spell_name (uint16_t spellId);
 QString language_name (uint8_t langId);
 QString skill_name (uint16_t skillId);
 QString size_name (uint8_t size);
-void spawndb (const dbSpawnStruct *spawn);
-void petdb(const petStruct *spawn);
 
 QString print_classes (uint16_t);
 QString print_races (uint16_t);
@@ -96,7 +94,5 @@ QString bitstring(T value)
 
   return bitstring;
 }
-
-bool findFile( QString& fileName );
 
 #endif // EQUTIL_U
