@@ -21,6 +21,36 @@
 
 //#define DEBUG_FILTER
 
+//----------------------------------------------------------------------
+//  LoadXmlContentHandler declaration
+class LoadXmlContentHandler : public QXmlDefaultHandler
+{
+public:
+  LoadXmlContentHandler(Filters& filters, const FilterTypes& types);
+  virtual ~LoadXmlContentHandler();
+  
+  // QXmlContentHandler overrides
+  bool startDocument();
+  bool startElement( const QString&, const QString&, const QString& , 
+		     const QXmlAttributes& );
+  bool characters(const QString& ch);
+  bool endElement( const QString&, const QString&, const QString& );
+  bool endDocument();
+  
+protected:
+  Filters& m_filters;
+  const FilterTypes& m_types;
+  
+  uint8_t m_currentType;
+  
+  QString m_currentFilterPattern;
+  uint8_t m_currentMinLevel;
+  uint8_t m_currentMaxLevel;
+  bool m_inRegex;
+};
+
+//----------------------------------------------------------------------
+// FilterItem
 /* FilterItem Class - allows easy creation / deletion of regex types */
 FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
 {
@@ -207,6 +237,8 @@ bool FilterItem::isFiltered(const QString& filterString, uint8_t level) const
   return false;
 }
 
+//----------------------------------------------------------------------
+// Filter
 /* Filter Class - Sets up regex filter */
 Filter::Filter(bool caseSensitive)
 {
@@ -383,7 +415,7 @@ Filter::listFilters(void)
   }
 }
 
-///////////////////////////////////
+//----------------------------------------------------------------------
 //  Filters
 Filters::Filters(const FilterTypes& types)
   : m_types(types)
@@ -621,126 +653,6 @@ void Filters::remFilter(uint8_t type, const QString& filterPattern)
 }
 
 ///////////////////////////////////
-//  Filters::LoadXmlContentHandler
-
-Filters::LoadXmlContentHandler::LoadXmlContentHandler(Filters& filters, 
-						      const FilterTypes& types)
-  : m_filters(filters),
-    m_types(types)
-{
-}
-
-Filters::LoadXmlContentHandler::~LoadXmlContentHandler()
-{
-}
-
-bool Filters::LoadXmlContentHandler::startDocument()
-{
-  m_currentType = 255;
-  m_currentFilterPattern = "";
-  m_currentMinLevel = 0;
-  m_currentMaxLevel = 0;
-  m_inRegex = false;
-  return true;
-}
-
-bool Filters::LoadXmlContentHandler::startElement(const QString&, 
-						  const QString&, 
-						  const QString& name, 
-						  const QXmlAttributes& attr)
-{
-  if (name == "oldfilter")
-  {
-    // clear information about the current filter
-    m_currentFilterPattern = "";
-    m_currentMinLevel = 0;
-    m_currentMaxLevel = 0;
-
-    return true;
-  }
-
-  if (name == "regex")
-  {
-    m_inRegex =true;
-    return true;
-  }
-
-  if (name == "level")
-  {
-    int index;
-    
-    // first check for a min
-    index = attr.index("min");
-
-    // if min attribute was found, use it
-    if (index != -1)
-      m_currentMinLevel = uint8_t(attr.value(index).toUShort());
-
-    // then check for a max
-    index = attr.index("max");
-
-    // if max attribute was found, use it
-    if (index != -1)
-      m_currentMaxLevel = uint8_t(attr.value(index).toUShort());
-
-    // done
-    return true;
-  }
-
-  if (name == "section")
-  {
-    int index = attr.index("name");
-    // section is only valid if a name is specified
-    if (index == -1)
-      return false;
-
-    // get the current type for the name
-    m_currentType = m_types.type(attr.value(index));
-
-    return true;
-  }
-  
-  return true;
-}
-
-bool Filters::LoadXmlContentHandler::characters(const QString& ch)
-{
-  if (m_inRegex)
-    m_currentFilterPattern = ch;
-
-  return true;
-}
-
-bool Filters::LoadXmlContentHandler::endElement(const QString&, 
-						const QString&, 
-						const QString& name)
-{
-  if (name == "regex")
-    m_inRegex = false;
-
-  if (name == "oldfilter")
-  {
-    if (m_currentType <= m_types.maxType())
-    {
-      m_filters.addFilter(m_currentType, m_currentFilterPattern,
-			  m_currentMinLevel, m_currentMaxLevel);
-    }
-
-    return true;
-  }
-
-  if (name == "section")
-    m_currentType = 255;
-
-  return true;
-}
-
-bool Filters::LoadXmlContentHandler::endDocument()
-{
-  return true;
-}
-
-///////////////////////////////////
 //  FilterTypes
 FilterTypes::FilterTypes()
   : m_allocated(0), 
@@ -828,4 +740,123 @@ QString FilterTypes::names(uint32_t mask) const
   }
 
   return text;
+}
+
+//----------------------------------------------------------------------
+//  LoadXmlContentHandler
+LoadXmlContentHandler::LoadXmlContentHandler(Filters& filters, 
+						      const FilterTypes& types)
+  : m_filters(filters),
+    m_types(types)
+{
+}
+
+LoadXmlContentHandler::~LoadXmlContentHandler()
+{
+}
+
+bool LoadXmlContentHandler::startDocument()
+{
+  m_currentType = 255;
+  m_currentFilterPattern = "";
+  m_currentMinLevel = 0;
+  m_currentMaxLevel = 0;
+  m_inRegex = false;
+  return true;
+}
+
+bool LoadXmlContentHandler::startElement(const QString&, 
+						  const QString&, 
+						  const QString& name, 
+						  const QXmlAttributes& attr)
+{
+  if (name == "oldfilter")
+  {
+    // clear information about the current filter
+    m_currentFilterPattern = "";
+    m_currentMinLevel = 0;
+    m_currentMaxLevel = 0;
+
+    return true;
+  }
+
+  if (name == "regex")
+  {
+    m_inRegex =true;
+    return true;
+  }
+
+  if (name == "level")
+  {
+    int index;
+    
+    // first check for a min
+    index = attr.index("min");
+
+    // if min attribute was found, use it
+    if (index != -1)
+      m_currentMinLevel = uint8_t(attr.value(index).toUShort());
+
+    // then check for a max
+    index = attr.index("max");
+
+    // if max attribute was found, use it
+    if (index != -1)
+      m_currentMaxLevel = uint8_t(attr.value(index).toUShort());
+
+    // done
+    return true;
+  }
+
+  if (name == "section")
+  {
+    int index = attr.index("name");
+    // section is only valid if a name is specified
+    if (index == -1)
+      return false;
+
+    // get the current type for the name
+    m_currentType = m_types.type(attr.value(index));
+
+    return true;
+  }
+  
+  return true;
+}
+
+bool LoadXmlContentHandler::characters(const QString& ch)
+{
+  if (m_inRegex)
+    m_currentFilterPattern = ch;
+
+  return true;
+}
+
+bool LoadXmlContentHandler::endElement(const QString&, 
+						const QString&, 
+						const QString& name)
+{
+  if (name == "regex")
+    m_inRegex = false;
+
+  if (name == "oldfilter")
+  {
+    if (m_currentType <= m_types.maxType())
+    {
+      m_filters.addFilter(m_currentType, m_currentFilterPattern,
+			  m_currentMinLevel, m_currentMaxLevel);
+    }
+
+    return true;
+  }
+
+  if (name == "section")
+    m_currentType = 255;
+
+  return true;
+}
+
+bool LoadXmlContentHandler::endDocument()
+{
+  return true;
 }

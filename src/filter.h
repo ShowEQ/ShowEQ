@@ -109,31 +109,6 @@ class Filters
   void remFilter(uint8_t type, const QString& filterString);
 
  protected:
-  class LoadXmlContentHandler : public QXmlDefaultHandler
-  {
-  public:
-    LoadXmlContentHandler(Filters& filters, const FilterTypes& types);
-    virtual ~LoadXmlContentHandler();
-
-    // QXmlContentHandler overrides
-    bool startDocument();
-    bool startElement( const QString&, const QString&, const QString& , 
-                       const QXmlAttributes& );
-    bool characters(const QString& ch);
-    bool endElement( const QString&, const QString&, const QString& );
-    bool endDocument();
-
-  protected:
-    Filters& m_filters;
-    const FilterTypes& m_types;
-
-    uint8_t m_currentType;
-
-    QString m_currentFilterPattern;
-    uint8_t m_currentMinLevel;
-    uint8_t m_currentMaxLevel;
-    bool m_inRegex;
-  };
 
  protected:
   QString m_file;
