@@ -899,8 +899,8 @@ void MapData::loadSOEMap(const QString& fileName, bool import)
   int16_t x2, y2, z2;
   MapPoint src, dest, oldSrc;
   uint8_t r, g, b;
-  uint32_t numPoints;
-  uint32_t checkPoint;
+  uint32_t numPoints = 0;
+  uint32_t checkPoint = 0;
   int filelines = 1;  // number of lines in map file
   QString name;
   MapLineM* currentLineM = 0;

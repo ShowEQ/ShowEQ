@@ -188,7 +188,14 @@ int main (int argc, char **argv)
 
    QFileInfo configFileInfo = dataLocMgr.findWriteFile(".", "showeq.xml",
 						       true, true);
-   QString configFile = configFileInfo.absFilePath();
+
+   // deal with funky border case since we may be running setuid
+   QString configFile;
+   if (configFileInfo.dir() != QDir::root())
+     configFile = configFileInfo.absFilePath();
+   else
+     configFile = QFileInfo(dataLocMgr.userDataDir(".").absPath(),
+			    "showeq.xml").absFilePath();
 
    // scan command line arguments for a specified config file
    int i = 1;
@@ -433,8 +440,7 @@ int main (int argc, char **argv)
          case 'V':
          case 'v':
          {
-	   displayVersion();
-	   exit(0);
+  	   exit(0);
 	   break;
          }
 
