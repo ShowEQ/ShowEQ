@@ -426,6 +426,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    menuBar()->insertItem("&File", pFileMenu);
    pFileMenu->insertItem("&Save Preferences", this, SLOT(savePrefs()), CTRL+Key_S);
    pFileMenu->insertItem("Open &Map", m_mapMgr, SLOT(loadMap()), Key_F1);
+   pFileMenu->insertItem("&Import &Map", m_mapMgr, SLOT(importMap()));
    pFileMenu->insertItem("Sa&ve Map", m_mapMgr, SLOT(saveMap()), Key_F2);
    pFileMenu->insertItem("Save SOE Map", m_mapMgr, SLOT(saveSOEMap()));
    pFileMenu->insertItem("Reload Guilds File", m_guildmgr, SLOT(readGuildList()));
