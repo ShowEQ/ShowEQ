@@ -162,6 +162,121 @@ AC_DEFUN(AC_PATH_QT_MOC,
   fi
 ])
 
+AC_DEFUN(UIC_ERROR_MESSAGE,
+[
+
+HEADER="No working Qt user interface compiler (uic) found!
+"
+
+FOOTER="
+
+As a last resort, it may be possible to eliminate this error by typing:
+
+	export UIC=\`updatedb && locate uic | grep bin/uic\`  (with the \`s)"
+
+if [[ -e "$ac_cv_path_uic" ]]; then
+  if ! [[ -x "$ac_cv_path_uic" ]]; then
+    AC_MSG_ERROR([$HEADER
+Configure found and tried to use '$ac_cv_path_uic', but failed...
+
+The problem appears to be the lack of an executable flag for the file...
+Try changing the permissions of '$ac_cv_path_uic' by issuing the following:
+
+	chmod 774 $ac_cv_path_uic    (NOTE: > 774 may pose a security risk...)])
+  else
+    AC_MSG_ERROR([$HEADER
+Configure found and tried to use '$ac_cv_path_uic', but failed...
+
+If configure shouldn't have tried '$ac_cv_path_uic', please set the environment 
+variable UIC to point to the location of your prefered uic binary and run
+configure over. $FOOTER])
+  fi
+else
+  AC_MSG_ERROR([$HEADER
+Configure was unable to locate a uic binary anywhere on your system!
+
+If you have a working uic binary, please set the environment variable UIC
+to point to the location of your uic binary and run configure over. $FOOTER])
+fi
+])
+
+
+dnl ------------------------------------------------------------------------
+dnl Find the meta object compiler in the PATH, in $QTDIR/bin, and some
+dnl more usual places
+dnl ------------------------------------------------------------------------
+dnl
+AC_DEFUN(AC_PATH_QT_UIC,
+[
+  if [[ -n "$ac_qt_includes" ]]; then
+   
+     AC_MSG_CHECKING([for Qt UIC]);
+     AC_FIND_FILE(uic, [ $ac_qt_bindir              \
+                         $QTDIR/bin                 \
+                         $QTDIR/src/uic             \
+                         /usr/local/qt3/bin	    \
+                         /usr/local/qt/bin          \
+                         /usr/local/qt2/bin         \
+	                 /usr/local/qt-2.3.2/lib    \
+                         /usr/local/qt*/bin         \
+	                 /usr/lib/qtgcc3-2.3.2/lib  \
+	                 /usr/lib/qtgcc3-*/lib  \
+	                 /opt/qt-gcc3-2.3.2/lib	    \
+	                 /opt/qt-gcc3-*/lib	    \
+	                 /opt/qt-2.3.2/lib          \
+                         /usr/bin                   \
+                         /usr/X11R6/bin             \
+                         /usr/X11R6/bin/qt3	    \
+                         /usr/X11R6/bin/qt          \
+                         /usr/X11R6/bin/qt2         \
+                         /usr/X11R6/bin/qt*         \
+                         /usr/X11R6/bin/qt2/bin     \
+                         /usr/X11R6/bin/qt3/bin     \
+                         /usr/X11R6/bin/qt/bin      \
+                         /usr/X11R6/bin/qt*/bin     \
+                         /usr/X11R6/bin/X11/qt3     \
+                         /usr/X11R6/bin/X11/qt      \
+                         /usr/X11R6/bin/X11/qt2     \
+                         /usr/X11R6/bin/X11/qt*     \
+                         /usr/X11R6/bin/X11/qt3/bin \
+                         /usr/X11R6/bin/X11/qt/bin  \
+                         /usr/X11R6/bin/X11/qt2/bin \
+                         /usr/X11R6/bin/X11/qt*/bin \
+                         /usr/lib/qt3/bin	    \
+                         /usr/lib/qt/bin            \
+                         /usr/lib/qt2/bin           \
+                         /usr/lib/qt*/bin           \
+                         /usr/src/qt-*/bin            ],
+
+             UIC)
+
+     UIC="$UIC/uic"
+     ac_cv_path_uic="$UIC"
+
+     if [[ -n "$ac_cv_path_uic" ]]; then
+       if ! [[ -e "$ac_cv_path_uic" ]]; then
+         UIC_ERROR_MESSAGE
+       fi
+
+       if ! [[ -x "$ac_cv_path_uic" ]]; then
+         UIC_ERROR_MESSAGE
+       fi
+
+       output=`eval "$ac_cv_path_uic --help  2>&1 | grep -i 'Qt user interface'"`
+
+       echo "configure:__oline__: tried to call $ac_cv_path_uic --help 2>&1 | sed -e '1q' | grep Qt" >&AC_FD_CC
+       echo "configure:__oline__: uic output: $output" >&AC_FD_CC
+
+       if [[ -z "$output" ]]; then
+         UIC_ERROR_MESSAGE
+       fi
+     fi
+
+     AC_SUBST(UIC)
+     AC_MSG_RESULT(yes)
+  fi
+])
+
 AC_DEFUN(KDE_MISC_TESTS,
 [
    AC_LANG_C
@@ -467,21 +582,30 @@ LIBQT="$LIBQT $X_PRE_LIBS -lXext -lX11 $LIBSOCKET"
 ac_qt_includes=""
 ac_qt_libraries=""
 ac_qt_bindir=""
+ac_qt_docs=""
 
 qt_libraries=""
 qt_includes=""
+qt_docs=""
 
 AC_ARG_WITH(qt-dir,
     [  --with-qt-dir=DIR       where the root of Qt is installed ],
     [  ac_qt_includes="$withval"/include
        ac_qt_libraries="$withval"/lib
        ac_qt_bindir="$withval"/bin
+       ac_qt_docs="$withval"/doc/html
     ])
 
 AC_ARG_WITH(qt-includes,
     [  --with-qt-includes=DIR  where the Qt includes are. ],
     [
        ac_qt_includes="$withval"
+    ])
+
+AC_ARG_WITH(qt-docs,
+    [  --with-qt-docs=DIR  where the Qt docs are. ],
+    [
+       ac_qt_docs="$withval"
     ])
 
 ac_qt_libs_given=no
@@ -507,41 +631,31 @@ qt_incdirs=" $QTDIR/include                     \
              $QTINC                             \
 	     /usr/local/qt3/include		\
              /usr/local/qt/include              \
-             /usr/local/qt2/include             \
-	     /usr/local/qt-2.3.2/include	\
              /usr/local/qt*/include             \
-	     /opt/qt-gcc3-2.3.2/include		\
+	     /usr/qt/3/include			\
+	     /usr/qt/*/include			\
 	     /opt/qt-gcc3-*/include		\
-	     /opt/qt-2.3.2/include		\
 	     /usr/include/qt3			\
              /usr/include/qt                    \
-             /usr/include/qt2                   \
              /usr/include/qt*                   \
              /usr/include                       \
 	     /usr/lib/qt3/include		\
              /usr/lib/qt/include                \
-             /usr/lib/qt2/include               \
              /usr/lib/qt*/include               \
-	     /usr/lib/qtgcc3-2.3.2/include	\
 	     /usr/lib/qtgcc3-*/include		\
 	     /usr/lib/qt3/include		\
              /usr/lib/qt/include                \
-             /usr/lib/qt2/include               \
              /usr/lib/qt*/include               \
-             /usr/X11R6/include/X11/qt2         \
 	     /usr/X11R6/include/X11/qt3		\
              /usr/X11R6/include/X11/qt          \
              /usr/X11R6/include/X11/qt*         \
-             /usr/X11R6/include/X11/qt2/include \
 	     /usr/X11R6/include/X11/qt3/include \
              /usr/X11R6/include/X11/qt/include  \
              /usr/X11R6/include/X11/qt*/include \
-             /usr/X11R6/include/qt2             \
 	     /usr/X11R6/include/qt3		\
              /usr/X11R6/include/qt              \
              /usr/X11R6/include/qt*             \
-             /usr/X11R6/include/qt2/include     \
-	     /usr/X11R6/include/qt3/include	\
+ 	     /usr/X11R6/include/qt3/include	\
              /usr/X11R6/include/qt/include      \
              /usr/X11R6/include/qt*/include     \
              /usr/src/qt-*/include              \
@@ -600,7 +714,7 @@ else
   AC_MSG_ERROR([Please verify your Qt devel install!]);
 fi;
 
-qt_target_version="3.0.5"
+qt_target_version="3.1.0"
 
 if test $qt_major_version -le 1 ; then
   AC_MSG_ERROR([Please Make sure $qt_target_version or later is installed!!!]);
@@ -623,40 +737,55 @@ qt_libdirs=" $QTDIR/lib			\
              $QTLIB			\
 	     /usr/local/qt3/lib		\
              /usr/local/qt/lib		\
-	     /usr/local/qt2/lib		\
-	     /usr/local/qt-2.3.2/lib	\
              /usr/local/qt*/lib		\
-	     /opt/qt-gcc3-2.3.2/lib	\
-	     /opt/qt-2.3.2/lib		\
+	     /usr/qt/3/lib		\
+	     /usr/qt/*/lib		\
 	     /usr/lib/qt3/lib		\
              /usr/lib/qt/lib		\
 	     /usr/lib/qt*/lib		\
 	     /usr/lib/qt3		\
-             /usr/lib/qt2		\
              /usr/lib/qt		\
-             /usr/lib/qt2/lib		\
-	     /usr/lib/qtgcc3-2.3.2/lib	\
              /usr/lib/qt*		\
              /usr/lib			\
 	     /usr/X11R6/lib/X11/qt3	\
              /usr/X11R6/lib/X11/qt	\
-             /usr/X11R6/lib/X11/qt2	\
              /usr/X11R6/lib/X11/qt*	\
 	     /usr/X11R6/lib/X11/qt3/lib	\
              /usr/X11R6/lib/X11/qt/lib	\
-             /usr/X11R6/lib/X11/qt2/lib	\
              /usr/X11R6/lib/X11/qt*/lib	\
 	     /usr/X11R6/lib/qt3		\
              /usr/X11R6/lib/qt		\
-             /usr/X11R6/lib/qt2		\
              /usr/X11R6/lib/qt*		\
 	     /usr/X11R6/lib/qt3/lib	\
              /usr/X11R6/lib/qt/lib	\
-             /usr/X11R6/lib/qt2/lib	\
 	     /usr/X11R6/lib/qt*/lib	\
              /usr/src/qt-*/lib		\
              $x_libraries		\
              $qt_libdirs"
+
+case $host_cpu in
+powerpc64 | s390x | sparc64 | x86_64)
+qt_libdirs=" $QTDIR/lib64			\
+             $QTLIB			\
+	     /usr/local/qt3/lib64	\
+             /usr/local/qt/lib64	\
+             /usr/local/qt*/lib64	\
+	     /usr/qt/3/lib64		\
+	     /usr/qt/*/lib64		\
+	     /usr/lib/qt3/lib64		\
+             /usr/lib/qt/lib64		\
+	     /usr/lib/qt*/lib64		\
+             /usr/lib64			\
+	     /usr/X11R6/lib/X11/qt3/lib64 \
+             /usr/X11R6/lib/X11/qt/lib64  \
+             /usr/X11R6/lib/X11/qt*/lib64 \
+	     /usr/X11R6/lib/qt3/lib64	\
+             /usr/X11R6/lib/qt/lib64	\
+	     /usr/X11R6/lib/qt*/lib64	\
+             /usr/src/qt-*/lib64	\
+             $qt_libdirs"
+;;
+esac
 
 [[ "$ac_qt_libraries" != "NO" ]]   &&   \
 qt_libdirs="$ac_qt_libraries $qt_libdirs"
@@ -673,7 +802,6 @@ for dir in $qt_libdirs; do
   else
     echo "tried $dir" >&AC_FD_CC;
   fi
-
 done
 
 ac_qt_libraries="$qt_libdir"
@@ -730,6 +858,53 @@ LDFLAGS="$ac_ldflags_safe"
 LIBS="$ac_libs_safe"
 
 AC_LANG_RESTORE
+
+dnl ************************************
+dnl * Build yet another search path... *
+dnl ************************************
+
+qt_docdirs=" $QTDIR/doc/html		     \
+	     $qt_incdir../doc/html     	     \
+             /usr/local/qt3/doc/html	     \
+             /usr/local/qt/doc/html	     \
+             /usr/local/qt*/doc/html	     \
+	     /usr/qt/3/doc/html	     	     \
+	     /usr/qt/*/doc/html	     	     \
+	     /usr/lib/qt3/doc/html	     \
+             /usr/lib/qt/doc/html	     \
+	     /usr/lib/qt*/doc/html	     \
+	     /usr/lib/doc/html	     	     \
+             /usr/lib/qt/doc/html	     \
+             /usr/lib/qt*/doc/html	     \
+	     /usr/X11R6/lib/X11/qt3/doc/html \
+             /usr/X11R6/lib/X11/qt/doc/html  \
+             /usr/X11R6/lib/X11/qt*/doc/html \
+	     /usr/X11R6/lib/X11/qt3/doc/html \
+             /usr/X11R6/lib/X11/qt/doc/html  \
+             /usr/X11R6/lib/X11/qt*/doc/html \
+	     /usr/X11R6/lib/qt3/doc/html     \
+             /usr/X11R6/lib/qt/doc/html	     \
+             /usr/X11R6/lib/qt*/doc/html     \
+	     /usr/X11R6/lib/qt3/doc/html     \
+             /usr/X11R6/lib/qt/doc/html	     \
+	     /usr/X11R6/lib/qt*/doc/html     \
+             /usr/src/qt-*/doc/html	     \
+             $qt_docdirs"
+
+[[ "$ac_qt_docs" != "NO" ]]   &&   \
+qt_docdirs="$ac_qt_docs $qt_docdirs"
+
+AC_FIND_FILE("qobject.html", $qt_docdirs, qt_docdir)
+
+ac_qt_docs="$qt_docdir"
+
+if [[ -n "$ac_qt_docs" -a "$ac_qt_docs" != "NO" ]]; then
+  echo -e ">>>> Documentation...:\t$ac_qt_docs/"
+else
+  echo -e ">>>> Documentation...:\tUnable to locate?!?"
+  AC_MSG_WARN([Qt documenation not installed?!]);
+fi;
+
 if [[ -z "$ac_qt_includes" ]] || [[ -z "$ac_qt_libraries" ]]; then
   ac_cv_have_qt="have_qt=no";
   ac_qt_notfound="";
@@ -776,15 +951,16 @@ elif [[ $qt_major_version -lt 3 ]]; then
        echo "]]]]]" > /dev/null 2>&1`;
 
   if [[ -n "$MBY" ]]; then
-    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.0.5+, please upgrade
+    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.1.0+, please upgrade
 >>>>>> Workable..:	$MBY]);
   else
-    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.0.5+, please upgrade
+    AC_MSG_RESULT([>>>>> NOTE.......:	ShowEQ is designed for Qt 3.1.0+, please upgrade
 >>>>>> Workable..:  -*{ ??? }*-]);
   fi
 
   qt_libraries=$ac_qt_libraries
   qt_includes=$ac_qt_includes
+  qt_docs=$ac_qt_docs
 
 else
 
@@ -799,14 +975,17 @@ else
 
   qt_libraries=$ac_qt_libraries
   qt_includes=$ac_qt_includes
+  qt_docs=$ac_qt_docs
 
 fi
 
 AC_PATH_QT_MOC
+AC_PATH_QT_UIC
 CHECK_QT_DIRECT(qt_libraries= ,[])
 
 AC_SUBST(qt_libraries)
 AC_SUBST(qt_includes)
+AC_SUBST(qt_docs)
 
 if [[ "$qt_includes" == "$x_includes" ]] ||
    [[ -z "$qt_includes" ]]; then
@@ -824,8 +1003,11 @@ else
  all_libraries="$all_libraries $QT_LDFLAGS"
 fi
 
+QT_DOCS="$qt_docs"
+
 AC_SUBST(QT_INCLUDES)
 AC_SUBST(QT_LDFLAGS)
+AC_SUBST(QT_DOCS)
 
 LIB_QT='-lqt-mt $(LIBPNG) -lXext $(LIB_X11) $(X_PRE_LIBS)'
 AC_SUBST(LIB_QT)
@@ -1934,36 +2116,6 @@ AC_DEFUN(AM_LC_MESSAGES,
       AC_DEFINE(HAVE_LC_MESSAGES, 1, [Define if your locale.h file contains LC_MESSAGES])
     fi
   fi])
-
-dnl From Jim Meyering.
-dnl FIXME: migrate into libit.
-
-dnl AC_DEFUN(AM_FUNC_OBSTACK,
-dnl [AC_CACHE_CHECK([for obstacks], am_cv_func_obstack,
-dnl [AC_TRY_LINK([#include "obstack.h"],
-dnl	      [struct obstack *mem;obstack_free(mem,(char *) 0)],
-dnl	      am_cv_func_obstack=yes,
-dnl	      am_cv_func_obstack=no)])
-dnl if test $am_cv_func_obstack = yes; then
-dnl   AC_DEFINE(HAVE_OBSTACK)
-dnl else
-dnl   LIBOBJS="$LIBOBJS obstack.o"
-dnl fi
-dnl ])
-
-dnl From Jim Meyering.  Use this if you use the GNU error.[ch].
-dnl FIXME: Migrate into libit
-
-dnl AC_DEFUN(AM_FUNC_ERROR_AT_LINE,
-dnl [AC_CACHE_CHECK([for error_at_line], am_cv_lib_error_at_line,
-dnl [AC_TRY_LINK([],[error_at_line(0, 0, "", 0, "");],
-dnl              am_cv_lib_error_at_line=yes,
-dnl	      am_cv_lib_error_at_line=no)])
-dnl if test $am_cv_lib_error_at_line = no; then
-dnl   LIBOBJS="$LIBOBJS error.o"
-dnl fi
-dnl AC_SUBST(LIBOBJS)dnl
-dnl ])
 
 # Macro to add for using GNU gettext.
 # Ulrich Drepper <drepper@cygnus.com>, 1995.
