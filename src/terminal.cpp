@@ -99,6 +99,41 @@ Terminal::~Terminal()
 {
 }
 
+void Terminal::setEnabledTypes(uint64_t types) 
+{ 
+  m_enabledTypes = types; 
+}
+
+void Terminal::setDateTimeForamt(const QString& dateTime)
+{
+  m_dateTimeFormat = dateTime;
+}
+
+void Terminal::setEQDateTimeFormat(const QString& dateTime)
+{
+  m_eqDateTimeFormat = dateTime;
+}
+
+void Terminal::setDisplayType(bool enable) 
+{
+  m_displayType = enable; 
+}
+
+void Terminal::setDisplayDateTime(bool enable) 
+{
+  m_displayDateTime = enable; 
+}
+
+void Terminal::setDisplayEQDateTime(bool enable) 
+{
+  m_displayEQDateTime = enable; 
+}
+
+void Terminal::setUseColor(bool enable)
+{ 
+  m_useColor = enable; 
+}
+
 void Terminal::newMessage(const MessageEntry& message)
 {
   MessageType type = message.type();

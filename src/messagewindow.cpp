@@ -608,7 +608,7 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
 
 MessageWindow::~MessageWindow()
 {
-  delete m_typeStyles;
+  delete [] m_typeStyles;
 }
 
 QPopupMenu* MessageWindow::menu()
