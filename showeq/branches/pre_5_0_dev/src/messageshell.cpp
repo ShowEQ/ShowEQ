@@ -271,11 +271,11 @@ void MessageShell::inspectData(const uint8_t* data)
 
   for (int inp = 0; inp < 21; inp ++)
   {
-    tempStr.sprintf("He has %s (icn:%i)\n", inspt->itemNames[inp], inspt->icons[inp]);
+    tempStr.sprintf("He has %s (icn:%i)", inspt->itemNames[inp], inspt->icons[inp]);
     m_messages->addMessage(MT_Zone, tempStr);
   }
 
-  tempStr.sprintf("His info: %s\n", inspt->mytext);
+  tempStr.sprintf("His info: %s", inspt->mytext);
   m_messages->addMessage(MT_Zone, tempStr);
 }
 

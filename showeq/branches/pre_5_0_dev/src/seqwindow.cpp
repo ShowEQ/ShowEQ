@@ -14,9 +14,7 @@
 
 #include "seqwindow.h"
 #include "main.h"
-#if 1 // ZBTEMP
-#include <stdio.h>
-#endif
+
 SEQWindow::SEQWindow(const QString prefName, const QString caption,
 		     QWidget* parent, const char* name, WFlags f)
   : QDockWindow(parent, name, f),
