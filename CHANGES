@@ -3,8 +3,7 @@ Version: $Id$ $Name$
 dohpaZ (12/?/03)
 ---------------------
 + Updated version to 5.0.0.2
-+ Added code to configure.in to force the use of autoconf 2.5 or higher and 
-  updated the documentation to reflect the new version requirement.
++ 
 + Updated the default ArqSeqGiveUp to 512 since with the current encryption
   scheme a single missed packet can have greater ramifications then under the
   previous one.
@@ -12,6 +11,24 @@ dohpaZ (12/?/03)
 + Removed some more cruft from ShowEQParams.
 + Minor tweak to map spawn color selection to deal with properly with traps,
   event-triggers, and timers.
++ Many SpellShell improvements
+  + Made it delete expired spells faster (after up to 6 seconds of 0, 
+    rather then 20).  
+  + Modified it to delete spells from the list for spawns that are killed.  
+  + It also now clears the caster and target ids when you zone, since they are 
+    not valid in the new zone.  This allows for it to fall back to matching
+    by target name for spells not cast in the current zone.
+  + Major revamp of how spells are internally managed.  This fixed numerous
+    bugs and usability issues.
+  + Added support for handling spell failure messages so that failed spells 
+    will be removed from the list.
++ Buf fixes:
+  + Fixed parsing of the spells_us.txt for the targettype field. This fixed
+    numerous problems with the handling of self-only spells.
+  + Added code to configure.in to force the use of autoconf 2.5 or higher and 
+    updated the documentation to reflect the new version requirement.
+  + Added stdlib.h inclusion to xmlpreferences.cpp to fix the build on some
+    Linux distributions.
 
 dohpaZ (12/7/03)
 ---------------------

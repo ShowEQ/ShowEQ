@@ -1334,11 +1334,11 @@ struct clientTargetStruct
 
 struct startCastStruct 
 {
-/*0000*/ int32_t  unknown0002;            // ***Placeholder
+/*0000*/ int32_t  slot;                   // ***Placeholder
 /*0004*/ uint32_t spellId;                // Spell ID
-/*0008*/ int32_t  unknown0010;            // ***Placeholder
+/*0008*/ int32_t  inventorySlot;          // ***Placeholder
 /*0012*/ uint32_t targetId;               // The current selected target
-/*0016*/ uint32_t unknown0018;            // ***Placeholder 
+/*0016*/ uint8_t  unknown0018[4];         // ***Placeholder 
 /*0020*/
 };
 
