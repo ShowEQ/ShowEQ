@@ -12,6 +12,10 @@
 #include "datetimemgr.h"
 
 //----------------------------------------------------------------------
+// initialize statics
+Messages* Messages::s_messages = 0;
+
+//----------------------------------------------------------------------
 // Messages
 Messages::Messages(DateTimeMgr* dateTimeMgr, MessageFilters* messageFilters,
 		   QObject* parent, const char* name)
@@ -19,6 +23,9 @@ Messages::Messages(DateTimeMgr* dateTimeMgr, MessageFilters* messageFilters,
     m_dateTimeMgr(dateTimeMgr),
     m_messageFilters(messageFilters)
 {
+  if (!s_messages)
+    s_messages = this;
+
   connect(m_messageFilters, SIGNAL(removed(uint32_t, uint8_t)),
 	  this, SLOT(removedFilter(uint32_t, uint8_t)));
   connect(m_messageFilters, SIGNAL(added(uint32_t, uint8_t, 

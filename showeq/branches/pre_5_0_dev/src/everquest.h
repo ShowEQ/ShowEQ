@@ -1054,9 +1054,9 @@ struct formattedMessageStruct
 
 struct simpleMessageStruct
 {
-/*0000*/ uint32_t messageFormat;          // Indicates the message format
-/*0005*/ uint32_t color;                  // Message color
-/*0008*/ uint32_t unknown;                // ***Placeholder
+/*0000*/ uint32_t  messageFormat;          // Indicates the message format
+/*0005*/ ChatColor messageColor;                  // Message color
+/*0008*/ uint32_t  unknown;                // ***Placeholder
 /*0012*/
 };
 

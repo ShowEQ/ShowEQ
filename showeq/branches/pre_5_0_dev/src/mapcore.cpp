@@ -16,6 +16,9 @@
 
 //#define DEBUGMAPLOAD
 
+#include "mapcore.h"
+#include "diagnosticmessages.h"
+
 #include <errno.h>
 
 #include <qpainter.h>
@@ -24,8 +27,6 @@
 #include <qfileinfo.h>
 #include <qfile.h>
 #include <qregexp.h>
-
-#include "mapcore.h"
 
 //----------------------------------------------------------------------
 // MapParameters
@@ -478,7 +479,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 
   if (!mapFile.open(IO_ReadOnly))
   {
-    fprintf(stderr, "Error opening map file '%s'!\n", filename);
+    seqWarn("Error opening map file '%s'!", filename);
 
     return;
   }
@@ -506,7 +507,7 @@ void MapData::loadMap(const QString& fileName, bool import)
   filelines = 1;
 
 #ifdef DEBUGMAPLOAD
-  fprintf(stderr, "Zone info line: %s\n", (const char*)(*lit));
+  seqDebug("Zone info line: %s", (const char*)(*lit));
 #endif
 
   QString fieldSep = ",";
@@ -517,14 +518,14 @@ void MapData::loadMap(const QString& fileName, bool import)
   size_t count = fields.count();
   if (!count)
   {
-    fprintf(stderr, "Error, no fields in first line of map file '%s'\n",
+    seqWarn("Error, no fields in first line of map file '%s'",
 	    filename);
     return;
   }
   
   if (count < 2)
   {
-    fprintf(stderr, "Error, too few fields in first line of map file '%s'\n",
+    seqWarn("Error, too few fields in first line of map file '%s'",
 	    filename);
     return;
   }
@@ -548,7 +549,7 @@ void MapData::loadMap(const QString& fileName, bool import)
     filelines++;
      
 #ifdef DEBUGMAPLOAD
-    fprintf(stderr, "Map line %d: %s\n", filelines, (const char*)*lit);
+    seqWarn("Map line %d: %s", filelines, (const char*)*lit);
 #endif
 
     // split the line into fields
@@ -577,14 +578,13 @@ void MapData::loadMap(const QString& fileName, bool import)
     case 'M':
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "M record  [%d] [%d fields]: %s\n", 
-		filelines, count, (const char*)*lit);
+	seqDebug("M record  [%d] [%d fields]: %s", 
+		 filelines, count, (const char*)*lit);
 #endif
 	
 	if (count < 3)
 	{
-	  fprintf(stderr, 
-		  "Error reading M line %d on map '%s'! %d is too few fields\n",
+	  seqWarn("Error reading M line %d on map '%s'! %d is too few fields",
 		  filelines, filename, count);
 	  continue;
 	}
@@ -595,7 +595,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 	// only bother going forward if there will be enough line points
         if (linePoints < 2)
 	{
-	  fprintf(stderr, "M Line %d in map '%s' only had %d points, not loading.\n",
+	  seqWarn("M Line %d in map '%s' only had %d points, not loading.",
 		  filelines, filename, linePoints );
 	  continue;
 	}
@@ -612,14 +612,14 @@ void MapData::loadMap(const QString& fileName, bool import)
 	specifiedLinePoints = (*fit++).toUInt(&ok);
 	if (!ok) 
 	{
-	  fprintf(stderr, "Error reading number of points on line %d in map '%s'!\n",
+	  seqWarn("Error reading number of points on line %d in map '%s'!",
 		  filelines, filename);
 	  continue;
 	}
 	
 	if (specifiedLinePoints != linePoints)
 	{
-	  fprintf(stderr, "L Line %d in map '%s' has %d points as opposed to the %d points it specified!\n", 
+	  seqWarn("L Line %d in map '%s' has %d points as opposed to the %d points it specified!", 
 		  filelines, filename, linePoints, specifiedLinePoints);
 	}
 	
@@ -659,14 +659,13 @@ void MapData::loadMap(const QString& fileName, bool import)
     case 'L':
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "L record  [%d] [%d fields] %s\n", 
+	seqDebug("L record  [%d] [%d fields] %s", 
 		filelines, count, (const char*)*lit);
 #endif
 	
 	if (count < 3)
         {
-	  fprintf(stderr, 
-		  "Error reading L line %d on map '%s'! %d is too few fields\n",
+	  seqWarn("Error reading L line %d on map '%s'! %d is too few fields",
 		  filelines, filename, count);
 	  continue;
 	}
@@ -677,7 +676,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 	// only bother going forward if there will be enough line points
 	if (linePoints < 2)
 	{
-	  fprintf(stderr, "L Line %d in map '%s' only had %d points, not loading.\n",
+	  seqWarn("L Line %d in map '%s' only had %d points, not loading.",
 		  filelines, filename, linePoints);
 	  continue;
 	}
@@ -694,14 +693,14 @@ void MapData::loadMap(const QString& fileName, bool import)
 	specifiedLinePoints = (*fit++).toUInt(&ok);
 	if (!ok) 
 	{
-	  fprintf(stderr, "Error reading number of points on line %d in map '%s'!\n",
+	  seqWarn("Error reading number of points on line %d in map '%s'!",
 		  filelines, filename);
 	  continue;
 	}
 	
 	if (specifiedLinePoints != linePoints)
 	{
-	  fprintf(stderr, "L Line %d in map '%s' has %d points as opposed to the %d points it specified!\n", 
+	   seqWarn("L Line %d in map '%s' has %d points as opposed to the %d points it specified!", 
 		  filelines, filename, linePoints, specifiedLinePoints);
 	}
 	
@@ -748,14 +747,13 @@ void MapData::loadMap(const QString& fileName, bool import)
     case 'P':
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "P record [%d] [%d fields]: %s\n", 
+	seqWarn("P record [%d] [%d fields]: %s", 
 		filelines, count, (const char*)*lit);
 #endif
 
 	if (count < 4)
         {
-	  fprintf(stderr, 
-		  "Error reading P line %d on map '%s'! %d is too few fields\n",
+	  seqWarn("Error reading P line %d on map '%s'! %d is too few fields",
 		  filelines, filename, count);
 	  continue;
 	}
@@ -788,14 +786,13 @@ void MapData::loadMap(const QString& fileName, bool import)
     case 'A':  //Creates aggro ranges.
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "A record  [%d] [%d fields]: %s\n",
+	seqWarn("A record  [%d] [%d fields]: %s",
 		filelines, count, (const char*)*lit);
 #endif
 	
 	if (count < 2)
         {
-	  fprintf(stderr, 
-		  "Line %d in map '%s' has an A record with too few fields (%d)!\n",
+	  seqWarn("Line %d in map '%s' has an A record with too few fields (%d)!",
 		  filelines, filename, count);
 	  break;
 	}
@@ -803,14 +800,14 @@ void MapData::loadMap(const QString& fileName, bool import)
 	name = (*fit++);
 	if (name.isEmpty()) 
         {
-	  fprintf(stderr, "Line %d in map '%s' has an A marker with no Name expression!\n", 
+	  seqWarn("Line %d in map '%s' has an A marker with no Name expression!", 
 		  filelines, filename);
 	  break;
 	}
 	rangeVal = (*fit++).toUShort();
 	if (!rangeVal) 
         {
-	  fprintf(stderr, "Line %d in map '%s' has an A marker with no or 0 Range radius!\n", 
+	  seqWarn("Line %d in map '%s' has an A marker with no or 0 Range radius!", 
 		  filelines, filename);
 	  break;
 	}
@@ -821,14 +818,13 @@ void MapData::loadMap(const QString& fileName, bool import)
 	break;
       case 'H':  //Sets global height for L lines.
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "H record [%d] [%d fields]: %s\n", 
+	seqDebug("H record [%d] [%d fields]: %s", 
 		filelines, count, (const char*)*lit);
 #endif
 	
 	if (count < 1)
         {
-	  fprintf(stderr, 
-		  "Line %d in map '%s' has an H record with too few fields (%d)!\n", 
+	  seqWarn("Line %d in map '%s' has an H record with too few fields (%d)!", 
 		  filelines, filename, count);
 	  break;
 	}
@@ -837,7 +833,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 	globHeight = (*fit++).toShort(&ok);
 	if (!ok) 
         {
-	  fprintf(stderr, "Line %d in map '%s' has an H marker with invalid Z!\n", 
+	  seqWarn("Line %d in map '%s' has an H marker with invalid Z!", 
 		  filelines, filename);
 	  break;
 	}
@@ -848,14 +844,13 @@ void MapData::loadMap(const QString& fileName, bool import)
     case 'Z':  // Quick and dirty ZEM implementation
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "Z record [%d] [%d fields]: %s\n", 
+	seqWarn("Z record [%d] [%d fields]: %s", 
 		filelines, count, (const char*)*lit);
 #endif
 	
 	if (count < 1)
         {
-	  fprintf(stderr, 
-		  "Line %d in map '%s' has a Z record with too few fields (%d)!\n", 
+	  seqWarn("Line %d in map '%s' has a Z record with too few fields (%d)!", 
 		  filelines, filename, count);
 	  break;
 	}
@@ -863,12 +858,12 @@ void MapData::loadMap(const QString& fileName, bool import)
 	m_zoneZEM = (*fit++).toUShort(&ok);
 	if (!ok) 
         {
-	  fprintf(stderr, "Line %d in map '%s' has an Z marker with invalid ZEM!\n", 
+	  seqWarn("Line %d in map '%s' has an Z marker with invalid ZEM!", 
 		  filelines, filename);
 	  break;
 	}
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "ZEM set to %d\n", m_zoneZEM);
+	seqDebug("ZEM set to %d", m_zoneZEM);
 #endif
       }
       break;
@@ -889,10 +884,10 @@ void MapData::loadMap(const QString& fileName, bool import)
   if (m_image.load(imageFileName))
   {
     m_imageLoaded = true;
-    printf("Loaded map image: '%s'\n", (const char*)imageFileName);
+    seqInfo("Loaded map image: '%s'", (const char*)imageFileName);
   }
 
-  printf("Loaded map: '%s'\n", filename);
+  seqInfo("Loaded map: '%s'", filename);
 }
 
 void MapData::loadSOEMap(const QString& fileName, bool import)
@@ -929,7 +924,7 @@ void MapData::loadSOEMap(const QString& fileName, bool import)
 
   if (!mapFile.open(IO_ReadOnly))
   {
-    fprintf(stderr, "Error opening map file '%s'!\n", filename);
+    seqWarn("Error opening map file '%s'!", filename);
 
     return;
   }
@@ -977,7 +972,7 @@ void MapData::loadSOEMap(const QString& fileName, bool import)
     filelines++;
      
 #ifdef DEBUGMAPLOAD
-    fprintf(stderr, "Map line %d: %s\n", filelines, (const char*)*lit);
+    seqDebug("Map line %d: %s", filelines, (const char*)*lit);
 #endif
 
     // entry type is the first character of the line
@@ -1004,14 +999,13 @@ void MapData::loadSOEMap(const QString& fileName, bool import)
     case 'L':
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "L record  [%d] [%d fields]: %s\n", 
+	seqDebug("L record  [%d] [%d fields]: %s", 
 		filelines, count, (const char*)*lit);
 #endif
 	
 	if (count != 9)
 	{
-	  fprintf(stderr, 
-		  "Error reading L line %d on map '%s'! %d is an incorrect field count!\n",
+	  seqWarn("Error reading L line %d on map '%s'! %d is an incorrect field count!",
 		  filelines, filename, count);
 	  continue;
 	}
@@ -1072,14 +1066,13 @@ void MapData::loadSOEMap(const QString& fileName, bool import)
     case 'P':
       {
 #ifdef DEBUGMAPLOAD
-	fprintf(stderr, "P record [%d] [%d fields]: %s\n", 
+	seqDebug("P record [%d] [%d fields]: %s", 
 		filelines, count, (const char*)*lit);
 #endif
 	
 	if (count != 8)
 	{
-	  fprintf(stderr, 
-		  "Error reading L line %d on map '%s'! %d is an incorrect field count!\n",
+	  seqWarn("Error reading L line %d on map '%s'! %d is an incorrect field count!",
 		  filelines, filename, count);
 	  continue;
 	}
@@ -1122,10 +1115,10 @@ void MapData::loadSOEMap(const QString& fileName, bool import)
   if (m_image.load(imageFileName))
   {
     m_imageLoaded = true;
-    printf("Loaded map image: '%s'\n", (const char*)imageFileName);
+    seqInfo("Loaded map image: '%s'", (const char*)imageFileName);
   }
 
-  printf("Loaded map: '%s'\n", filename);
+  seqInfo("Loaded SOE map: '%s'", filename);
 }
 
 void MapData::saveMap(const QString& fileName) const
@@ -1144,7 +1137,7 @@ void MapData::saveMap(const QString& fileName) const
 
   if ((fh = fopen(filename, "w")) == NULL) 
   {
-    printf("Error saving map '%s'!\n", filename);
+    seqWarn("Error saving map '%s'!", filename);
     return;
   }
   
@@ -1256,13 +1249,13 @@ void MapData::saveMap(const QString& fileName) const
   }
 
 #ifdef DEBUGMAP
-  printf("saveMap() - map '%s' saved with %d L lines, %d M lines, %d locations\n", filename,
+  seqDebug("saveMap() - map '%s' saved with %d L lines, %d M lines, %d locations", filename,
 	 m_lLines.count(), m_mLines.count(), m_locations.count());
 #endif
   
   fclose (fh);
 
-  printf("Saved map: '%s'\n", filename);
+  seqInfo("Saved map: '%s'", filename);
 }
 
 void MapData::saveSOEMap(const QString& fileName) const
@@ -1281,7 +1274,7 @@ void MapData::saveSOEMap(const QString& fileName) const
 
   if ((fh = fopen(filename, "w")) == NULL) 
   {
-    printf("Error saving map '%s'!\n", filename);
+    seqWarn("Error saving map '%s'!", filename);
     return;
   }
   
@@ -1371,13 +1364,13 @@ void MapData::saveSOEMap(const QString& fileName) const
 	    (const char*)name);
   }
 #ifdef DEBUGMAP
-  printf("saveMap() - map '%s' saved with %d L lines, %d M lines, %d locations\n", filename,
+  seqDebug("saveMap() - map '%s' saved with %d L lines, %d M lines, %d locations", filename,
 	 m_lLines.count(), m_mLines.count(), m_locations.count());
 #endif
   
   fclose (fh);
 
-  printf("Saved map: '%s'\n", filename);
+  seqInfo("Saved SOE map: '%s'", filename);
 }
 
 bool MapData::isAggro(const QString& name, uint16_t* range) const
@@ -1668,7 +1661,7 @@ void MapData::paintLines(MapParameters& param, QPainter& p) const
   //----------------------------------------------------------------------
   /* Paint the lines */
 #ifdef DEBUGMAP
-  printf("Paint the lines\n");
+  seqDebug("Paint the lines");
 #endif
   // Note: none of the map loops below check for zero length lines,
   // because all line manipulation code makes sure that they don't occur
@@ -1710,7 +1703,7 @@ void MapData::paintLines(MapParameters& param, QPainter& p) const
     
     // set pen color
 #ifdef DEBUGMAP
-    printf("lineColor = '%s'\n", (char *) currentLineL->color());
+    seqDebug("lineColor = '%s'", (char *) currentLineL->color());
 #endif
     p.setPen(currentLineL->color());
     
@@ -1764,7 +1757,7 @@ void MapData::paintLines(MapParameters& param, QPainter& p) const
     
     // set pen color
 #ifdef DEBUGMAP
-    printf("lineColor = '%s'\n", (char *) currentLineM->color());
+    seqDebug("lineColor = '%s'", (char *) currentLineM->color());
 #endif
     p.setPen(currentLineM->color());
     
@@ -1806,7 +1799,7 @@ void MapData::paintDepthFilteredLines(MapParameters& param, QPainter& p) const
   //----------------------------------------------------------------------
   /* Paint the lines */
 #ifdef DEBUGMAP
-  printf("Paint Depth Filtered lines\n");
+  seqDebug("Paint Depth Filtered lines");
 #endif
   // Note: none of the map loops below check for zero length lines,
   // because all line manipulation code makes sure that they don't occur
@@ -1857,7 +1850,7 @@ void MapData::paintDepthFilteredLines(MapParameters& param, QPainter& p) const
     
     // set the line color
 #ifdef DEBUGMAP
-    printf("lineColor = '%s'\n", (char *) currentLineL->color());
+    seqDebug("lineColor = '%s'", (char *) currentLineL->color());
 #endif
     p.setPen(currentLineL->color());
     
@@ -1911,7 +1904,7 @@ void MapData::paintDepthFilteredLines(MapParameters& param, QPainter& p) const
     
     // set the line color
 #ifdef DEBUGMAP
-    printf("lineColor = '%s'\n", (char *) currentLineM->color());
+    seqDebug("lineColor = '%s'", (char *) currentLineM->color());
 #endif
     p.setPen(currentLineM->color());
     
@@ -1926,7 +1919,7 @@ void MapData::paintDepthFilteredLines(MapParameters& param, QPainter& p) const
 			   curZ));
     
 #ifdef DEBUGMAP
-    printf("Line has %i points:\n", currentLineM->size());
+    seqDebug("Line has %i points:", currentLineM->size());
 #endif
     
     // move to the starting position
@@ -1965,7 +1958,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
   //----------------------------------------------------------------------
   /* Paint the lines */
 #ifdef DEBUGMAP
-  printf("Paint Faded Floor lines\n");
+  seqDebug("Paint Faded Floor lines");
 #endif
   // Note: none of the map loops below check for zero length lines,
   // because all line manipulation code makes sure that they don't occur
@@ -2023,7 +2016,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
     {
       // set the line color
 #ifdef DEBUGMAP
-      printf("lineColor = '%s'\n", (char *) currentLineL->color());
+      seqDebug("lineColor = '%s'", (char *) currentLineL->color());
 #endif
       p.setPen(currentLineL->color());
     }
@@ -2040,7 +2033,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
       
       // set the line color
 #ifdef DEBUGMAP
-      printf("lineColor = '#%2x%2x%2x'\n", useColor, useColor, useColor);
+      seqDebug("lineColor = '#%2x%2x%2x'", useColor, useColor, useColor);
 #endif
       p.setPen(QColor(useColor, useColor, useColor));
     }
@@ -2093,7 +2086,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
     
     // set the line color
 #ifdef DEBUGMAP
-    printf("lineColor = '%s'\n", (char *) currentLineM->color());
+    seqDebug("lineColor = '%s'", (char *) currentLineM->color());
 #endif
     p.setPen(currentLineM->color());
     
@@ -2106,7 +2099,7 @@ void MapData::paintFadedFloorsLines(MapParameters& param, QPainter& p) const
     lastInBounds = inRect(screenBounds, curX, curY);
     
 #ifdef DEBUGMAP
-    printf("Line has %i points:\n", currentLineM->size());
+    seqDebug("Line has %i points:", currentLineM->size());
 #endif
     
     // calculate starting color info for the line
@@ -2166,7 +2159,7 @@ void MapData::paintLocations(MapParameters& param, QPainter& p) const
   //----------------------------------------------------------------------
   /* Paint the locations */
 #ifdef DEBUGMAP
-  printf("Paint the locations\n");
+  seqDebug("Paint the locations");
 #endif
   // set the brush
   p.setBrush(QColor (80, 80, 80));
@@ -2328,7 +2321,7 @@ const QPixmap& MapCache::getMapImage(MapParameters& param)
       break;
 #ifdef DEBUGMAP
     default:
-      fprintf(stderr, "Unknown Map Line Style: %d!\n", param.mapLineStyle());
+      seqWarn("Unknown Map Line Style: %d!", param.mapLineStyle());
       break;
 #endif
     }

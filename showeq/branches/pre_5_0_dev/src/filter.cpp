@@ -8,14 +8,16 @@
  */
 
 /* Implementation of filter class */
+#include "filter.h"
+#include "diagnosticmessages.h"
+#include "everquest.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <qfile.h>
-
-#include "everquest.h"
-#include "filter.h"
 
 #define MAXLEN   5000
 
@@ -76,8 +78,8 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
     QString levelString = workString.mid(breakPoint + 1);
 
 #ifdef DEBUG_FILTER 
-    printf("regexString=%s\n", (const char*)regexString);
-    printf("breakPoint=%d mid()=%s\n",
+    seqDebug("regexString=%s", (const char*)regexString);
+    seqDebug("breakPoint=%d mid()=%s",
 	   breakPoint, (const char*)levelString);
 #endif
 
@@ -96,7 +98,7 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
 	m_minLevel = level;
 
 #ifdef DEBUG_FILTER
-      printf("filter min level decode levelStr='%s' level=%d ok=%1d minLevel=%d\n",
+      seqDebug("filter min level decode levelStr='%s' level=%d ok=%1d minLevel=%d",
 	     (const char*)levelString, level, ok, m_minLevel);
 #endif
     }
@@ -111,7 +113,7 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
 	m_minLevel = level;
 
 #ifdef DEBUG_FILTER
-      printf("filter min level decode levelStr='%s' level=%d ok=%1d minLevel=%d\n",
+      seqDebug("filter min level decode levelStr='%s' level=%d ok=%1d minLevel=%d",
 	     (const char*)levelString.left(breakPoint), level, ok, m_minLevel);
 #endif
 
@@ -132,7 +134,7 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
 	  m_maxLevel = level;
 
 #ifdef DEBUG_FILTER
-      printf("filter max level decode levelStr='%s' level=%d ok=%1d maxLevel=%d\n",
+      seqDebug("filter max level decode levelStr='%s' level=%d ok=%1d maxLevel=%d",
 	     (const char*)levelString, level, ok, m_maxLevel);
 #endif
       }
@@ -145,7 +147,7 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
   }
 
 #ifdef DEBUG_FILTER
-  printf("regexString=%s minLevel=%d maxLevel=%d\n", 
+  seqDebug("regexString=%s minLevel=%d maxLevel=%d", 
 	 (const char*)regexString, m_minLevel, m_maxLevel);
 #endif
 
@@ -156,11 +158,11 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive)
   if (!m_regexp.isValid())
   {
 #if (QT_VERSION > 0x030100)
-    fprintf(stderr, "Filter Error: '%s' - %s\n",
+    seqWarn("Filter Error: '%s' - %s",
 	    (const char*)m_regexp.pattern(), 
 	    (const char*)m_regexp.errorString());
 #else
-    fprintf(stderr, "Filter Error: '%s' - Is Invalid - Upgrade to Qt 3.1 or better for more info...\n",
+    seqWarn("Filter Error: '%s' - Is Invalid - Upgrade to Qt 3.1 or better for more info...",
 	    (const char*)m_regexp.pattern());
 #endif
   }
@@ -175,11 +177,11 @@ FilterItem::FilterItem(const QString& filterPattern, bool caseSensitive,
   if (!m_regexp.isValid())
   {
 #if (QT_VERSION > 0x030100)
-    fprintf(stderr, "Filter Error: '%s' - %s\n",
+    seqWarn("Filter Error: '%s' - %s",
 	    (const char*)m_regexp.pattern(), 
 	    (const char*)m_regexp.errorString());
 #else
-    fprintf(stderr, "Filter Error: '%s' - Is Invalid - Upgrade to Qt 3.1 or better for more info...\n",
+    seqWarn("Filter Error: '%s' - Is Invalid - Upgrade to Qt 3.1 or better for more info...",
 	    (const char*)m_regexp.pattern());
 #endif
   }
@@ -262,7 +264,7 @@ bool Filter::isFiltered(const QString& filterString, uint8_t level)
 {
   FilterItem *re;
 #ifdef DEBUG_FILTER
-// printf("isFiltered(%s)\n", string);
+  //seqDebug("isFiltered(%s)", string);
 #endif /* DEBUG_FILTER */
 
   // iterate over the filters checking for a match
@@ -321,7 +323,7 @@ Filter::remFilter(const QString& filterPattern)
        m_filterItems.remove(re);
 
 #ifdef DEBUG_FILTER
-printf("Removed '%s' from List\n", (const char*)filterPattern);
+       seqDebug("Removed '%s' from List", (const char*)filterPattern);
 #endif
        break;
      }
@@ -349,7 +351,7 @@ Filter::addFilter(const QString& filterPattern)
   m_filterItems.append(re);
 
 #ifdef DEBUG_FILTER
-printf("Added Filter '%s'\n", (const char*)filterPattern);
+  seqDebug("Added Filter '%s'", (const char*)filterPattern);
 #endif
 
  return re->valid(); 
@@ -370,8 +372,8 @@ Filter::addFilter(const QString& filterPattern, uint8_t minLevel, uint8_t maxLev
   m_filterItems.append(re);
 
 #ifdef DEBUG_FILTER
-printf("Added Filter '%s' (%d, %d)\n",
-       (const char*)filterPattern, minLevel, maxLevel);
+  seqDebug("Added Filter '%s' (%d, %d)",
+	   (const char*)filterPattern, minLevel, maxLevel);
 #endif
 
  return re->valid(); 
@@ -401,17 +403,17 @@ Filter::listFilters(void)
   FilterItem *re;
 
 #ifdef DEBUG_FILTER
-//  printf("Filter::listFilters\n");
+//  seqDebug("Filter::listFilters");
 #endif
 
   FilterListIterator it(m_filterItems);
   for (re = it.toFirst(); re != NULL; re = ++it)
   {
     if (re->minLevel() || re->maxLevel())
-      printf("\t'%s' (%d, %d)\n", 
+      seqInfo("\t'%s' (%d, %d)", 
 	     (const char*)re->name().utf8(), re->minLevel(), re->maxLevel());
     else
-      printf("\t'%s'\n", (const char*)re->name().utf8());
+      seqInfo("\t'%s'", (const char*)re->name().utf8());
   }
 }
 
@@ -555,13 +557,13 @@ void Filters::list(void) const
 {
   FilterMap::const_iterator it;
 
-  printf("Filters from file '%s':\n",
+  seqInfo("Filters from file '%s':",
 	 (const char*)m_file);
   // iterate over the filters
   for (it = m_filters.begin(); it != m_filters.end(); it++)
   {
     // print the header
-    printf("Filter Type '%s':\n", 
+    seqInfo("Filter Type '%s':", 
 	   (const char*)m_types.name(it->first));
 
     // list off the actual filters

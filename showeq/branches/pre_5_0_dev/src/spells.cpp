@@ -14,6 +14,7 @@
 
 #include "spells.h"
 #include "util.h"
+#include "diagnosticmessages.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -163,8 +164,8 @@ Spell::Spell(const QString& spells_enLine)
   for (size_t i = 0; i < playerClasses; i++)
     m_classLevels[i] = uint8_t(spellInfo[104 + i].toUShort());
 #if 0 // ZBTEMP
-  fprintf(stderr, "Spell: %d  Fields: %d\n", m_spell, 
-	  spellInfo.count());
+  seqDebug("Spell: %d  Fields: %d", m_spell, 
+	   spellInfo.count());
 #endif 
 }
 
@@ -204,7 +205,7 @@ int16_t Spell::calcDuration(uint8_t level) const
   case 3600:
     return 3600;
   default:
-    fprintf(stderr, "Spell::calcDuration(): Unknown formula for spell %.04x\n",
+    seqInfo("Spell::calcDuration(): Unknown formula for spell %.04x",
 	    m_spell);
     return m_buffDurationArgument;
   }
@@ -268,7 +269,7 @@ void Spells::loadSpells(const QString& spellsFileName)
 	text.setUnicode(QChar*(textData.data()), textData.size() / 2);
       else
       {
-	fprintf(stderr, "Spells::loadSpells(): Upgrade your version of Qt to at least 3.1 to properly handle UTF-16 encoded files!\n");
+	seqWarn("Spells::loadSpells(): Upgrade your version of Qt to at least 3.1 to properly handle UTF-16 encoded files!");
 	text = textData;
       }
 #endif
@@ -293,8 +294,7 @@ void Spells::loadSpells(const QString& spellsFileName)
       spellQueue.enqueue(newSpell);
     }
 
-    fprintf(stderr, 
-	    "Loaded %d spells from '%s' maxSpell=%#.04x\n",
+    seqInfo("Loaded %d spells from '%s' maxSpell=%#.04x",
 	    spellQueue.count(), spellsFileName.latin1(), m_maxSpell);
 
     // allocate the spell array 
@@ -316,7 +316,7 @@ void Spells::loadSpells(const QString& spellsFileName)
     }
   }
   else
-    fprintf(stderr, "Spells::Spells(): Failed to open: '%s'\n",
+    seqWarn("Spells::Spells(): Failed to open: '%s'",
 	    spellsFileName.latin1());
 }
 

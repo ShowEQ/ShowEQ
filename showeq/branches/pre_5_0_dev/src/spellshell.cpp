@@ -15,6 +15,7 @@
 #include "spawnshell.h"
 #include "spells.h"
 #include "packetcommon.h"
+#include "diagnosticmessages.h"
 
 // #define DIAG_SPELLSHELL 1 
 
@@ -333,7 +334,7 @@ void SpellShell::selfStartSpellCast(const uint8_t* data)
 {
   const startCastStruct *c = (const startCastStruct *)data;
 #ifdef DIAG_SPELLSHELL
-   printf("selfStartSpellCast - id=%d on spawnid=%d\n", 
+  seqDebug("selfStartSpellCast - id=%d on spawnid=%d", 
 	  c->spellId, c->targetId);
 #endif // DIAG_SPELLSHELL
 
@@ -344,7 +345,7 @@ void SpellShell::selfStartSpellCast(const uint8_t* data)
 void SpellShell::buffLoad(const spellBuff* c)
 {
 #ifdef DIAG_SPELLSHELL
-   printf("Loading buff - id=%d.\n",c->spellid);
+  seqDebug("Loading buff - id=%d.",c->spellid);
 #endif // DIAG_SPELLSHELL
 
    InsertSpell(c);
@@ -363,7 +364,7 @@ void SpellShell::buff(const uint8_t* data, size_t, uint8_t dir)
     return;
 
 #ifdef DIAG_SPELLSHELL
-  printf("Dropping buff - id=%d from spawn=%d\n", b->spellid, b->spawnid);
+  seqDebug("Dropping buff - id=%d from spawn=%d", b->spellid, b->spawnid);
 #endif // DIAG_SPELLSHELL
 
   // find the spell item
@@ -395,7 +396,7 @@ void SpellShell::action(const uint8_t* data, size_t, uint8_t)
   if (item)
   {
 #ifdef DIAG_SPELLSHELL
-    printf("action - source=%d (lvl: %d) cast id=%d on target=%d causing %d damage\n", 
+    seqDebug("action - source=%d (lvl: %d) cast id=%d on target=%d causing %d damage", 
 	   a->source, a->level, a->spell, a->target, a->damage);
 #endif // DIAG_SPELLSHELL
 
@@ -408,7 +409,7 @@ void SpellShell::action(const uint8_t* data, size_t, uint8_t)
   if (a->target == m_player->id())
   {
 #ifdef DIAG_SPELLSHELL
-    printf("action - source=%d (lvl: %d) cast id=%d on target=%d causing %d damage\n", 
+    seqDebug("action - source=%d (lvl: %d) cast id=%d on target=%d causing %d damage", 
 	   a->source, a->level, a->spell, a->target, a->damage);
 #endif // DIAG_SPELLSHELL
 
@@ -435,7 +436,7 @@ void SpellShell::interruptSpellCast(const uint8_t* data)
    // Check the last spell in the list, if spawnId and casterId match,
    // reset spell.
 
-   //printf("SpellShell::interruptSpellCast()\n");
+   //seqDebug("SpellShell::interruptSpellCast()");
    if (icast) 
    {
       // At times this segfaults.  Stepping through this in GDB at a crash,
@@ -444,7 +445,7 @@ void SpellShell::interruptSpellCast(const uint8_t* data)
 
       //SpellItem *item = m_spellList.last();
      // if ( (item) && (icast->spawnId == item->casterId()) ) {
-     //    printf("Interrupt %d by %d\n", item->spellId(), icast->spawnId);
+     //    seqDebug("Interrupt %d by %d", item->spellId(), icast->spawnId);
      //    item->setDuration(-20);
      // }
    }
@@ -455,7 +456,7 @@ void SpellShell::selfFinishSpellCast(const uint8_t* data)
 #ifdef DIAG_SPELLSHELL
   const memSpellStruct *b = (const memSpellStruct*)data;
 
-   printf("selfFinishSpellCast - id=%d, by=%d\n", b->spellId, b->slotId);
+  seqDebug("selfFinishSpellCast - id=%d, by=%d", b->spellId, b->slotId);
 #endif // DIAG_SPELLSHELL
 }
 
@@ -466,16 +467,16 @@ void SpellShell::spellMessage(QString &str)
    // Your xxx has worn off.
    // Your target resisted the xxx spell.
    // Your spell fizzles.
-   printf("*** spellMessage *** %s\n", spell.latin1());
+   seqInfo("*** spellMessage *** %s", spell.latin1());
    if (spell.left(25) == QString("Your target resisted the ")) {
       spell = spell.right(spell.length() - 25);
       spell = spell.left(spell.length() - 7);
-      printf("RESIST: '%s'\n", spell.latin1());
+      seqInfo("RESIST: '%s'", spell.latin1());
       b = true;
    } else if (spell.right(20) == QString(" spell has worn off.")) {
       spell = spell.right(spell.length() - 5);
       spell = spell.left(spell.length() - 20);
-      printf("WORE OFF: '%s'\n", spell.latin1());
+      seqInfo("WORE OFF: '%s'", spell.latin1());
       b = true;
    }
 
@@ -505,7 +506,7 @@ void SpellShell::timeout()
             (*it)->setDuration(d);
             emit changeSpell(*it);
          } else {
-            printf("SpellItem '%s' finished.\n", (*it)->spellName().latin1());
+            seqInfo("SpellItem '%s' finished.", (*it)->spellName().latin1());
             delList[count++] = *it;
          }
       }

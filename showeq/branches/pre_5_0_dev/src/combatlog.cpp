@@ -5,6 +5,11 @@
  *  http://seq.sourceforge.net
  */
 
+#include "combatlog.h"
+#include "player.h"
+#include "util.h"
+#include "diagnosticmessages.h"
+
 #include <qgrid.h>
 #include <qtimer.h>
 #include <qhbox.h>
@@ -13,10 +18,6 @@
 #include <qlayout.h>
 #include <stdio.h>
 #include <time.h>
-
-#include "combatlog.h"
-#include "player.h"
-#include "util.h"
 
 #define DEBUGCOMBAT
 
@@ -131,7 +132,7 @@ void CombatDefenseRecord::addMiss(int iMissReason)
 		default:
 		{
 #ifdef DEBUGCOMBAT
-			printf("CombatDefenseRecord::addMiss:WARNING: invalid miss reason\n");
+		  seqDebug("CombatDefenseRecord::addMiss:WARNING: invalid miss reason");
 #endif
 			break;
 		}
@@ -245,7 +246,7 @@ CombatWindow::CombatWindow(Player* player,
 void CombatWindow::initUI()
 {
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::initUI: starting...\n");
+	seqDebug("CombatWindow::initUI: starting...");
 #endif
 	QVBoxLayout* layout = new QVBoxLayout(boxLayout());
 
@@ -275,7 +276,7 @@ void CombatWindow::initUI()
 	updateMob();
 
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::initUI: finished...\n");
+	seqDebug("CombatWindow::initUI: finished...");
 #endif
 }
 
@@ -483,7 +484,7 @@ void CombatWindow::savePrefs()
 void CombatWindow::updateOffense()
 {
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::updateOffense starting...\n");
+	seqDebug("CombatWindow::updateOffense starting...");
 #endif
 
 
@@ -652,7 +653,7 @@ void CombatWindow::updateOffense()
 
 
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::updateOffense finished...\n");
+	seqDebug("CombatWindow::updateOffense finished...");
 #endif
 
 }
@@ -748,8 +749,8 @@ void CombatWindow::updateMob()
 void CombatWindow::addCombatRecord(int iTargetID, int iSourceID, int iType, int iSpell, int iDamage, QString tName, QString sName)
 {
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::addCombatRecord starting...\n");
-	printf("target=%d, source=%d, type=%d, spell=%d, damage=%d\n",
+	seqDebug("CombatWindow::addCombatRecord starting...");
+	seqDebug("target=%d, source=%d, type=%d, spell=%d, damage=%d",
 			iTargetID, iSourceID, iType, iSpell, iDamage);
 #endif
 
@@ -780,7 +781,7 @@ void CombatWindow::addCombatRecord(int iTargetID, int iSourceID, int iType, int 
 	}
 
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::addCombatRecord finished...\n");
+	seqDebug("CombatWindow::addCombatRecord finished...");
 #endif
 }
 
@@ -788,7 +789,7 @@ void CombatWindow::addOffenseRecord(int iType, int iDamage, int iSpell)
 {
 
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::addOffenseRecord starting...\n");
+	seqDebug("CombatWindow::addOffenseRecord starting...");
 #endif
 
 	bool bFoundRecord = false;
@@ -830,7 +831,7 @@ void CombatWindow::addOffenseRecord(int iType, int iDamage, int iSpell)
 	}
 
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::addOffenseRecord finished...\n");
+	seqDebug("CombatWindow::addOffenseRecord finished...");
 #endif
 }
 
@@ -847,7 +848,7 @@ void CombatWindow::addDefenseRecord(int iDamage)
 void CombatWindow::addMobRecord(int iTargetID, int iSourceID, int iDamage, QString tName, QString sName)
 {
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::addMobRecord starting...\n");
+	seqDebug("CombatWindow::addMobRecord starting...");
 #endif
 
 	int iTimeNow = mTime();
@@ -896,7 +897,7 @@ void CombatWindow::addMobRecord(int iTargetID, int iSourceID, int iDamage, QStri
 
 
 #ifdef DEBUGCOMBAT
-	printf("CombatWindow::addMobRecord finished...\n");
+	seqDebug("CombatWindow::addMobRecord finished...");
 #endif
 }
 

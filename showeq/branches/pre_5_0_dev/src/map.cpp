@@ -12,8 +12,18 @@
 #include <stdint.h>
 #endif
 
-#include <dirent.h>
-#include <errno.h>
+
+#include "map.h"
+#include "util.h"
+#include "main.h"
+#include "filtermgr.h"
+#include "zonemgr.h"
+#include "spawnmonitor.h"
+#include "player.h"
+#include "spawnshell.h"
+#include "datalocationmgr.h"
+#include "diagnosticmessages.h"
+
 #include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -41,17 +51,6 @@
 #if 1 // ZBTEMP: Until we setup a better way to enter location name/color
 #include <qinputdialog.h>
 #endif
-
-#include "map.h"
-#include "util.h"
-#include "main.h"
-#include "filtermgr.h"
-#include "zonemgr.h"
-#include "spawnmonitor.h"
-#include "player.h"
-#include "spawnshell.h"
-#include "datalocationmgr.h"
-
 
 //----------------------------------------------------------------------
 // Macros
@@ -388,7 +387,7 @@ void MapMgr::loadMap ()
   if (fileName.isEmpty ())
     return;
 
-  printf("Attempting to load map: %s\n", (const char*)fileName);
+  seqInfo("Attempting to load map: %s", (const char*)fileName);
 
   // load the map
   loadFileMap(fileName, false, true);
@@ -411,7 +410,7 @@ void MapMgr::importMap ()
   if (fileName.isEmpty ())
     return;
 
-  printf("Attempting to import map: %s\n", (const char*)fileName);
+  seqInfo("Attempting to import map: %s", (const char*)fileName);
 
   // load the map
   loadFileMap(fileName, true, true);
@@ -587,7 +586,7 @@ void MapMgr::addLocation(QWidget* parent, const MapPoint& point)
 			  QPoint(point.x(), point.y()));
   
 #ifdef DEBUGMAP
-  printf("addLocation(): Location x added at %d/%d\n", 
+  seqDebug("addLocation(): Location x added at %d/%d", 
 	 point.x(), point.y()); 
 #endif
 }
@@ -2865,7 +2864,7 @@ void Map::addLocation(void)
   m_player->approximatePosition(m_animate, QTime::currentTime(), point);
 
 #ifdef DEBUGMAP
-  printf("addLocation() point(%d, %d, %d)\n", point.x(), point.y(), point.z());
+  seqDebug("addLocation() point(%d, %d, %d)", point.x(), point.y(), point.z());
 #endif
 
   // add the location
@@ -2883,7 +2882,7 @@ void Map::startLine (void)
   m_player->approximatePosition(m_animate, QTime::currentTime(), point);
 
 #ifdef DEBUGMAP
-  printf("startLine() point(%d, %d, %d)\n", point.x(), point.y(), point.z());
+  seqDebug("startLine() point(%d, %d, %d)", point.x(), point.y(), point.z());
 #endif
 
   // start the line using the player spawns position
@@ -2902,7 +2901,7 @@ void Map::addLinePoint()
 
 
 #ifdef DEBUGMAP
-  printf("addLinePoint() point(%d, %d, %d)\n", point.x(), point.y(), point.z());
+  seqDebug("addLinePoint() point(%d, %d, %d)", point.x(), point.y(), point.z());
 #endif
 
   // add it as the next line point
@@ -2962,15 +2961,15 @@ void Map::addPathPoint()
 QRect Map::mapRect () const
 {
 #ifdef DEBUGMAP
-   debug ("mapRect()");
+   seqDebug("mapRect()");
    static int rendercount = 0;
    rendercount++;
-   printf("%i, (0,0,%i,%i)\n",rendercount, width (), height ());
+   seqDebug("%i, (0,0,%i,%i)",rendercount, width (), height ());
 #endif /* DEBUGMAP */
    QRect r (0, 0, width (), height ());
    r.moveBottomLeft (rect ().bottomLeft ());
 #ifdef DEBUGMAP
-   printf("hmm2\n");
+   seqDebug("hmm2");
    rendercount--;
 #endif /* DEBUGMAP */
    return r;
@@ -3142,7 +3141,7 @@ void Map::paintPlayerView(MapParameters& param, QPainter& p)
 {
   /* Paint the player direction */
 #ifdef DEBUGMAP
-  printf("Paint the player direction\n");
+  seqDebug("Paint the player direction");
 #endif
   
   int const player_circle_radius = 4;
@@ -3182,7 +3181,7 @@ void Map::paintPlayerView(MapParameters& param, QPainter& p)
 void Map::paintPlayer(MapParameters& param, QPainter& p)
 {
 #ifdef DEBUGMAP
-  printf("Paint player position\n");
+  seqDebug("Paint player position");
 #endif
   p.setPen(gray);
   p.setBrush(white);
@@ -3194,7 +3193,7 @@ void Map::paintDrops(MapParameters& param,
 		     QPainter& p)
 {
 #ifdef DEBUGMAP
-  printf("Paint the dropped items\n");
+  seqDebug("Paint the dropped items");
 #endif
   const ItemMap& itemMap = m_spawnShell->drops();
   ItemConstIterator it(itemMap);
@@ -3238,7 +3237,7 @@ void Map::paintDoors(MapParameters& param,
 		     QPainter& p)
 {
 #ifdef DEBUGMAP
-  printf("Paint the door items\n");
+  seqDebug("Paint the door items");
 #endif
   const ItemMap& itemMap = m_spawnShell->doors();
   ItemConstIterator it(itemMap);
@@ -3275,7 +3274,7 @@ void Map::paintSpawns(MapParameters& param,
 		      const QTime& drawTime)
 {
 #ifdef DEBUGMAP
-  printf("Paint the spawns\n");
+  seqDebug("Paint the spawns");
 #endif
   const ItemMap& itemMap = m_spawnShell->spawns();
   ItemConstIterator it(itemMap);
@@ -3309,8 +3308,7 @@ void Map::paintSpawns(MapParameters& param,
     
     if (spawn == NULL)
     {
-      fprintf(stderr, 
-	      "Got non Spawn from iterator over type tSpawn (Tyep:%d ID: %d)!\n",
+      seqWarn("Got non Spawn from iterator over type tSpawn (Tyep:%d ID: %d)!",
 	      item->type(), item->id());
       continue;
     }
@@ -3344,7 +3342,7 @@ void Map::paintSpawns(MapParameters& param,
 
       //--------------------------------------------------
 #ifdef DEBUGMAP
-      printf("Draw Spawn Names\n");
+      seqDebug("Draw Spawn Names");
 #endif
       // Draw Spawn Names if selected and distance is less than the FOV 
       // distance
@@ -3369,7 +3367,7 @@ void Map::paintSpawns(MapParameters& param,
 
       //--------------------------------------------------
 #ifdef DEBUGMAP
-      printf("Draw velocities\n");
+      seqDebug("Draw velocities");
 #endif
       /* Draw velocities */
       if (m_showVelocityLines &&
@@ -3388,7 +3386,7 @@ void Map::paintSpawns(MapParameters& param,
 
       //--------------------------------------------------
 #ifdef DEBUGMAP
-      printf("Draw corpse, team, and filter boxes\n");
+      seqDebug("Draw corpse, team, and filter boxes");
 #endif
       // handle regular NPC's first, since they are generally the most common
       if (spawn->isNPC())
@@ -3768,7 +3766,7 @@ void Map::paintSpawns(MapParameters& param,
 
       //--------------------------------------------------
 #ifdef DEBUGMAP
-      printf("PvP handling\n");
+      seqDebug("PvP handling");
 #endif
       // if PvP is not enabled, don't try to do it, continue to the next spawn
       if (!m_racePvP && !m_deityPvP)
@@ -3956,7 +3954,7 @@ void Map::paintSpawns(MapParameters& param,
 
   //----------------------------------------------------------------------
 #ifdef DEBUGMAP
-   printf("Done drawing spawns\n");
+  seqDebug("Done drawing spawns");
 #endif
 }
 
@@ -3967,7 +3965,7 @@ void Map::paintSelectedSpawnSpecials(MapParameters& param, QPainter& p,
     return;
 
 #ifdef DEBUGMAP
-  printf("Draw the line of the selected spawn\n");
+  seqDebug("Draw the line of the selected spawn");
 #endif
   EQPoint location;
 
@@ -3988,7 +3986,7 @@ void Map::paintSelectedSpawnSpecials(MapParameters& param, QPainter& p,
 	     spawnYOffset);
   
 #ifdef DEBUGMAP
-  printf("Draw the path of the selected spawn\n");
+  seqDebug("Draw the path of the selected spawn");
 #endif
   if (m_walkpathshowselect)
   {
@@ -4348,7 +4346,7 @@ void Map::selectSpawn(const Item* item)
   if (item == NULL)
     return;
   
-  /* printf ("%s\n", item->ID()); */
+  /* seqDebug("%s", item->ID()); */
   m_selectedItem = item;
   
   // if following the selected spawn, call reAdjust to focus on the new one
@@ -4856,7 +4854,7 @@ void MapFrame::setregexp(const QString &str)
   if (str == m_lastFilter)
     return;
     
-  //printf("New Filter: %s\n", (const char*)str);
+  //seqDebug("New Filter: %s", (const char*)str);
 
   bool needCommit = false;
 

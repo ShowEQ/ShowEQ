@@ -10,6 +10,15 @@
  * Date   - 7/31/2001
  */
 
+#include "spawnshell.h"
+#include "filtermgr.h"
+#include "zonemgr.h"
+#include "player.h"
+#include "util.h"
+#include "itemdb.h"
+#include "guild.h"
+#include "packetcommon.h"
+#include "diagnosticmessages.h"
 
 #include <qfile.h>
 #include <qdatastream.h>
@@ -19,15 +28,6 @@
 #endif
 #include <limits.h>
 #include <math.h>
-
-#include "spawnshell.h"
-#include "filtermgr.h"
-#include "zonemgr.h"
-#include "player.h"
-#include "util.h"
-#include "itemdb.h"
-#include "guild.h"
-#include "packetcommon.h"
 
 //----------------------------------------------------------------------
 // useful macro definitions
@@ -156,7 +156,7 @@ SpawnShell::SpawnShell(FilterMgr& filterMgr,
 void SpawnShell::clear(void)
 {
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::clear()\n");
+   seqDebug("SpawnShell::clear()");
 #endif
 
    emit clearItems();
@@ -248,7 +248,7 @@ const Spawn* SpawnShell::findSpawnByName(const QString& name)
 void SpawnShell::deleteItem(spawnItemType type, int id)
 {
 #ifdef SPAWNSHELL_DIAG
-   printf ("SpawnShell::deleteItem()\n");
+   seqDebug("SpawnShell::deleteItem()");
 #endif
    ItemMap& theMap = getMap(type);
 
@@ -328,7 +328,7 @@ void SpawnShell::newGroundItem(const uint8_t* data, size_t, uint8_t dir)
 {
   const makeDropStruct *d = (const makeDropStruct *)data;
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::newGroundItem(makeDropStruct *)\n");
+   seqDebug("SpawnShell::newGroundItem(makeDropStruct *)");
 #endif
   // if zoning, then don't do anything
   if (m_zoneMgr->isZoning())
@@ -372,7 +372,7 @@ void SpawnShell::newGroundItem(const uint8_t* data, size_t, uint8_t dir)
 void SpawnShell::removeGroundItem(const uint8_t* data, size_t, uint8_t dir)
 {
 #ifdef SPAWNSHELL_DIAG
-  printf("SpawnShell::removeGroundItem(remDropStruct *)\n");
+  seqDebug("SpawnShell::removeGroundItem(remDropStruct *)");
 #endif
 
   // if zoning, then don't do anything
@@ -399,7 +399,7 @@ void SpawnShell::newDoorSpawns(const uint8_t* data, size_t len, uint8_t dir)
 void SpawnShell::newDoorSpawn(const doorStruct& d, size_t len, uint8_t dir)
 {
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::newDoorSpawn(doorStruct*)\n");
+   seqDebug("SpawnShell::newDoorSpawn(doorStruct*)");
 #endif
    Item* item = m_doors.find(d.doorId);
    if (item != NULL)
@@ -454,7 +454,7 @@ void SpawnShell::newSpawn(const uint8_t* data)
 void SpawnShell::newSpawn(const spawnStruct& s)
 {
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::newSpawn(spawnStruct *(name='%s'), bSelected=%s)\n", s.name, bSelected?"true":"false");
+   seqDebug("SpawnShell::newSpawn(spawnStruct *(name='%s'), bSelected=%s)", s.name, bSelected?"true":"false");
 #endif
    // if this is the SPAWN_SELF it's the player
    if (s.NPC == SPAWN_SELF)
@@ -469,7 +469,7 @@ void SpawnShell::newSpawn(const spawnStruct& s)
        m_deadSpawnID[i] = 0;
 
        // let the user know what's going on
-       printf("%s(%d) has already been removed from the zone before we processed it.\n", 
+       seqInfo("%s(%d) has already been removed from the zone before we processed it.", 
 	      s.name, s.spawnId);
        
        // and stop the attempt to add the spawn.
@@ -550,7 +550,7 @@ void SpawnShell::updateSpawn(uint16_t id,
 			     uint8_t animation)
 {
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::updateSpawn(id=%d, x=%d, y=%d, z=%d, xVel=%d, yVel=%d, zVel=%d)\n", id, x, y, z, xVel, yVel, zVel);
+   seqDebug("SpawnShell::updateSpawn(id=%d, x=%d, y=%d, z=%d, xVel=%d, yVel=%d, zVel=%d)", id, x, y, z, xVel, yVel, zVel);
 #endif
 
    Item* item = m_spawns.find(id);
@@ -597,7 +597,7 @@ void SpawnShell::updateSpawn(uint16_t id,
 	 // found a match, ignore it
 	 m_deadSpawnID[i] = 0;
 
-	 printf("(%d) had been removed from the zone, but saw a position update on it, so assuming bogus update.\n", 
+	 seqInfo("(%d) had been removed from the zone, but saw a position update on it, so assuming bogus update.", 
 		id);
 
 	 return;
@@ -632,7 +632,7 @@ void SpawnShell::updateSpawnInfo(const uint8_t* data)
 {
    const SpawnUpdateStruct* su = (const SpawnUpdateStruct*)data;
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::updateSpawnInfo(id=%d, sub=%d, hp=%d, maxHp=%d)\n", 
+   seqDebug("SpawnShell::updateSpawnInfo(id=%d, sub=%d, hp=%d, maxHp=%d)", 
 	  su->spawnId, su->subcommand, su->arg1, su->arg2);
 #endif
 
@@ -654,7 +654,7 @@ void SpawnShell::updateNpcHP(const uint8_t* data)
 {
   const hpNpcUpdateStruct* hpupdate = (const hpNpcUpdateStruct*)data;
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::updateNpcHP(id=%d, maxhp=%d hp=%d)\n", 
+   seqDebug("SpawnShell::updateNpcHP(id=%d, maxhp=%d hp=%d)", 
 	  hpupdate->spawnId, hpupdate->maxHP, hpupdate->curHP);
 #endif
    Item* item = m_spawns.find(hpupdate->spawnId);
@@ -768,7 +768,7 @@ void SpawnShell::deleteSpawn(const uint8_t* data)
 {
   const deleteSpawnStruct* delspawn = (const deleteSpawnStruct*)data;
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::deleteSpawn(id=%d)\n", delspawn->spawnId);
+   seqDebug("SpawnShell::deleteSpawn(id=%d)", delspawn->spawnId);
 #endif
    if (m_posDeadSpawnIDs < (MAX_DEAD_SPAWNIDS - 1))
      m_posDeadSpawnIDs++;
@@ -787,7 +787,7 @@ void SpawnShell::killSpawn(const uint8_t* data)
 {
   const newCorpseStruct* deadspawn = (const newCorpseStruct*)data;
 #ifdef SPAWNSHELL_DIAG
-   printf("SpawnShell::killSpawn(id=%d, kid=%d)\n", 
+   seqDebug("SpawnShell::killSpawn(id=%d, kid=%d)", 
 	  deadspawn->spawnId, deadspawn->killerId);
 #endif
    Item* item;
@@ -1024,8 +1024,7 @@ void SpawnShell::restoreSpawns(void)
 
     if (magicTest != *magic)
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad magic string!\n",
+      seqWarn("Failure loading %s: Bad magic string!",
 	      (const char*)fileName);
       return;
     }
@@ -1034,8 +1033,7 @@ void SpawnShell::restoreSpawns(void)
     d >> testVal;
     if (testVal != sizeof(spawnStruct))
     {
-      fprintf(stderr, 
-	      "Failure loading %s: Bad spawnStruct size!\n",
+      seqWarn("Failure loading %s: Bad spawnStruct size!",
 	      (const char*)fileName);
       return;
     }
@@ -1045,8 +1043,7 @@ void SpawnShell::restoreSpawns(void)
     d >> zoneShortName;
     if (zoneShortName != m_zoneMgr->shortZoneName().lower())
     {
-      fprintf(stderr,
-	      "\aWARNING: Restoring spawns for potentially incorrect zone (%s != %s)!\n",
+      seqWarn("\aWARNING: Restoring spawns for potentially incorrect zone (%s != %s)!",
 	      (const char*)zoneShortName, 
 	      (const char*)m_zoneMgr->shortZoneName().lower());
     }
@@ -1072,14 +1069,12 @@ void SpawnShell::restoreSpawns(void)
 
     emit numSpawns(m_spawns.count());
 
-    fprintf(stderr,
-	    "Restored SPAWNS: count=%d!\n",
+    seqInfo("Restored SPAWNS: count=%d!",
 	    m_spawns.count());
   }
   else
   {
-    fprintf(stderr,
-	    "Failure loading %s: Unable to open!\n",
+    seqWarn("Failure loading %s: Unable to open!",
 	    (const char*)fileName);
   }
 }

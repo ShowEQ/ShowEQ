@@ -37,6 +37,7 @@ enum MessageType
   MT_Raid = 15,
   MT_Debug,
   MT_Info,
+  MT_Warning,
   MT_General,
   MT_Motd,
   MT_System,

@@ -5,6 +5,10 @@
  *  http://seq.sourceforge.net/
  */
 
+#include "util.h"
+#include "diagnosticmessages.h"
+#include "main.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,9 +17,6 @@
 #include <qcolor.h>
 #include <qfileinfo.h>
 #include <qdir.h>
-
-#include "util.h"
-#include "main.h"
 
 #ifdef __FreeBSD__
 long int lroundf(float x)
@@ -788,26 +789,26 @@ void diagFileWriteFail(QString filename)
   {
     // if what's supposed to be a directory isn't somethings wierd.
     if (!dirInfo.isDir())
-      fprintf(stderr, "\tDirectory '%s' isn't a directory!\n",
+      seqWarn("\tDirectory '%s' isn't a directory!",
 	      (const char*)dirInfo.absFilePath());
     else
     {
       // if the directory isn't writable, that might explain it
       if (!dirInfo.isWritable())
-	fprintf(stderr, "\tCan't write to directory: %s\n",
+	seqWarn("\tCan't write to directory: %s",
 		(const char*)dirInfo.absFilePath());
       // if the directory isn't readable, that might explain it
       if (!dirInfo.isReadable())
-	fprintf(stderr, "\tCan't read directory: %s\n",
+	seqWarn("\tCan't read directory: %s",
 		(const char*)dirInfo.absFilePath());
       // is the directory executable (listable),
       if (!dirInfo.isExecutable())
-	fprintf(stderr, "\tCan't execute/access directory: %s\n",
+	seqWarn("\tCan't execute/access directory: %s",
 		(const char*)dirInfo.absFilePath());
     }
   }
   else // directory doesn't exist
-    fprintf(stderr, "\tDirectory '%s' doesn't exist!\n",
+    seqWarn("\tDirectory '%s' doesn't exist!",
 	    (const char*)dirInfo.absFilePath());
   
   
@@ -816,12 +817,12 @@ void diagFileWriteFail(QString filename)
   {
     // The file exists, but is it writable
     if (!fileInfo.isWritable())
-      fprintf(stderr, "\tCan't write to file: %s\n",
+      seqWarn("\tCan't write to file: %s",
 	      (const char*)fileInfo.absFilePath());
 
     // Is the file really a file (or did someone do something wierd)
     if (!fileInfo.isFile())
-      fprintf(stderr, "\tNot a file:'%s'!",
+      seqWarn("\tNot a file:'%s'!",
 	      (const char*)fileInfo.absFilePath());
   }
 }
@@ -839,22 +840,22 @@ void diagFileReadFail(QString filename)
   {
     // if what's supposed to be a directory isn't somethings wierd.
     if (!dirInfo.isDir())
-      fprintf(stderr, "\tDirectory '%s' isn't a directory!\n",
+      seqWarn("\tDirectory '%s' isn't a directory!",
 	      (const char*)dirInfo.absFilePath());
     else
     {
       // if the directory isn't readable, that might explain it
       if (!dirInfo.isReadable())
-	fprintf(stderr, "\tCan't read directory: %s\n",
+	seqWarn("\tCan't read directory: %s",
 		(const char*)dirInfo.absFilePath());
       // is the directory executable (listable),
       if (!dirInfo.isExecutable())
-	fprintf(stderr, "\tCan't execute/access directory: %s\n",
+	seqWarn("\tCan't execute/access directory: %s",
 		(const char*)dirInfo.absFilePath());
     }
   }
   else // directory doesn't exist
-    fprintf(stderr, "\tDirectory '%s' doesn't exist!\n",
+    seqWarn("\tDirectory '%s' doesn't exist!",
 	    (const char*)dirInfo.absFilePath());
   
   
@@ -863,16 +864,16 @@ void diagFileReadFail(QString filename)
   {
     // The file exists, but is it writable
     if (!fileInfo.isReadable())
-      fprintf(stderr, "\tCan't read to file: %s\n",
+      seqWarn("\tCan't read to file: %s",
 	      (const char*)fileInfo.absFilePath());
 
     // Is the file really a file (or did someone do something wierd)
     if (!fileInfo.isFile())
-      fprintf(stderr, "\tNot a file:'%s'!",
+      seqWarn("\tNot a file:'%s'!",
 	      (const char*)fileInfo.absFilePath());
   }
   else
-    fprintf(stderr, "\tFile '%s' doesn't exist.\n",
+    seqWarn("\tFile '%s' doesn't exist.",
 	    (const char*)fileInfo.absFilePath());
 }
 

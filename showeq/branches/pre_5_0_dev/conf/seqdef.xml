@@ -2805,6 +2805,9 @@ If any argument is left blank, it is filled in with its default...
   <property name="RaidColor">
    <color name="darkCyan" />
   </property>
+  <property name="SpellColor">
+   <color name="blue" />
+  </property>
   <property name="AlertBGColor">
    <color name="magenta" />
   </property>
@@ -2864,6 +2867,9 @@ If any argument is left blank, it is filled in with its default...
   </property>
   <property name="RaidColor">
    <color name="darkCyan" />
+  </property>
+  <property name="SpellColor">
+   <color name="blue" />
   </property>
   <property name="AlertBGColor">
    <color name="magenta" />
@@ -2925,6 +2931,9 @@ If any argument is left blank, it is filled in with its default...
   <property name="RaidColor">
    <color name="darkCyan" />
   </property>
+  <property name="SpellColor">
+   <color name="blue" />
+  </property>
   <property name="AlertBGColor">
    <color name="magenta" />
   </property>
@@ -2984,6 +2993,9 @@ If any argument is left blank, it is filled in with its default...
   </property>
   <property name="RaidColor">
    <color name="darkCyan" />
+  </property>
+  <property name="SpellColor">
+   <color name="blue" />
   </property>
   <property name="AlertBGColor">
    <color name="magenta" />
@@ -3045,6 +3057,9 @@ If any argument is left blank, it is filled in with its default...
   <property name="RaidColor">
    <color name="darkCyan" />
   </property>
+  <property name="SpellColor">
+   <color name="blue" />
+  </property>
   <property name="AlertBGColor">
    <color name="magenta" />
   </property>
@@ -3104,6 +3119,9 @@ If any argument is left blank, it is filled in with its default...
   </property>
   <property name="RaidColor">
    <color name="darkCyan" />
+  </property>
+  <property name="SpellColor">
+   <color name="blue" />
   </property>
   <property name="AlertBGColor">
    <color name="magenta" />

@@ -8,9 +8,10 @@
  *
  */
 
-#include <stdio.h>
-
 #include "datalocationmgr.h"
+#include "diagnosticmessages.h"
+
+#include <stdio.h>
 
 #include <qdir.h>
 #include <qfileinfo.h>
@@ -41,7 +42,7 @@ bool DataLocationMgr::setupUserDirectory()
     // no, then attempt to create it.
     if (!userDataDir.mkdir(m_userData, true))
     {
-      fprintf(stderr, "Failed to create '%s'\n", 
+      seqWarn("Failed to create '%s'\n", 
 	      (const char*)userDataDir.absPath());
       return false;
     }

@@ -10,17 +10,16 @@
 // to be reused for other Show{} style projects.  Any existing ShowEQ/EQ
 // dependencies will be migrated out.
 //
+#include "filtermgr.h"
+#include "filter.h"
+#include "datalocationmgr.h"
+#include "diagnosticmessages.h"
 
-#include <stdio.h>
 #include <errno.h>
 
 #include <qregexp.h>
 #include <qstring.h>
 #include <qfileinfo.h>
-
-#include "filtermgr.h"
-#include "filter.h"
-#include "datalocationmgr.h"
 
 //
 // ZBTEMP: predefined filters and filter mask will be migrated out
@@ -123,7 +122,7 @@ void FilterMgr::loadFilters(void)
 
   m_filterFile = fileInfo.absFilePath();
 
-  printf("Loading Filters from '%s'\n", (const char*)m_filterFile);
+  seqInfo("Loading Filters from '%s'", (const char*)m_filterFile);
 
   m_filters->load(m_filterFile);
 
@@ -137,7 +136,7 @@ void FilterMgr::loadFilters(const QString& fileName)
 
   m_filterFile = fileInfo.absFilePath();
 
-  printf("Loading Filters from '%s'\n", (const char*)m_filterFile);
+  seqInfo("Loading Filters from '%s'", (const char*)m_filterFile);
   
   m_filters->load(m_filterFile);
 
@@ -153,7 +152,7 @@ void FilterMgr::saveFilters(void)
 
   m_filterFile = fileInfo.absFilePath();
 
-  printf("Saving filters to %s\n", (const char*)m_filterFile);
+  seqInfo("Saving filters to %s", (const char*)m_filterFile);
 
   m_filters->save(m_filterFile);
 }
@@ -165,7 +164,7 @@ void FilterMgr::saveAsFilters(const QString& shortZoneName)
 
   QFileInfo fileInfo = m_dataLocMgr->findWriteFile("filters", fileName, true);
 
-  printf("Saving filters to %s\n", (const char*)fileInfo.absFilePath());
+  seqInfo("Saving filters to %s", (const char*)fileInfo.absFilePath());
 
   m_filters->save(fileInfo.absFilePath());
 }
@@ -240,7 +239,7 @@ void FilterMgr::loadZone(const QString& shortZoneName)
 
   m_zoneFilterFile = fileInfo.absFilePath();
 
-  printf("Loading Zone Filter File: %s\n", (const char*)m_zoneFilterFile);
+  seqInfo("Loading Zone Filter File: %s", (const char*)m_zoneFilterFile);
 
   m_zoneFilters->load(m_zoneFilterFile);
 
@@ -256,7 +255,7 @@ void FilterMgr::loadZoneFilters(void)
 
   m_zoneFilterFile = fileInfo.absFilePath();
 
-  printf("Loading Zone Filter File: %s\n", (const char*)m_zoneFilterFile);
+  seqInfo("Loading Zone Filter File: %s", (const char*)m_zoneFilterFile);
 
   m_zoneFilters->load(m_zoneFilterFile);
   
@@ -278,7 +277,7 @@ void FilterMgr::saveZoneFilters(void)
 
   m_zoneFilterFile = fileInfo.absFilePath();
 
-  printf("Saving filters to %s\n", (const char*)m_zoneFilterFile);
+  seqInfo("Saving filters to %s", (const char*)m_zoneFilterFile);
 
   m_zoneFilters->save(m_zoneFilterFile);
 }

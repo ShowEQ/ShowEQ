@@ -48,6 +48,8 @@ dohpaZ (11/?/03)
 + Made the right-click menus of SEQWindow derived windows come up in a
   more consistent fashion.
 + Added support for storing 64 bit integers to the XML preference system.
++ Added diagnostic message functions to unify how certain messages were 
+  being handled.
 
 dohpaZ (10/24/03)
 ---------------------

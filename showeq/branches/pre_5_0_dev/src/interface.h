@@ -109,7 +109,6 @@ class EQInterface:public QMainWindow
    QFont appFont;
 
  public slots:
-   void msgReceived(const QString &);
    void stsMessage(const QString &, int timeout = 0);
    void numSpawns(int);
    void setExp(uint32_t totalExp, uint32_t totalTick,
@@ -132,8 +131,6 @@ class EQInterface:public QMainWindow
    void combatKillSpawn(const uint8_t*);
    void updatedDateTime(const QDateTime&);
    void syncDateTime(const QDateTime&);
-   void spMessage(const uint8_t* spmsg);
-   void systemMessage(const uint8_t* smsg);
    void clientTarget(const uint8_t* cts);
 
    void zoneBegin(const QString& shortZoneName);
@@ -206,7 +203,6 @@ class EQInterface:public QMainWindow
 
  signals:
    void guildList2text(QString);
-   void newMessage(int index);
    void loadFileMap();
    void selectSpawn(const Item* item);
    void saveAllPrefs(void);

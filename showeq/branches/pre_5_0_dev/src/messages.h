@@ -38,7 +38,8 @@ class Messages : public QObject
   Messages(DateTimeMgr* dateTimeMgr, MessageFilters* messageFilters,
 	   QObject* parent = 0, const char* name = 0);
   ~Messages();
-  
+
+  static Messages* messages() { return s_messages; }
   const MessageList messageList() const;
 
  public slots:
@@ -58,6 +59,8 @@ class Messages : public QObject
   DateTimeMgr* m_dateTimeMgr;
   MessageFilters* m_messageFilters;
   MessageList m_messages;
+
+  static Messages* s_messages;
 };
 
 inline const MessageList Messages::messageList() const

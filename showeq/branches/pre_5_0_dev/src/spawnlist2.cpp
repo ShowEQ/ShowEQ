@@ -1,13 +1,15 @@
-#include <qcombobox.h>
-#include <qspinbox.h>
-#include <qtimer.h>
-#include <qlayout.h>
 
 #include "spawnlist2.h"
 #include "category.h"
 #include "spawnshell.h"
 #include "filtermgr.h"
 #include "player.h"
+#include "diagnosticmessages.h"
+
+#include <qcombobox.h>
+#include <qspinbox.h>
+#include <qtimer.h>
+#include <qlayout.h>
 
 SpawnListWindow2::SpawnListWindow2(Player* player, 
 				   SpawnShell* spawnShell,
@@ -552,8 +554,7 @@ void SpawnListWindow2::refresh(void)
 #if 0 // ZBTEMP
   QTime test;
   test.start();
-  fprintf(stderr, 
-	  "SpawnListWindow2::refresh(void) Category=%08x '%s' %d:%d:%d\n",
+  seqDebug("SpawnListWindow2::refresh(void) Category=%08x '%s' %d:%d:%d",
 	  m_currentCategory, 
 	  (m_currentCategory != NULL) ? 
 	  (const char*) m_currentCategory->name() : "NONE",
@@ -656,7 +657,7 @@ void SpawnListWindow2::refresh(void)
   m_lastUpdate = time(NULL);
 
 #if 0 // ZBTEMP
-  fprintf(stderr, "* elapsed (pre-sort): %d\n", test.elapsed());
+  seqDebug("* elapsed (pre-sort): %d", test.elapsed());
 #endif 
 
   // make sure the spawnlist is sorted
@@ -668,7 +669,7 @@ void SpawnListWindow2::refresh(void)
     selectSpawn(m_selectedItem);
 
 #if 0 // ZBTEMP
-  fprintf(stderr, "* elapsed (post-sort): %d\n", test.elapsed());
+  seqDebug("* elapsed (post-sort): %d", test.elapsed());
 #endif 
 
   // update the displayed count
@@ -679,7 +680,7 @@ void SpawnListWindow2::refresh(void)
   repaint();
 
 #if 0 // ZBTEMP
-  fprintf(stderr, "* elapsed (post-paint): %d\n", test.elapsed());
+  seqDebug("* elapsed (post-paint): %d", test.elapsed());
 #endif 
 
   if (!m_immediateUpdate)
@@ -763,7 +764,7 @@ void SpawnListWindow2::mouseDoubleClickEvent(QListViewItem* litem)
 
   const Item* item = ((SpawnListItem*)litem)->item();
   if (item != NULL)
-    printf("%s\n",(const char*)filterString(item));
+    seqInfo("%s",(const char*)filterString(item));
 }
 
 
@@ -851,8 +852,7 @@ void SpawnListWindow2::setSelectedQuiet(QListViewItem* item, bool selected)
 void SpawnListWindow2::populateSpawns(void)
 {
 #if 0 // ZBTEMP
-  fprintf(stderr, 
-	  "SpawnListWindow2::populateSpawns(void) Category=%08x '%s'\n",
+  seqDebug("SpawnListWindow2::populateSpawns(void) Category=%08x '%s'",
 	  m_currentCategory, 
 	  (m_currentCategory != NULL) ? 
 	  (const char*) m_currentCategory->name() : "NONE");
@@ -917,7 +917,7 @@ void SpawnListWindow2::populateSpawns(void)
   m_lastUpdate = time(NULL);
 
 #if 0 // ZBTEMP
-  fprintf(stderr, "* elapsed (pre-sort): %d\n", test.elapsed());
+  seqDebug("* elapsed (pre-sort): %d", test.elapsed());
 #endif 
 
   // make sure the spawnlist is sorted
@@ -932,7 +932,7 @@ void SpawnListWindow2::populateSpawns(void)
     selectSpawn(m_selectedItem);
 
 #if 0 // ZBTEMP
-  fprintf(stderr, "* elapsed (post-sort): %d\n", test.elapsed());
+  seqDebug("* elapsed (post-sort): %d", test.elapsed());
 #endif 
 
   // re-enable updates and force a repaint
@@ -940,7 +940,7 @@ void SpawnListWindow2::populateSpawns(void)
   repaint();
 
 #if 0 // ZBTEMP
-  fprintf(stderr, "* elapsed (post-paint): %d\n", test.elapsed());
+  seqDebug("* elapsed (post-paint): %d", test.elapsed());
 #endif 
 }
 

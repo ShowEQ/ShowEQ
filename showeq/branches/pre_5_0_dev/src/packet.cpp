@@ -28,6 +28,7 @@
 #include "packetinfo.h"
 #include "vpacket.h"
 #include "everquest.h"
+#include "diagnosticmessages.h"
 
 //----------------------------------------------------------------------
 // Macros
@@ -64,29 +65,6 @@ const in_port_t ChatServerPort = 5998;
 
 //----------------------------------------------------------------------
 // Here begins the code
-
-
-////////////////////////////////////////////////////
-// This code handles packet payload size validation
-#ifdef PACKET_PAYLOAD_SIZE_DIAG
-bool validatePayloadSize(int len, int size, uint16_t code,
-			 const char* clarifier,
-			 const char* codeName, const char* structName)
-{
-  // verify size
-  if (len != size)
-  {
-    fprintf(stderr, "WARNING: %s%s (%04x) (dataLen:%d != sizeof(%s):%d)!\n",
-	    clarifier, codeName, code, len, structName, size);
-    return false;
-  }
-  return true;
-}
-
-#define ValidatePayload(codeName, structName) \
-  validatePayloadSize(len, sizeof( structName ), codeName, \
-		      "", #codeName , #structName )
-#endif
 
 
 //----------------------------------------------------------------------
@@ -135,10 +113,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
 
   // load the world opcode db
   if (!m_worldOPCodeDB->load(*m_packetTypeDB, worldopcodesxml))
-  {
-    fprintf(stderr, "Error loading '%s'!\n", (const char*)worldopcodesxml);
-    exit(-1);
-  }
+    seqFatal("Error loading '%s'!", (const char*)worldopcodesxml);
   
 #ifdef PACKET_OPCODEDB_DIAG
   m_worldOPCodeDB->list();
@@ -151,10 +126,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
   
   // load the zone opcode db
   if (!m_zoneOPCodeDB->load(*m_packetTypeDB, zoneopcodesxml))
-  {
-    fprintf(stderr, "Error loading '%s'!\n", (const char*)zoneopcodesxml);
-    exit(-1);
-  }
+    seqFatal("Error loading '%s'!", (const char*)zoneopcodesxml);
 
 #ifdef PACKET_OPCODEDB_DIAG
   m_zoneOPCodeDB->list();
@@ -315,10 +287,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
   struct hostent *he;
   struct in_addr  ia;
   if (m_ip.isEmpty() && m_mac.isEmpty())
-  {
-    printf ("No address specified\n");
-    exit(0);
-  }
+    seqFatal("No address specified");
   
   if (!m_ip.isEmpty())
   {
@@ -331,10 +300,8 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
     {
       he = gethostbyname(m_ip);
       if (!he)
-      {
-	printf ("Invalid address; %s\n", (const char*)m_ip);
-	exit (0);
-      }
+	seqFatal("Invalid address; %s", (const char*)m_ip);
+
       memcpy (&ia, he->h_addr_list[0], he->h_length);
     }
     m_client_addr = ia.s_addr;
@@ -343,13 +310,13 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
     if (m_ip ==  AUTOMATIC_CLIENT_IP)
     {
       m_detectingClient = true;
-      printf("Listening for first client seen.\n");
+      seqInfo("Listening for first client seen.");
     }
     else
     {
       m_detectingClient = false;
-      printf("Listening for client: %s\n",
-	     (const char*)m_ip);
+      seqInfo("Listening for client: %s",
+	      (const char*)m_ip);
     }
   }
   
@@ -396,7 +363,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
     {
       m_vPacket = new VPacket(filename, 1, true);
       // Must appear befire next call to getPrefString, which uses a static string
-      printf("Recording packets to '%s' for future playback\n", filename);
+      seqInfo("Recording packets to '%s' for future playback", filename);
       
       if (pSEQPrefs->getPrefString("FlushPackets", section))
 	m_vPacket->setFlushPacket(true);
@@ -407,7 +374,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
       m_vPacket->setCompressTime(pSEQPrefs->getPrefInt("CompressTime", section, 0));
       m_vPacket->setPlaybackSpeed(m_playbackSpeed);
       
-      printf("Playing back packets from '%s' at speed '%d'\n", filename,
+      seqInfo("Playing back packets from '%s' at speed '%d'", filename,
 	     
 	     m_playbackSpeed);
     }
@@ -553,8 +520,8 @@ void EQPacket::processPlaybackPackets (void)
       }
       else
       {
-	fprintf( stderr, "Error:  The version of the packet stream has " \
-		 "changed since '%s' was recorded - disabling playback\n",
+	seqWarn("Error:  The version of the packet stream has " \
+		 "changed since '%s' was recorded - disabling playback",
 		 m_vPacket->getFileName());
 
 	// stop the timer, nothing more can be done...
@@ -570,8 +537,8 @@ void EQPacket::processPlaybackPackets (void)
   // check if we've reached the end of the recording
   if (m_vPacket->endOfData())
   {
-    fprintf(stderr, "End of playback file '%s' reached.\n"
-	    "Playback Finished!\n",
+    seqInfo("End of playback file '%s' reached."
+	    "Playback Finished!",
 	    m_vPacket->getFileName());
 
     // stop the timer, nothing more can be done...
@@ -613,26 +580,26 @@ void EQPacket::dispatchPacket(int size, unsigned char *buffer)
   if (packet.flagsHi() < 0x02 || packet.flagsHi() > 0x46 || size < 10)
   {
 #if defined(PACKET_PROCESS_DIAG)
-    printf("discarding packet %s:%d ==>%s:%d flagsHi=%d size=%d\n",
+    seqDebug("discarding packet %s:%d ==>%s:%d flagsHi=%d size=%d",
 	   (const char*)packet.getIPv4SourceA(), packet.getSourcePort(),
 	   (const char*)packet.getIPv4DestA(), packet.getDestPort(),
 	   packet.flagsHi(), size);
-    printf("%s\n", (const char*)packet.headerFlags(false));
+    seqDebug("%s", (const char*)packet.headerFlags(false));
 #endif
     return;    
   }
 
 #if defined(PACKET_PROCESS_DIAG) && (PACKET_PROCESS_DIAG > 1)
-  printf("%s\n", (const char*)packet.headerFlags((PACKET_PROCESS_DIAG < 3)));
+  seqDebug("%s", (const char*)packet.headerFlags((PACKET_PROCESS_DIAG < 3)));
   uint32_t crc = packet.calcCRC32();
   if (crc != packet.crc32())
-    printf("CRC: Warning Packet seq = %d CRC (%08x) != calculated CRC (%08x)!\n",
+    seqWarn("CRC: Warning Packet seq = %d CRC (%08x) != calculated CRC (%08x)!",
 	   packet.seq(), packet.crc32(), crc);
 #endif
   
   if (!packet.isValid())
   {
-    printf("INVALID PACKET: Bad CRC32 [%s:%d -> %s:%d] seq %04x len %d crc32 (%08x != %08x)\n",
+    seqWarn("INVALID PACKET: Bad CRC32 [%s:%d -> %s:%d] seq %04x len %d crc32 (%08x != %08x)",
 	   (const char*)packet.getIPv4SourceA(), packet.getSourcePort(),
 	   (const char*)packet.getIPv4DestA(), packet.getDestPort(),
 	   packet.seq(), 
@@ -648,7 +615,7 @@ void EQPacket::dispatchPacket(int size, unsigned char *buffer)
     m_client_addr = packet.getIPv4DestN();
     m_detectingClient = false;
     emit clientChanged(m_client_addr);
-    printf("Client Detected: %s\n", (const char*)m_ip);
+    seqInfo("Client Detected: %s", (const char*)m_ip);
   }
   else if (m_detectingClient && packet.getDestPort() == WorldServerGeneralPort)
   {
@@ -656,7 +623,7 @@ void EQPacket::dispatchPacket(int size, unsigned char *buffer)
     m_client_addr = packet.getIPv4SourceN();
     m_detectingClient = false;
     emit clientChanged(m_client_addr);
-    printf("Client Detected: %s\n", (const char*)m_ip);
+    seqInfo("Client Detected: %s", (const char*)m_ip);
   }
   /* end client detection */
 
@@ -707,7 +674,7 @@ void EQPacket::closeStream()
     emit filterChanged();
   }
 
-  printf ("EQPacket: SEQClosing detected, awaiting next zone session,  pcap filter: EQ Client %s\n",
+  seqInfo("EQPacket: SEQClosing detected, awaiting next zone session,  pcap filter: EQ Client %s",
 	  (const char*)m_ip);
   
   // we'll be waiting for a new SEQStart for ALL streams
@@ -733,7 +700,7 @@ void EQPacket::lockOnClient(in_port_t serverPort, in_port_t clientPort)
 				 MAC_ADDRESS_TYPE, 0, 
 				 m_clientPort);
       emit filterChanged();
-      printf ("EQPacket: SEQStart detected, pcap filter: EQ Client %s, Client port %d\n",
+      seqInfo("EQPacket: SEQStart detected, pcap filter: EQ Client %s, Client port %d",
 	      (const char*)m_mac, 
 	      m_clientPort);
     }
@@ -745,7 +712,7 @@ void EQPacket::lockOnClient(in_port_t serverPort, in_port_t clientPort)
 				 IP_ADDRESS_TYPE, 0, 
 				 m_clientPort);
       emit filterChanged();
-      printf ("EQPacket: SEQStart detected, pcap filter: EQ Client %s, Client port %d\n",
+      seqInfo("EQPacket: SEQStart detected, pcap filter: EQ Client %s, Client port %d",
 	      (const char*)m_ip, 
 	      m_clientPort);
     }
@@ -771,7 +738,7 @@ void EQPacket::dispatchWorldChatData (size_t len, uint8_t *data,
   switch (opCode)
   {
   default:
-    printf ("%04x - %d (%s)\n", opCode, len,
+    seqDebug("%04x - %d (%s)", opCode, len,
 	    ((dir == DIR_Server) ? 
 	     "WorldChatServer --> Client" : "Client --> WorldChatServer"));
   }
@@ -892,7 +859,7 @@ void EQPacket::monitorIPClient(const QString& ip)
   
   resetEQPacket();
   
-  printf("Listening for IP client: %s\n", (const char*)m_ip);
+  seqInfo("Listening for IP client: %s", (const char*)m_ip);
   if (!m_playbackPackets)
   {
     m_packetCapture->setFilter(m_device, m_ip,
@@ -915,7 +882,7 @@ void EQPacket::monitorMACClient(const QString& mac)
 
   resetEQPacket();
 
-  printf("Listening for MAC client: %s\n", 
+  seqInfo("Listening for MAC client: %s", 
 	 (const char*)m_mac);
 
   if (!m_playbackPackets)
@@ -940,7 +907,7 @@ void EQPacket::monitorNextClient()
 
   resetEQPacket();
 
-  printf("Listening for next client seen. (you must zone for this to work!)\n");
+  seqInfo("Listening for next client seen. (you must zone for this to work!)");
 
   if (!m_playbackPackets)
   {
@@ -980,10 +947,8 @@ void EQPacket::monitorDevice(const QString& dev)
     {
       he = gethostbyname(m_ip);
       if (!he)
-      {
-	printf ("Invalid address; %s\n", (const char*)m_ip);
-	exit (0);
-      }
+	seqFatal("Invalid address; %s", (const char*)m_ip);
+
       memcpy (&ia, he->h_addr_list[0], he->h_length);
     }
     m_client_addr = ia.s_addr;
@@ -992,12 +957,12 @@ void EQPacket::monitorDevice(const QString& dev)
     if (m_ip ==  AUTOMATIC_CLIENT_IP)
     {
       m_detectingClient = true;
-      printf("Listening for first client seen.\n");
+      seqInfo("Listening for first client seen.");
     }
     else
     {
       m_detectingClient = false;
-      printf("Listening for client: %s\n",
+      seqInfo("Listening for client: %s",
 	     (const char*)m_ip);
     }
   }
