@@ -1,0 +1,29 @@
+ShowEQ v5.x
+-----------
+Realtime packet analyzer for Everquest
+
+DESCRIPTION
+-----------
+ShowEQ sits passively and waits for Everquest packets to pass by
+on the ethernet card. It rebuilds the data stream and displays
+useful information about the data being sent between client and
+server.
+
+Please read the CHANGES and BUGS files for more information.
+
+INSTALLATION
+------------
+See the file 'INSTALL' for installation and configuration information.
+For people new to ShowEQ and to linux see INSTALL.newbies.
+
+RUNNING
+-------
+ShowEQ needs to have root access to be able to receive the packets,
+so make sure you run it as root.
+
+Usage:
+  ./showeq --help
+
+shows current command line arguments.  Also look at the 
+conf/seqdef.xml file for configuration file options and defaults.
+Most configuration changes can be done via the user interface.
