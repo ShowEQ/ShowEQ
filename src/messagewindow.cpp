@@ -403,8 +403,8 @@ MessageWindow::MessageWindow(Messages* messages,
     m_useTypeStyles(true),
     m_wrapText(true)
 {
-  m_enabledTypes = pSEQPrefs->getPrefInt("EnabledTypes", preferenceName(), 
-					 m_enabledTypes);
+  m_enabledTypes = pSEQPrefs->getPrefUInt64("EnabledTypes", preferenceName(), 
+					    m_enabledTypes);
   m_defaultColor = pSEQPrefs->getPrefColor("DefaultColor", preferenceName(),
 					   m_defaultColor);
   m_defaultBGColor = pSEQPrefs->getPrefColor("DefaultBGColor", 
@@ -495,7 +495,7 @@ MessageWindow::MessageWindow(Messages* messages,
     if (!typeName.isEmpty())
     {
       m_typeFilterMenu->insertItem(typeName, i);
-      m_typeFilterMenu->setItemChecked(i, (((1 << i) & m_enabledTypes) != 0));
+      m_typeFilterMenu->setItemChecked(i, (((uint64_t(1) << i) & m_enabledTypes) != 0));
       typeStyleMenu->insertItem(typeName + "...", i);
 
       m_typeStyles[i].load(preferenceName(), typeName);
@@ -569,7 +569,7 @@ void MessageWindow::addMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if (((m_enabledTypes & ( 1 << type)) == 0) || m_lockedText)
+  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) || m_lockedText)
     return;
   
   QString text;
@@ -600,7 +600,7 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
   MessageType type = message.type();
 
   // if the message type isn't enabled, nothing to do
-  if (((m_enabledTypes & ( 1 << type)) == 0) || m_lockedText)
+  if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) || m_lockedText)
     return;
   
   // if the message has a specific color, then use it
@@ -719,15 +719,14 @@ void MessageWindow::findDialog(void)
 
 void MessageWindow::toggleTypeFilter(int id)
 {
-  printf("toggleTypeFilter(%d)\n", id);
-  if (((1 << id) & m_enabledTypes) != 0)
-    m_enabledTypes &= ~(1 << id);
+  if (((uint64_t(1) << id) & m_enabledTypes) != 0)
+    m_enabledTypes &= ~(uint64_t(1) << id);
   else
-    m_enabledTypes |= (1 << id);
+    m_enabledTypes |= (uint64_t(1) << id);
  
-  m_typeFilterMenu->setItemChecked(id, ((m_enabledTypes & (1 << id)) != 0));
+  m_typeFilterMenu->setItemChecked(id, ((m_enabledTypes & (uint64_t(1) << id)) != 0));
 
-  pSEQPrefs->setPrefInt("EnabledTypes", preferenceName(), m_enabledTypes);
+  pSEQPrefs->setPrefUInt64("EnabledTypes", preferenceName(), m_enabledTypes);
 }
 
 void MessageWindow::toggleLockedText()

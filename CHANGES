@@ -47,6 +47,7 @@ dohpaZ (11/?/03)
 + Got rid of the old MsgDialog classes
 + Made the right-click menus of SEQWindow derived windows come up in a
   more consistent fashion.
++ Added support for storing 64 bit integers to the XML preference system.
 
 dohpaZ (10/24/03)
 ---------------------
