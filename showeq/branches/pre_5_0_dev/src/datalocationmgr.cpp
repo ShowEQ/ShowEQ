@@ -76,6 +76,16 @@ QFileInfo DataLocationMgr::findWriteFile(const QString& subdir,
 			 caseSensitive);
 }
 
+QDir DataLocationMgr::pkgDataDir(const QString& subdir) const
+{
+  return findOrMakeSubDir(m_pkgData, subdir);
+}
+
+QDir DataLocationMgr::userDataDir(const QString& subdir) const
+{
+  return findOrMakeSubDir(m_userData, subdir);
+}
+
 QFileInfo DataLocationMgr::findFile(const QString& dir1, const QString& dir2,
 				    const QString& subdir, 
 				    const QString& filename,
@@ -225,7 +235,7 @@ QFileInfo DataLocationMgr::findWriteFile(const QString& dir1,
 }
 
 QDir DataLocationMgr::findOrMakeSubDir(const QString& dir,
-					    const QString& subdir) const
+				       const QString& subdir) const
 {
   QDir dirDir(dir);
   
