@@ -274,6 +274,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Initialize the experience window;
    m_expWindow = new ExperienceWindow(m_dataLocationMgr, m_player, m_groupMgr);
+   addDockWindow(m_expWindow, Bottom, false);
+   m_expWindow->undock();
 
    m_expWindow->restoreSize();
 
@@ -286,6 +288,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Initialize the combat window
    m_combatWindow = new CombatWindow(m_player);
+   addDockWindow(m_combatWindow, Bottom, false);
+   m_combatWindow->undock();
 
    m_combatWindow->restoreSize();
 
@@ -1642,7 +1646,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_msgDialogList.setAutoDelete(true);
    QString title;
    int i = 0;
-   MsgDialog* pMsgDlg;
+   MsgDialog* msgDlg;
    QString msgSection;
    bool haveMsgDialogs = false;
    for(i = 1; i < 15; i++)
@@ -1652,22 +1656,23 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      if (pSEQPrefs->isSection(msgSection))
      {
        haveMsgDialogs = true;
-       pMsgDlg = new MsgDialog(NULL, msgSection, msgSection, 
+       msgDlg = new MsgDialog(NULL, msgSection, msgSection, 
 			       m_StringList);
-       pMsgDlg->undock();
-       m_msgDialogList.append(pMsgDlg);
+       addDockWindow(msgDlg, Bottom, false);
+       msgDlg->undock();
+       m_msgDialogList.append(msgDlg);
 
        // connect signal for new messages
        connect (this, SIGNAL (newMessage(int)),
-		pMsgDlg, SLOT (newMessage(int)));
+		msgDlg, SLOT (newMessage(int)));
        connect (this, SIGNAL(saveAllPrefs()),
-		pMsgDlg, SLOT(savePrefs()));
-       connect (pMsgDlg, SIGNAL(toggle_view_ChannelMsgs()),
+		msgDlg, SLOT(savePrefs()));
+       connect (msgDlg, SIGNAL(toggle_view_ChannelMsgs()),
 		this, SLOT(toggle_view_ChannelMsgs()));
 
-       pMsgDlg->restoreSize();
+       msgDlg->restoreSize();
        if (pSEQPrefs->getPrefBool("UseWindowPos", section, true))
-	 pMsgDlg->restorePosition();
+	 msgDlg->restorePosition();
      } // end if dialog config section found
      else 
        break;
@@ -3649,16 +3654,17 @@ EQInterface::createMessageBox(void)
 {
   QString msgSection;
   msgSection.sprintf("MessageBox%d", m_msgDialogList.count() + 1);
-  MsgDialog* pMsgDlg = new MsgDialog(this, 
+  MsgDialog* msgDlg = new MsgDialog(NULL, 
 				     msgSection, msgSection, m_StringList);
-  pMsgDlg->undock();
-  m_msgDialogList.append(pMsgDlg);
+  addDockWindow(msgDlg, Bottom, false);
+  msgDlg->undock();
+  m_msgDialogList.append(msgDlg);
 
   // connect signal for new messages
-  connect (this, SIGNAL (newMessage(int)), pMsgDlg, SLOT (newMessage(int)));
-  connect (this, SIGNAL(saveAllPrefs()), pMsgDlg, SLOT(savePrefs()));
+  connect (this, SIGNAL (newMessage(int)), msgDlg, SLOT (newMessage(int)));
+  connect (this, SIGNAL(saveAllPrefs()), msgDlg, SLOT(savePrefs()));
 
-  pMsgDlg->show();
+  msgDlg->show();
 }
 
 

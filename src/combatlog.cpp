@@ -245,6 +245,10 @@ void CombatWindow::initUI()
 	printf("CombatWindow::initUI: starting...\n");
 #endif
 	QVBoxLayout* layout = new QVBoxLayout(boxLayout());
+
+	m_menu_bar = new QMenuBar(this);
+	layout->addWidget(m_menu_bar);
+
 	m_tab = new QTabWidget(this);
 	layout->addWidget(m_tab);
 
@@ -261,8 +265,6 @@ void CombatWindow::initUI()
 	m_clear_menu->insertItem("Clear Offense Stats", this, SLOT(clearOffense()));
 	m_clear_menu->insertItem("Clear Mob Stats", this, SLOT(clearMob()));
 
-	m_menu_bar = new QMenuBar(this);
-	layout->addWidget(m_menu_bar);
 	m_menu_bar->insertItem("&Clear", m_clear_menu);
 
 	updateOffense();
