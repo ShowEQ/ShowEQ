@@ -61,7 +61,8 @@ MessageWindow::MessageWindow(Messages* messages,
     m_useColor(false),
     m_wrapText(true),
     m_typeColors(0),
-    m_typeBGColors(0)
+    m_typeBGColors(0),
+    m_itemPattern("\022(\\d+)-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)[\022]")
 {
   m_enabledTypes = pSEQPrefs->getPrefInt("EnabledTypes", preferenceName(), 
 					 m_enabledTypes);
@@ -111,6 +112,8 @@ MessageWindow::MessageWindow(Messages* messages,
   // make sure history isn't kept
   m_messageWindow->setUndoDepth(0);
   m_messageWindow->setUndoRedoEnabled(false);
+
+  m_messageWindow->setTextFormat(PlainText);
 
   // set it to read only
   m_messageWindow->setReadOnly(true);
@@ -263,9 +266,7 @@ void MessageWindow::newMessage(const MessageEntry& message)
   // append the actual message text
   text += message.text();
 
-  QRegExp re("\022(\\d+)-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)[\022]");
-  text.replace(re,
-	       "<a href=http://eqitems.13th-floor.org/item.php?id=\\1>\\2</a>");
+  text.replace(m_itemPattern, "\\2 (#\\1)");
 
   // now append the message text to the buffer
   m_messageWindow->append(text);
@@ -284,12 +285,14 @@ void MessageWindow::refreshMessages()
 {
   // set the IBeam Cursor for easier text selection
   setCursor(Qt::WaitCursor);
+  m_messageWindow->setCursor(Qt::WaitCursor);
 
   // clear the document
   m_messageWindow->clear();
 
   // turn off updates while doing this mass update
   m_messageWindow->setUpdatesEnabled(false);
+  setUpdatesEnabled(false);
 
   m_messageWindow->append(" ");
 
@@ -311,13 +314,15 @@ void MessageWindow::refreshMessages()
   m_messageWindow->scrollToBottom();
 
   // turn updates back on 
-  m_messageWindow->setUpdatesEnabled(false);
+  m_messageWindow->setUpdatesEnabled(true);
+  setUpdatesEnabled(true);
 
   // repain window now that updates have been re-enabled
   repaint();
 
   // set the IBeam Cursor for easier text selection
-  setCursor(Qt::IbeamCursor);
+  unsetCursor();
+  m_messageWindow->unsetCursor();
 }
 
 void MessageWindow::toggleTypeFilter(int id)

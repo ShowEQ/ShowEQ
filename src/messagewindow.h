@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include <qtextedit.h>
+#include <qregexp.h>
 
 //----------------------------------------------------------------------
 // forward declarations
@@ -88,6 +89,7 @@ class MessageWindow : public SEQWindow
   bool m_wrapText;
   QColor* m_typeColors;
   QColor* m_typeBGColors;
+  QRegExp m_itemPattern;
 };
 
 #endif // _MESSAGEWINDOW_H_
