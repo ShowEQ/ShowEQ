@@ -34,21 +34,23 @@ class Terminal : public QObject
 
   // accessors
   uint64_t enabledTypes() const { return m_enabledTypes; }
-  void setEnabledTypes(uint64_t types) { m_enabledTypes = types; }
   const QString& dateTimeFormat() const { return m_dateTimeFormat; }
-  void setDateTimeForamt(const QString& dateTime);
   const QString& eqDateTimeFormat() const { return m_eqDateTimeFormat; }
-  void setEQDateTimeFormat(const QString& dateTime);
   bool displayType() const { return m_displayType; }
-  void setDisplayType(bool enable) { m_displayType = enable; }
   bool displayDateTime() const { return m_displayDateTime; } 
-  void setDisplayDateTime(bool enable) { m_displayDateTime = enable; }
   bool displayEQDateTime() const { return m_displayEQDateTime; }
-  void setDisplayEQDateTime(bool enable) { m_displayEQDateTime = enable; }
   bool useColor() const { return m_useColor; }
-  void setUseColor(bool enable) { m_useColor = enable; }
   
  public slots:
+  void setEnabledTypes(uint64_t types);
+  void setDateTimeForamt(const QString& dateTime);
+  void setEQDateTimeFormat(const QString& dateTime);
+  void setDisplayType(bool enable);
+  void setDisplayDateTime(bool enable);
+  void setDisplayEQDateTime(bool enable);
+  void setUseColor(bool enable);
+
+ protected slots:
   void newMessage(const MessageEntry& message);
 
  protected:
