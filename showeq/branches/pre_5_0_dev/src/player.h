@@ -44,13 +44,17 @@ public:
   virtual ~Player();
 
  public slots:
-   void player(const uint8_t* player); 
    void clear();
    void reset();
-#if 0 // ZBTEMP
-   //void wearItem(const uint8_t* itemp);
-   //void removeItem(const uint8_t* item);
-#endif // ZBTEMP
+   void setUseAutoDetectedSettings(bool enable);
+   void setDefaultName(const QString&);
+   void setDefaultLastname(const QString&);
+   void setDefaultLevel(uint8_t);
+   void setDefaultRace(uint16_t);
+   void setDefaultClass(uint8_t);
+   void setDefaultDeity(uint16_t);
+
+   void player(const uint8_t* player); 
    void increaseSkill(const uint8_t* skilli);
    void manaChange(const uint8_t* mana);
    void updateExp(const uint8_t* exp);
@@ -67,10 +71,9 @@ public:
    void tradeSpellBookSlots(const uint8_t*, size_t, uint8_t);
 
    void setPlayerID(uint16_t playerID);
-   void checkDefaults(void) { setDefaults(); } // Update our default values
-   void setUseDefaults (bool bdefaults) { m_useDefaults = bdefaults; }
    void savePlayerState(void);
    void restorePlayerState(void);
+   void setUseDefaults(bool bdefaults) { m_useDefaults = bdefaults; }
 
  public:
    virtual QString name() const;
@@ -79,7 +82,15 @@ public:
    virtual uint16_t deity() const;
    virtual uint16_t race() const;
    virtual uint8_t classVal() const;
-   
+
+   bool useAutoDetectedSettings() const { return m_useAutoDetectedSettings; }
+   QString defaultName() const { return m_defaultName; }
+   QString defaultLastName() const { return m_defaultLastName; }
+   uint8_t defaultLevel() const { return m_defaultLevel; }
+   uint16_t defaultDeity() const { return m_defaultDeity; }
+   uint16_t defaultRace() const { return m_defaultRace; }
+   uint8_t defaultClass() const { return m_defaultClass; }
+
    // ZBTEMP: compatibility code
    uint16_t getPlayerID() const { return id(); }
    int16_t headingDegrees() const { return m_headingDegrees; }
@@ -113,7 +124,6 @@ public:
    bool getStatValue(uint8_t stat,
 		     uint32_t& curValue, 
 		     uint32_t& maxValue);
-   void setDefaults(void);
 
  signals:
    void newPlayer(void);
@@ -242,10 +252,13 @@ public:
    uint16_t m_lastSpellOnId;
    
    int16_t m_headingDegrees;
-   // Wether or not we use defaults, determined by wether or not we could decode the zone
-   // loading data.  Used alongside showeq_params->forceDefaults
+   // Wether or not we use defaults, determined by wether or not we could 
+   // decode the zone loading data.  
    bool m_useDefaults;
    
+   // Whether or not to use auto-detected character settings
+   bool m_useAutoDetectedSettings;
+
    // which things are valid
    bool m_validStam;
    bool m_validMana;

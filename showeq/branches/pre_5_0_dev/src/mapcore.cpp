@@ -619,7 +619,7 @@ void MapData::loadMap(const QString& fileName, bool import)
 	
 	if (specifiedLinePoints != linePoints)
 	{
-	  seqWarn("L Line %d in map '%s' has %d points as opposed to the %d points it specified!", 
+	  seqWarn("M Line %d in map '%s' has %d points as opposed to the %d points it specified!", 
 		  filelines, filename, linePoints, specifiedLinePoints);
 	}
 	

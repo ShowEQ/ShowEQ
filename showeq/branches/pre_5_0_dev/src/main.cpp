@@ -201,8 +201,6 @@ int main (int argc, char **argv)
    section = "Interface";
    /* Allow map depth filtering */
    showeq_params->retarded_coords  = pSEQPrefs->getPrefBool("RetardedCoords", section, 0);
-   showeq_params->con_select = pSEQPrefs->getPrefBool("SelectOnCon", section, false);
-   showeq_params->tar_select = pSEQPrefs->getPrefBool("SelectOnTarget", section, false);
    showeq_params->net_stats = pSEQPrefs->getPrefBool("ShowNetStats", section, false);
    showeq_params->systime_spawntime = pSEQPrefs->getPrefBool("SystimeSpawntime", section, false);
    showeq_params->pvp = pSEQPrefs->getPrefBool("PvPTeamColoring", section, false);
@@ -216,20 +214,11 @@ int main (int argc, char **argv)
    showeq_params->walkpathrecord = pSEQPrefs->getPrefBool("WalkPathRecording", section, false);
    showeq_params->walkpathlength = pSEQPrefs->getPrefInt("WalkPathLength", section, 25);
    /* Tells SEQ whether or not to display casting messages (Turn this off if you're on a big raid) */
-   showeq_params->showSpellMsgs = pSEQPrefs->getPrefBool("ShowSpellMessages", section, true);
 
    section = "Filters";
    showeq_params->spawnfilter_audio = pSEQPrefs->getPrefBool("Audio", section, false);
 
    /* Default Level / Race / Class preferences */
-   section = "Defaults";
-   showeq_params->AutoDetectCharSettings = pSEQPrefs->getPrefBool("AutoDetectCharSettings", section, 1);
-   showeq_params->defaultName = pSEQPrefs->getPrefString("DefaultName", section, "You");
-   showeq_params->defaultLastName = pSEQPrefs->getPrefString("DefaultLastName", section, "");
-   showeq_params->defaultLevel = pSEQPrefs->getPrefInt("DefaultLevel", section, 1);
-   showeq_params->defaultRace = pSEQPrefs->getPrefInt("DefaultRace", section, 1);
-   showeq_params->defaultClass = pSEQPrefs->getPrefInt("DefaultClass", section, 1);
-   showeq_params->defaultDeity = pSEQPrefs->getPrefInt("DefaultDeity", section, DEITY_AGNOSTIC);
 
    section = "SpawnList";
    showeq_params->showRealName = pSEQPrefs->getPrefBool("ShowRealName", section, false);
@@ -370,16 +359,18 @@ int main (int argc, char **argv)
          /* Select spawn on 'Consider' */
          case 'S':
          {
-            showeq_params->con_select = 1;
-            break;
+	   pSEQPrefs->setPrefBool("SelectOnCon", "Interface", true,
+				  XMLPreferences::Runtime);
+	   break;
          }
 
 
          /* Select spawn on 'Target' */
          case 'e':
          {
-            showeq_params->tar_select = 1;
-            break;
+	   pSEQPrefs->setPrefBool("SelectOnTarget", "Interface", true, 
+				  XMLPreferences::Runtime);
+	   break;
          }
 
 
@@ -436,8 +427,9 @@ int main (int argc, char **argv)
          /* Don't autodetect character settings */
          case 'W':
          {
-            showeq_params->AutoDetectCharSettings = 0;
-            break;
+	   pSEQPrefs->getPrefBool("AutoDetectCharSettings", "Defaults", 
+				  false, XMLPreferences::Runtime);
+	   break;
          }
 
 
@@ -451,8 +443,9 @@ int main (int argc, char **argv)
                printf ("Invalid default level.  Valid range is 1 - 60.\n");
                exit(0);
             }
-            
-            showeq_params->defaultLevel = temp_int;           
+
+	    pSEQPrefs->setPrefInt("DefaultLevel", "Defaults", temp_int,
+				  XMLPreferences::Runtime);
             break;
          }
 
@@ -462,13 +455,18 @@ int main (int argc, char **argv)
          {
             temp_int = atoi(optarg);
             
-            if ((temp_int < 1 || temp_int > 12) && temp_int != 128)
+            if ((temp_int < 1 || temp_int > 12) && 
+		(temp_int != 128) &&
+		(temp_int != 130) &&
+		(temp_int != 26))
             {
                printf ("Invalid default race, please use showeq -h to list valid race options.\n");
                exit(0);
             }
             
-            showeq_params->defaultRace = temp_int;
+	    pSEQPrefs->setPrefInt("DefaultRace", "Defaults", temp_int,
+				  XMLPreferences::Runtime);
+
             break;
          }
 
@@ -478,13 +476,13 @@ int main (int argc, char **argv)
          {
             temp_int = atoi(optarg);
             
-            if (temp_int < 1 || temp_int > 14)
+            if (temp_int < 1 || temp_int > 15)
             {
                printf ("Invalid default class, please use showeq -h to list valid class options.\n");
                exit(0);
             }
 
-            showeq_params->defaultClass = temp_int;
+	    pSEQPrefs->setPrefInt("DefaultClass", "Defaults", temp_int);
             break;
          }
 

@@ -30,8 +30,6 @@ struct ShowEQParams
   bool           retarded_coords; // Verant style YXZ instead of XYZ
   bool           fast_machine;
   bool           createUnknownSpawns;
-  bool           con_select;
-  bool           tar_select;
   bool           keep_selected_visible;
   bool           promisc;
   bool           net_stats;
@@ -43,16 +41,6 @@ struct ShowEQParams
   bool           systime_spawntime;
   bool           showRealName;
   
-  bool           AutoDetectCharSettings;
-  QString        defaultName;
-  QString        defaultLastName;
-  unsigned char  defaultLevel;
-  unsigned char  defaultRace;
-  unsigned char  defaultClass;
-  unsigned char  defaultDeity;
-
-  bool           showSpellMsgs;
-
   bool           saveZoneState;
   bool           savePlayerState;
   bool           saveSpawns;
