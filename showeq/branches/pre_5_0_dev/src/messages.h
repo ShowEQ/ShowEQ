@@ -19,7 +19,6 @@
 #include <qobject.h>
 #include <qstring.h>
 #include <qvaluelist.h>
-#include <qvaluevector.h>
 
 //----------------------------------------------------------------------
 // forward declarations
@@ -41,7 +40,6 @@ class Messages : public QObject
   ~Messages();
   
   const MessageList messageList() const;
-  const QString& messageTypeString(MessageType type);
 
  public slots:
   void addMessage(MessageType type, const QString& text, 
@@ -60,22 +58,11 @@ class Messages : public QObject
   DateTimeMgr* m_dateTimeMgr;
   MessageFilters* m_messageFilters;
   MessageList m_messages;
-  QValueVector<QString> m_messageTypeStrings;
 };
 
 inline const MessageList Messages::messageList() const
 {
   return m_messages;
-}
-
-inline const QString& Messages::messageTypeString(MessageType type)
-{
-  static QString dummy;
-
-  if (QValueVector<QString>::size_type(type) < m_messageTypeStrings.count())
-    return m_messageTypeStrings[type];
-  
-  return dummy;
 }
 
 #endif // _MESSAGES_H_

@@ -17,39 +17,8 @@ Messages::Messages(DateTimeMgr* dateTimeMgr, MessageFilters* messageFilters,
 		   QObject* parent, const char* name)
   : QObject(parent, name),
     m_dateTimeMgr(dateTimeMgr),
-    m_messageFilters(messageFilters),
-    m_messageTypeStrings(MT_Max+1)
+    m_messageFilters(messageFilters)
 {
-  m_messageTypeStrings[MT_Guild] = "Guild";
-  m_messageTypeStrings[MT_Group] = "Group";
-  m_messageTypeStrings[MT_Shout] = "Shout";
-  m_messageTypeStrings[MT_Auction] = "Auction";
-  m_messageTypeStrings[MT_OOC] = "OOC";
-  m_messageTypeStrings[MT_Tell] = "Tell";
-  m_messageTypeStrings[MT_Say] = "Say";
-  m_messageTypeStrings[MT_GMSay] = "GMSay";
-  m_messageTypeStrings[MT_GMTell] = "GMTell";
-  m_messageTypeStrings[MT_Raid] = "Raid";
-  m_messageTypeStrings[MT_Debug] = "Debug";
-  m_messageTypeStrings[MT_Info] = "Info";
-  m_messageTypeStrings[MT_General] = "General";
-  m_messageTypeStrings[MT_Motd] = "MOTD";
-  m_messageTypeStrings[MT_System] = "System";
-  m_messageTypeStrings[MT_Money] = "Money";
-  m_messageTypeStrings[MT_Random] = "Random";
-  m_messageTypeStrings[MT_Emote] = "Emote";
-  m_messageTypeStrings[MT_Time] = "Time";
-  m_messageTypeStrings[MT_Spell] = "Spell";
-  m_messageTypeStrings[MT_Zone] = "Zone";
-  m_messageTypeStrings[MT_Inspect] = "Inspect";
-  m_messageTypeStrings[MT_Player] = "Player";
-  m_messageTypeStrings[MT_Consider] = "Consider";
-  m_messageTypeStrings[MT_Alert] = "Alert";
-  m_messageTypeStrings[MT_Danger] = "Danger";
-  m_messageTypeStrings[MT_Caution] = "Caution";
-  m_messageTypeStrings[MT_Hunt] = "Hunt";
-  m_messageTypeStrings[MT_Locate] = "Locate";
-
   connect(m_messageFilters, SIGNAL(removed(uint32_t, uint8_t)),
 	  this, SLOT(removedFilter(uint32_t, uint8_t)));
   connect(m_messageFilters, SIGNAL(added(uint32_t, uint8_t, 

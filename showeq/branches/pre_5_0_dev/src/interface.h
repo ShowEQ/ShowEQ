@@ -73,6 +73,7 @@ class Messages;
 class MessageShell;
 class MessageWindow;
 class Terminal;
+class MessageFilterDialog;
 
 //--------------------------------------------------
 // typedefs
@@ -361,6 +362,8 @@ class EQInterface:public QMainWindow
    ExperienceWindow* m_expWindow;
    CombatWindow* m_combatWindow;
    NetDiag* m_netDiag;
+   MessageFilterDialog* m_messageFilterDiag;
+
    QLabel* m_stsbarSpawns;
    QLabel* m_stsbarStatus;
    QLabel* m_stsbarZone;

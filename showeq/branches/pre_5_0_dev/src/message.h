@@ -15,6 +15,7 @@
 
 #include <qstring.h>
 #include <qdatetime.h>
+#include <qvaluevector.h>
 
 //----------------------------------------------------------------------
 // constants
@@ -79,6 +80,8 @@ class MessageEntry
   uint32_t filterFlags() const { return m_filterFlags; }
   void setFilterFlags(uint32_t filterFlags) { m_filterFlags = filterFlags; }
 
+  static const QString& messageTypeString(MessageType type);
+
  protected:
   MessageType m_type;
   QDateTime m_dateTime;
@@ -86,6 +89,8 @@ class MessageEntry
   QString m_text;
   uint32_t m_color;
   uint32_t m_filterFlags;
+
+  static QString s_messageTypeStrings[MT_Max+1];
 };
 
 inline MessageEntry::MessageEntry(MessageType type, 
@@ -112,6 +117,16 @@ inline MessageEntry::MessageEntry()
 
 inline MessageEntry::~MessageEntry()
 {
+}
+
+inline const QString& MessageEntry::messageTypeString(MessageType type)
+{
+  static QString dummy;
+
+  if (type <= MT_Max)
+    return s_messageTypeStrings[type];
+
+  return dummy;
 }
 
 #endif // _MESSAGE_H_

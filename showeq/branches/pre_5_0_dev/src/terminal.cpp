@@ -125,7 +125,7 @@ void Terminal::newMessage(const MessageEntry& message)
 
   // if displaying the type, add it
   if (m_displayType)
-    text = m_messages->messageTypeString(type) + ": ";
+    text = MessageEntry::messageTypeString(type) + ": ";
     
   // if displaying the message date/time append it
   if (m_displayDateTime)
