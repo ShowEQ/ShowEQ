@@ -22,6 +22,9 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qgroupbox.h>
+#include <qfiledialog.h>
+#include <qfile.h>
+#include <qtextstream.h>
 
 //---------------------------------------------------------------------- 
 // MessageBrowser
@@ -581,6 +584,8 @@ MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
   int x;
   x = m_menu->insertItem("Refresh Messages...", this, SLOT(refreshMessages()),
 			 CTRL+Key_R);
+  m_menu->insertItem("Save Message Text...", this, SLOT(saveText()),
+		     CTRL+Key_S);
   m_menu->insertSeparator(-1);
   m_menu->setItemChecked(x, m_lockedText);
   m_menu->insertSeparator(-1);
@@ -787,6 +792,27 @@ void MessageWindow::messageFilterDialog(void)
 
   // show the message filter dialog
   m_filterDialog->show();
+}
+
+void MessageWindow::saveText(void)
+{
+  QString fileName = 
+    QFileDialog::getSaveFileName("", "*.txt", this,
+				 "ShowEQ - Message Text File");
+
+  if (fileName.isEmpty())
+    return;
+
+  QFile file( fileName ); // Write the text to a file
+  if ( file.open( IO_WriteOnly ) ) 
+  {
+    QTextStream stream( &file );
+
+    // save all the paragraphs
+    //   ZBNOTE: unfortunately just using ->text() doesn't work.
+    for (int i = 0; i < m_messageWindow->paragraphs(); i++)
+      stream << m_messageWindow->text(i) << endl;
+  }
 }
 
 void MessageWindow::toggleTypeFilter(int id)

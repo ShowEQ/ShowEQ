@@ -155,6 +155,7 @@ class MessageWindow : public SEQWindow
   void refreshMessages(void);
   void findDialog(void);
   void messageFilterDialog(void);
+  void saveText(void);
 
  protected slots:
   void toggleTypeFilter(int);
