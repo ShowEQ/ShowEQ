@@ -143,7 +143,8 @@ class MapMgr : public QObject
 
    // Map Handling
   void loadMap(void);
-  void loadFileMap(const QString& fileName);
+  void importMap(void);
+  void loadFileMap(const QString& fileName, bool import = false);
   void saveMap(void);
   void saveSOEMap(void);
 

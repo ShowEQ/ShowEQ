@@ -445,7 +445,7 @@ void MapData::clear()
   m_zoneZEM = 75;
 }
 
-void MapData::loadMap(const QString& fileName)
+void MapData::loadMap(const QString& fileName, bool import)
 {
   int16_t mx, my, mz;
   uint numPoints;
@@ -467,8 +467,9 @@ void MapData::loadMap(const QString& fileName)
   // set the map filename
   setFileName(fileName);
 
-  // clear any existing map data
-  clear();
+  // clear any existing map data (if not importing)
+  if (!import)
+    clear();
 
   /* Kind of stupid to try a non-existant map, don't you think? */
   if (fileName.contains("/.map") != 0)
@@ -898,7 +899,7 @@ void MapData::loadMap(const QString& fileName)
   printf("Loaded map: '%s'\n", filename);
 }
 
-void MapData::loadSOEMap(const QString& fileName)
+void MapData::loadSOEMap(const QString& fileName, bool import)
 {
   int16_t x1, y1, z1;
   int16_t x2, y2, z2;
@@ -918,8 +919,9 @@ void MapData::loadSOEMap(const QString& fileName)
   // set the map filename
   setFileName(fileName);
 
-  // clear any existing map data
-  clear();
+  // clear any existing map data if not importing
+  if (!import)
+    clear();
 
   /* Kind of stupid to try a non-existant map, don't you think? */
   if (fileName.contains("/.txt") != 0)

@@ -33,6 +33,9 @@ dohpaZ (11/?/03)
 + zones.h, changed 162 to be ssratemple and 182 to be nedaria, thanks to 
   darkgrue and uRit1u2CBBA= respectively.
 + Initial support for direct loading of SOE txt format map files.
++ Added minimal support for importing maps (warning, this imports everything,
+  so if not importing other SOE layers you will probably end up with duplicate
+  lines, points, etc...).
 
 dohpaZ (10/24/03)
 ---------------------

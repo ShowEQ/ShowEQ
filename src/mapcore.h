@@ -510,8 +510,8 @@ class MapData
 
   // map loading/clearing/saving
   void clear();
-  void loadMap(const QString& fileName);
-  void loadSOEMap(const QString& fileName);
+  void loadMap(const QString& fileName, bool import = false);
+  void loadSOEMap(const QString& fileName, bool import = false);
   void saveMap(const QString& fileName) const;
   void saveSOEMap(const QString& fileName) const;
 

@@ -397,8 +397,31 @@ void MapMgr::loadMap ()
   loadFileMap(fileName);
 }
 
+void MapMgr::importMap ()
+{
+#ifdef DEBUGMAP
+  debug ("importMap()");
+#endif /* DEBUGMAP */
 
-void MapMgr::loadFileMap (const QString& fileName) 
+  QString fileName = m_mapData.fileName();
+
+  if (fileName.isEmpty())
+    fileName = m_dataLocMgr->findExistingFile("maps", fileName).absFilePath();
+
+  // create a file dialog the defaults to the currently open map
+  fileName = QFileDialog::getOpenFileName(fileName, "*.map;*.txt");
+
+  if (fileName.isEmpty ())
+    return;
+
+  printf("Attempting to import map: %s\n", (const char*)fileName);
+
+  // load the map
+  loadFileMap(fileName, true);
+}
+
+
+void MapMgr::loadFileMap (const QString& fileName, bool import) 
 {
 #ifdef DEBUGMAP
   debug ("loadFileMap()");
@@ -406,9 +429,9 @@ void MapMgr::loadFileMap (const QString& fileName)
 
   // load the specified map
   if (!fileName.endsWith(".txt"))
-    m_mapData.loadMap(fileName);
+    m_mapData.loadMap(fileName, import);
   else
-    m_mapData.loadSOEMap(fileName);
+    m_mapData.loadSOEMap(fileName, import);
 
   const ItemMap& itemMap = m_spawnShell->spawns();
   ItemConstIterator it(itemMap);
