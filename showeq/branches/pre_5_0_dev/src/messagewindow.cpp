@@ -283,6 +283,9 @@ void MessageWindow::newMessage(const MessageEntry& message)
 
 void MessageWindow::refreshMessages()
 {
+  // get the list of messages
+  const MessageList& messages = m_messages->messageList();
+ 
   // set the IBeam Cursor for easier text selection
   setCursor(Qt::WaitCursor);
   m_messageWindow->setCursor(Qt::WaitCursor);
@@ -302,13 +305,11 @@ void MessageWindow::refreshMessages()
   // move the cursor to the end of the document
   m_messageWindow->moveCursor(QTextEdit::MoveEnd, false);
 
-  // get the list of messages
-  const MessageList& messages = m_messages->messageList();
- 
   // iterate over the message list and add the messages
   MessageList::const_iterator it;
-  for (it = messages.begin(); it != messages.end(); ++it)
-    newMessage(*it);
+  int i;
+  for (i = 0, it = messages.begin(); it != messages.end(); ++it, ++i)
+    newMessage(*it); // append the message
 
   // move the cursor to the end of the document
   m_messageWindow->scrollToBottom();

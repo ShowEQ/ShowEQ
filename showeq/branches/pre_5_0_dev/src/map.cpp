@@ -95,9 +95,6 @@ CLineDlg::CLineDlg(QWidget *parent, QString name, MapMgr *mapMgr)
   m_LineColor->insertItem("darkCyan");
   m_LineColor->insertItem("darkRed");
   m_LineColor->insertItem("darkMagenta");
-  /* DarkYellow is not in the standard X11R6 rgb.txt file so its
-     use should be discouraged.  cpphack */
-  // m_LineColor->insertItem("darkYellow");
   m_LineColor->insertItem("darkGray");
   m_LineColor->insertItem("white");
   m_LineColor->insertItem("blue");
@@ -394,7 +391,7 @@ void MapMgr::loadMap ()
   printf("Attempting to load map: %s\n", (const char*)fileName);
 
   // load the map
-  loadFileMap(fileName);
+  loadFileMap(fileName, false, true);
 }
 
 void MapMgr::importMap ()
@@ -417,15 +414,20 @@ void MapMgr::importMap ()
   printf("Attempting to import map: %s\n", (const char*)fileName);
 
   // load the map
-  loadFileMap(fileName, true);
+  loadFileMap(fileName, true, true);
 }
 
 
-void MapMgr::loadFileMap (const QString& fileName, bool import) 
+void MapMgr::loadFileMap (const QString& fileName, bool import, bool force) 
 {
 #ifdef DEBUGMAP
   debug ("loadFileMap()");
 #endif /* DEBUGMAP */
+
+  // if not a forced load, and the same map is already loaded, do nothing
+  if (!force && m_mapData.mapLoaded() && 
+      (m_mapData.fileName() == fileName))
+    return;
 
   // load the specified map
   if (!fileName.endsWith(".txt"))
@@ -662,6 +664,22 @@ void MapMgr::showLineDlg(QWidget* parent)
    m_dlgLineProps->show();
 }
 
+void MapMgr::scaleDownZ(int16_t factor)
+{
+  m_mapData.scaleDownZ(factor);
+
+  // signal that the map has been updated
+  emit mapUpdated();
+}
+
+void MapMgr::scaleUpZ(int16_t factor)
+{
+  m_mapData.scaleUpZ(factor);
+
+  // signal that the map has been updated
+  emit mapUpdated();
+}
+
 void MapMgr::savePrefs(void)
 {
 #if 0 // ZBTEMP: Migrate to place where ever this is set
@@ -707,6 +725,7 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
   setCheckable(true);
 
   QPopupMenu* subMenu;
+  QPopupMenu* subSubMenu;
 
   subMenu = new QPopupMenu;
   subMenu->setCheckable(true);
@@ -737,6 +756,18 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
 					  m_map, SLOT(delLinePoint()), key);
   m_id_showLineDlg = subMenu->insertItem("Show Line Dialog...",
 					 m_map, SLOT(showLineDlg()));
+  subSubMenu = new QPopupMenu(m_map);
+  int x;
+  x = subSubMenu->insertItem("Down 8", m_map, SLOT(scaleDownZ(int)));
+  subSubMenu->setItemParameter(x, 8);
+  x = subSubMenu->insertItem("Down 10", m_map, SLOT(scaleDownZ(int)));
+  subSubMenu->setItemParameter(x, 10);
+  x = subSubMenu->insertItem("Up 8", m_map, SLOT(scaleUpZ(int)));
+  subSubMenu->setItemParameter(x, 8);
+  x = subSubMenu->insertItem("Up 10", m_map, SLOT(scaleUpZ(int)));
+  subSubMenu->setItemParameter(x, 10);
+
+  subMenu->insertItem("Scale Map Z Coordinates", subSubMenu);
   m_id_editMap = insertItem("Edit", subMenu);
 
   subMenu = new QPopupMenu(m_map);
@@ -841,8 +872,6 @@ MapMenu::MapMenu(Map* map, QWidget* parent, const char* name)
   m_id_FOVDistance = subMenu->insertItem(tmpHBox);
   m_id_FOVColor = subMenu->insertItem("Color...",
 				      this, SLOT(select_fovColor(int)));
-
-  QPopupMenu* subSubMenu;
 
   subSubMenu = new QPopupMenu;
   subMenu->setCheckable(true);
@@ -2838,6 +2867,7 @@ void Map::addLocation(void)
 #endif
 
   // add the location
+  m_mapCache.forceRepaint();
   m_mapMgr->addLocation(this, point);
 }
 
@@ -2874,6 +2904,7 @@ void Map::addLinePoint()
 #endif
 
   // add it as the next line point
+  m_mapCache.forceRepaint();
   m_mapMgr->addLinePoint(point);
 }
 
@@ -2884,6 +2915,7 @@ void Map::delLinePoint(void)
   debug ("delLinePoint()");
 #endif /* DEBUGMAP */
 
+  m_mapCache.forceRepaint();
   m_mapMgr->delLinePoint();
 } // END delLinePoint
 
@@ -2892,6 +2924,18 @@ void Map::showLineDlg(void)
 {
   // show the line dialog
   m_mapMgr->showLineDlg(this);
+}
+
+void Map::scaleDownZ(int id)
+{
+  m_mapCache.forceRepaint();
+  m_mapMgr->scaleDownZ(m_menu->itemParameter(id));
+}
+
+void Map::scaleUpZ(int id)
+{
+  m_mapCache.forceRepaint();
+  m_mapMgr->scaleUpZ(m_menu->itemParameter(id));
 }
 
 void Map::addPathPoint() 
@@ -5090,3 +5134,5 @@ void MapFrame::toggle_depthControls(int id)
     pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_depthControlBox->isVisible()); 
  }
 }
+
+

@@ -144,7 +144,8 @@ class MapMgr : public QObject
    // Map Handling
   void loadMap(void);
   void importMap(void);
-  void loadFileMap(const QString& fileName, bool import = false);
+  void loadFileMap(const QString& fileName, 
+		   bool import = false, bool force = false);
   void saveMap(void);
   void saveSOEMap(void);
 
@@ -165,6 +166,8 @@ class MapMgr : public QObject
   void setLineName(const QString &);
   void setLineColor(const QString &);
   void showLineDlg(QWidget* parent);
+  void scaleDownZ(int16_t);
+  void scaleUpZ(int16_t);
 
   // Preference handling
   void savePrefs(void);
@@ -439,14 +442,17 @@ class Map :public QWidget
   void mapUnloaded(void);
   void mapUpdated(void);
 
-  // assorted
+  // map editing
   void addLocation();
   void startLine();
   void addLinePoint();
   void delLinePoint(void);
   void addPathPoint();
   void showLineDlg(void);
-
+  void scaleDownZ(int);
+  void scaleUpZ(int);
+  
+  // assorted
   void zoomIn();
   void zoomOut();
   void increaseGridResolution	(void);
