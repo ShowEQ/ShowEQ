@@ -24,6 +24,7 @@ class Messages;
 class QPopupMenu;
 class QLineEdit;
 class QCheckBox;
+class QLabel;
 
 //----------------------------------------------------------------------
 // MessageBrowser
@@ -72,6 +73,67 @@ class MessageFindDialog : public QDialog
 };
 
 //----------------------------------------------------------------------
+// MessageTypeStyle
+class MessageTypeStyle
+{
+ public:
+  MessageTypeStyle();
+  MessageTypeStyle(const MessageTypeStyle& style);
+  ~MessageTypeStyle();
+  
+  MessageTypeStyle& operator=(const MessageTypeStyle& style);
+
+  const QColor& color() const { return m_color; }
+  void setColor(const QColor& color) { m_color = color; }
+  const QColor& bgColor() const { return m_bgColor; }
+  void setBGColor(const QColor& color) { m_bgColor = color; }
+  const QFont& font() const { return m_font; }
+  void setFont(const QFont& font) { m_font = font; }
+  bool useDefaultFont() const { return m_useDefaultFont; }
+  void setUseDefaultFont(bool val) { m_useDefaultFont = val; }
+  
+  void load(const QString& preferenceName, const QString& typeName);
+  void save(const QString& preferenceName, const QString& typeName) const;
+ protected:
+  QColor m_color;
+  QColor m_bgColor;
+  QFont m_font;
+  bool m_useDefaultFont;
+};
+
+//----------------------------------------------------------------------
+// MessageTypeStyleDialog
+class MessageTypeStyleDialog : public QDialog
+{
+  Q_OBJECT
+ public:
+  MessageTypeStyleDialog(MessageTypeStyle& style, 
+			 const QColor& color, const QColor& bgColor,
+			 const QString& caption,
+			 QWidget* parent = 0, const char* name = 0);
+  ~MessageTypeStyleDialog();
+  const MessageTypeStyle& style() { return m_style; }
+
+ public slots:
+   void selectColor();
+   void selectBGColor();
+   void selectFont();
+
+ protected slots:
+  void useDefaultFontToggled(bool on);
+
+ protected:
+  MessageTypeStyle m_style;
+  const QColor& m_defaultColor;
+  const QColor& m_defaultBGColor;
+  QPushButton* m_color;
+  QPushButton* m_bgColor;
+  QCheckBox* m_useDefaultFont;
+  QPushButton* m_font;
+  QLabel* m_example;
+};
+
+//----------------------------------------------------------------------
 // MessageWindow
 class MessageWindow : public SEQWindow
 {
@@ -96,10 +158,9 @@ class MessageWindow : public SEQWindow
   void toggleDisplayType(int);
   void toggleDisplayTime(int);
   void toggleEQDisplayTime(int);
-  void toggleUseColor(int);
+  void toggleUseTypeStyles(int);
   void toggleWrapText(int);
-  void setTypeColor(int);
-  void setTypeBGColor(int);
+  void setTypeStyle(int);
   void setColor();
   void setBGColor();
   void setFont();
@@ -123,14 +184,13 @@ class MessageWindow : public SEQWindow
   QColor m_defaultBGColor;
   QString m_dateTimeFormat;
   QString m_eqDateTimeFormat;
-  QColor* m_typeColors;
-  QColor* m_typeBGColors;
+  MessageTypeStyle* m_typeStyles;
   QRegExp m_itemPattern;
   bool m_lockedText;
   bool m_displayType;
   bool m_displayDateTime;
   bool m_displayEQDateTime;
-  bool m_useColor;
+  bool m_useTypeStyles;
   bool m_wrapText;
 };
 

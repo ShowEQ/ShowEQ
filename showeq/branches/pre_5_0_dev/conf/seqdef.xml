@@ -2473,6 +2473,20 @@
    <bool value="true" />
    <comment>set to true to print bank/inventory items to stdout</comment> 
   </property>
+  <property name="DockingInfo" >
+    <comment>Automatically generated window position information</comment>
+    <string value="
+ShowEQ - Experience,ShowEQ Combat,ShowEQ - Channel Messages,
+[ShowEQ - Experience,400,360,800,480,0][ShowEQ Combat,400,360,800,480,0][ShowEQ - Channel Messages,38,687,800,480,0]
+
+
+
+
+
+
+ShowEQ - Spawn List 2,ShowEQ - Spawn Points,ShowEQ - Spell List,Map ,
+[ShowEQ - Spawn List 2,64,1,378,190,1][ShowEQ - Spawn Points,0,0,378,118,1][ShowEQ - Spell List,0,0,378,136,1][Map ,0,1,378,766,1]" />
+  </property>
   <property name="GuildsFile" >
    <string value="guilds2.dat" />
    <comment>Location of file containing guild strings</comment>
@@ -2815,7 +2829,7 @@ If any argument is left blank, it is filled in with its default...
    <comment>Window caption</comment>
   </property>
   <property name="Create" >
-   <bool value="false" />
+   <bool value="ue" />
    <comment>Causes this window to be created</comment>
   </property>
   <property name="DefaultColor">

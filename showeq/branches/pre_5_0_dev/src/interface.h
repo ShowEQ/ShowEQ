@@ -149,6 +149,8 @@ class EQInterface:public QMainWindow
    void updateSelectedSpawnStatus(const Item* item);
 
    void savePrefs(void);
+   void saveDockAreaPrefs(QDockArea* a, Dock edge);
+
    void addCategory(void);
    void reloadCategories(void);
    void rebuildSpawnList();
@@ -276,7 +278,6 @@ class EQInterface:public QMainWindow
    bool getMonitorOpCodeList(const QString& title, QString& opcodeList);
    int setTheme(int id);
    void loadFormatStrings();
-   void resizeEvent (QResizeEvent *);
    void makeNoise( const Item* item, char* szAudioCmd, char* szSoundType);
    void doAlertCommand(const Item* item, 
 		       const QString& command,

@@ -5,14 +5,6 @@
  *  http://seq.sourceforge.net/
  */
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "interface.h"
 #include "util.h"
 #include "main.h"
@@ -51,6 +43,14 @@
 #include "terminal.h"
 #include "filteredspawnlog.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include <qfont.h>
 #include <qapplication.h>
 #include <qlabel.h>
@@ -69,6 +69,7 @@
 #include <qinputdialog.h>
 #include <qfontdialog.h>
 #include <qcolordialog.h>
+#include <qdockarea.h>
 #include <qwindowsstyle.h>
 #include <qplatinumstyle.h>
 #include <qmotifstyle.h>
@@ -329,7 +330,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Initialize the experience window;
    m_expWindow = new ExperienceWindow(m_dataLocationMgr, m_player, m_groupMgr);
-   addDockWindow(m_expWindow, Bottom, false);
+   Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					   m_expWindow->preferenceName(),
+					   Bottom);
+   addDockWindow(m_expWindow, edge, false);
    m_expWindow->undock();
 
    m_expWindow->restoreSize();
@@ -343,7 +347,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Initialize the combat window
    m_combatWindow = new CombatWindow(m_player);
-   addDockWindow(m_combatWindow, Bottom, false);
+   edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+				      m_combatWindow->preferenceName(),
+				      Bottom);
+   addDockWindow(m_combatWindow, edge, false);
    m_combatWindow->undock();
 
    m_combatWindow->restoreSize();
@@ -1815,7 +1822,16 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    QAccel *accel = new QAccel(this);
    accel->connectItem( accel->insertItem(CTRL+ALT+Key_S), this, SLOT(toggle_view_statusbar()));
    accel->connectItem( accel->insertItem(CTRL+ALT+Key_T), this, SLOT(toggle_view_menubar()));
-   
+
+   // load in the docking preferences if any have been saved
+   QString dockPrefs = pSEQPrefs->getPrefString("DockingInfo", section, 
+						QString());
+   if (!dockPrefs.isEmpty())
+   {
+     QTextStream ts(&dockPrefs, IO_ReadOnly);
+     ts >> *this;
+   }
+
    // Set main window title
    // TODO: Add % replacement values and a signal to update, for ip address currently
    // TODO: being monitored.
@@ -2537,27 +2553,47 @@ void
 EQInterface::savePrefs(void)
 {
    printf("==> EQInterface::savePrefs()\n");
-   if( isVisible() ) {
+   
+   if( isVisible() ) 
+   {
      QString section;
      QString interfaceSection = "Interface";
      QString tempStr;
 
-      // send savePrefs signal out
-      emit saveAllPrefs();
+     QString dockPrefs;
+     QTextStream ts(&dockPrefs, IO_WriteOnly);
 
-      section = "Interface";
-      if (pSEQPrefs->getPrefBool("SavePosition", interfaceSection, true)) 
-      {
-	pSEQPrefs->setPrefPoint("WindowPos", section, 
-			      topLevelWidget()->pos());
-	pSEQPrefs->setPrefSize("WindowSize", section, 
-			       topLevelWidget()->size());
-      }
+     ts << *this;
 
-      // save prefs to file
-      pSEQPrefs->save();
+     pSEQPrefs->setPrefString("DockingInfo", interfaceSection, dockPrefs);
+
+     // send savePrefs signal out
+     emit saveAllPrefs();
+     
+     section = "Interface";
+     if (pSEQPrefs->getPrefBool("SavePosition", interfaceSection, true)) 
+     {
+       pSEQPrefs->setPrefPoint("WindowPos", section, 
+			       topLevelWidget()->pos());
+       pSEQPrefs->setPrefSize("WindowSize", section, 
+			      topLevelWidget()->size());
+     }
+     
+     // save prefs to file
+     pSEQPrefs->save();
    }
 } // end savePrefs
+
+void EQInterface::saveDockAreaPrefs(QDockArea* a, Dock edge)
+{
+  QPtrList<QDockWindow> l = a->dockWindowList();
+  for (QDockWindow *dw = l.first(); dw; dw = l.next())
+  {
+    if (dw->inherits("SEQWindow"))
+      pSEQPrefs->setPrefInt("Dock", ((SEQWindow*)dw)->preferenceName(), edge);
+  }
+}
+
 
 void EQInterface::setCaption(const QString& text)
 {
@@ -2578,12 +2614,6 @@ void EQInterface::loadFormatStrings()
 
   // load the strings
   m_eqStrings->load(fileInfo.absFilePath());
-}
-
-/* Capture resize events and reset the geometry */
-void
-EQInterface::resizeEvent (QResizeEvent *e)
-{
 }
 
 void
@@ -4767,7 +4797,10 @@ void EQInterface::showMap(int i)
 			    mapName, 
 			    NULL);
 
-    addDockWindow(m_map[i], Right, false);
+
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", m_map[i]->preferenceName(),
+					    Left);
+    addDockWindow(m_map[i], mapName, edge, true);
     if (!m_isMapDocked[i])
       m_map[i]->undock();
 
@@ -4790,8 +4823,7 @@ void EQInterface::showMap(int i)
     m_map[i]->restoreSize();
 
     // restore it's position if necessary and practical
-    if (!m_isMapDocked[i] && 
-	pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
+    if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
       m_map[i]->restorePosition();
   }
       
@@ -4818,7 +4850,10 @@ void EQInterface::showMessageWindow(int i)
     m_messageWindow[i] = new MessageWindow(m_messages, prefName, caption,
 					   NULL, name);
 
-    addDockWindow(m_messageWindow[i], Bottom, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_messageWindow[i]->preferenceName(),
+					    Left);
+    addDockWindow(m_messageWindow[i], edge, false);
     if (!m_isMessageWindowDocked[i])
       m_messageWindow[i]->undock();
 
@@ -4830,8 +4865,7 @@ void EQInterface::showMessageWindow(int i)
     m_messageWindow[i]->restoreSize();
 
     // restore it's position if necessary and practical
-    if (!m_isMessageWindowDocked[i] && 
-	pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
+    if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
       m_messageWindow[i]->restorePosition();
   }
       
@@ -4846,7 +4880,10 @@ void EQInterface::showSpawnList(void)
   {
     m_spawnList = new SpawnListWindow (m_player, m_spawnShell, m_categoryMgr,
 				       NULL, "spawnlist");
-    addDockWindow(m_spawnList, Left, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_spawnList->preferenceName(),
+					    Left);
+    addDockWindow(m_spawnList, edge, false);
     if (m_isSpawnListDocked)
       m_spawnList->undock();
 
@@ -4884,7 +4921,10 @@ void EQInterface::showSpawnList2(void)
     m_spawnList2 = new SpawnListWindow2(m_player, m_spawnShell, 
 					m_categoryMgr,
 					NULL, "spawnlist");
-    addDockWindow(m_spawnList2, Left, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_spawnList2->preferenceName(),
+					    Left);
+    addDockWindow(m_spawnList2, edge, false);
     if (!m_isSpawnList2Docked)
       m_spawnList2->undock();
 
@@ -4921,7 +4961,11 @@ void EQInterface::showSpawnPointList(void)
   {
       m_spawnPointList = new SpawnPointWindow(m_spawnMonitor,
 					      NULL, "spawnlist");
-      addDockWindow(m_spawnPointList, Left, false);
+      Dock edge = 
+	(Dock)pSEQPrefs->getPrefInt("Dock", 
+				    m_spawnPointList->preferenceName(),
+				    Left);
+      addDockWindow(m_spawnPointList, edge, false);
       if (!m_isSpawnPointListDocked)
 	m_spawnPointList->undock();
 
@@ -4951,7 +4995,10 @@ void EQInterface::showStatList(void)
   if (m_statList == NULL)
   {
     m_statList = new StatListWindow(m_player, NULL, "stats");
-    addDockWindow(m_statList, Left, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_statList->preferenceName(),
+					    Left);
+    addDockWindow(m_statList, edge, false);
     if (!m_isStatListDocked)
       m_statList->undock();
 
@@ -4981,7 +5028,10 @@ void EQInterface::showSkillList(void)
   if (m_skillList == NULL)
   {
     m_skillList = new SkillListWindow(m_player, NULL, "skills");
-    addDockWindow(m_skillList, Left, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_skillList->preferenceName(),
+					    Left);
+    addDockWindow(m_skillList, edge, false);
     if (!m_isSkillListDocked)
       m_skillList->undock();
 
@@ -5011,7 +5061,10 @@ void EQInterface::showSpellList(void)
   if (m_spellList == NULL)
   {
     m_spellList = new SpellListWindow(m_spellShell, this, "spelllist");
-    addDockWindow(m_spellList, Left, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_spellList->preferenceName(),
+					    Left);
+    addDockWindow(m_spellList, edge, false);
     if (!m_isSpellListDocked)
       m_spellList->undock();
 
@@ -5051,7 +5104,10 @@ void EQInterface::showCompass(void)
   if (m_compass == NULL)
   {
     m_compass = new CompassFrame(m_player, NULL, "compass");
-    addDockWindow(m_compass, Left, false);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_compass->preferenceName(),
+					    Left);
+    addDockWindow(m_compass, edge, false);
     if (!m_isCompassDocked)
       m_compass->undock();
 
@@ -5079,7 +5135,10 @@ void EQInterface::showNetDiag()
   if (m_netDiag == NULL)
   {
     m_netDiag = new NetDiag(m_packet, NULL, "NetDiag");
-    addDockWindow(m_netDiag, Bottom, true);
+    Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
+					    m_netDiag->preferenceName(),
+					    Bottom);
+    addDockWindow(m_netDiag, edge, true);
     m_netDiag->undock();
 
     connect(this, SIGNAL(restoreFonts(void)),
