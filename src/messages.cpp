@@ -68,6 +68,7 @@ Messages::Messages(DateTimeMgr* dateTimeMgr, QObject* parent,
   m_messageTypeStrings[MT_Inspect] = "Inspect";
   m_messageTypeStrings[MT_Alert] = "Alert";
   m_messageTypeStrings[MT_Player] = "Player";
+  m_messageTypeStrings[MT_Consider] = "Consider";
 }
 
 Messages::~Messages()

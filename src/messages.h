@@ -55,7 +55,8 @@ enum MessageType
   MT_Inspect,
   MT_Alert,
   MT_Player,
-  MT_Max = MT_Player,
+  MT_Consider,
+  MT_Max = MT_Consider,
 };
 
 //----------------------------------------------------------------------

@@ -588,3 +588,154 @@ void MessageShell::groupDelete(const uint8_t* data)
 		   gmem->membername, gmem->yourname);
   m_messages->addMessage(MT_Group, tempStr);
 }
+
+void MessageShell::player(const uint8_t* data)
+{
+  const charProfileStruct* player = (const charProfileStruct*)data;
+  QString message;
+
+  message.sprintf("Name: '%s' Last: '%s'\n", 
+		  player->name, player->lastName);
+  m_messages->addMessage(MT_Player, message);
+  
+  message.sprintf("Level: %d\n", player->level);
+  m_messages->addMessage(MT_Player, message);
+  
+  message.sprintf("PlayerMoney: P=%d G=%d S=%d C=%d\n",
+		 player->platinum, player->gold, 
+		 player->silver, player->copper);
+  m_messages->addMessage(MT_Player, message);
+  
+  message.sprintf("BankMoney: P=%d G=%d S=%d C=%d\n",
+		  player->platinum_bank, player->gold_bank, 
+		  player->silver_bank, player->copper_bank);
+  m_messages->addMessage(MT_Player, message);
+
+  message.sprintf("CursorMoney: P=%d G=%d S=%d C=%d\n",
+		  player->platinum_cursor, player->gold_cursor, 
+		  player->silver_cursor, player->copper_cursor);
+  m_messages->addMessage(MT_Player, message);
+
+  message.sprintf("SharedMoney: P=%d\n",
+		  player->platinum_shared);
+  m_messages->addMessage(MT_Player, message);
+
+  message = "Player: Exp =" + Commanate(player->exp);
+  m_messages->addMessage(MT_Player, message);
+
+  message = "Player: ExpAA =" + Commanate(player->altexp);
+  m_messages->addMessage(MT_Player, message);
+
+  int buffnumber;
+  for (buffnumber=0;buffnumber<15;buffnumber++)
+  {
+    if (player->buffs[buffnumber].spellid && player->buffs[buffnumber].duration)
+    {
+      message.sprintf("You have buff %s duration left is %d in ticks.\n",
+		      (const char*)spell_name(player->buffs[buffnumber].spellid),
+		      player->buffs[buffnumber].duration);
+      m_messages->addMessage(MT_Player, message);
+    }
+  }
+}
+
+void MessageShell::increaseSkill(const uint8_t* data)
+{
+  const skillIncStruct* skilli = (const skillIncStruct*)data;
+  QString tempStr;
+  tempStr.sprintf("Skill: %s has increased (%d)",
+		  (const char*)skill_name(skilli->skillId),
+		  skilli->value);
+  m_messages->addMessage(MT_Player, tempStr);
+}
+
+void MessageShell::updateLevel(const uint8_t* data)
+{
+  const levelUpUpdateStruct *levelup = (const levelUpUpdateStruct *)data;
+  QString tempStr;
+  tempStr.sprintf("Player: NewLevel: %d\n", levelup->level);
+  m_messages->addMessage(MT_Player, tempStr);
+}
+  
+
+
+void MessageShell::consMessage(const uint8_t* data, size_t, uint8_t dir) 
+{
+  const considerStruct * con = (const considerStruct*)data;
+  const Item* item;
+
+  QString lvl("");
+  QString hps("");
+  QString cn("");
+  QString deity;
+
+  QString msg("Your faction standing with ");
+
+  // is it you that you've conned?
+  if (con->playerid == con->targetid) 
+  {
+    deity = m_player->deityName();
+    
+    // well, this is You
+    msg += m_player->name();
+  }
+  else 
+  {
+    // find the spawn if it exists
+    item = m_spawnShell->findID(tSpawn, con->targetid);
+    
+    // has the spawn been seen before?
+    if (item != NULL)
+    {
+      Spawn* spawn = (Spawn*)item;
+
+      // yes
+      deity = spawn->deityName();
+
+      msg += item->name();
+    } // end if spawn found
+    else
+      msg += "Spawn:" + QString::number(con->targetid, 16);
+  } // else not yourself
+  
+  switch (con->level) 
+  {
+  case 0:
+    msg += " (even)";
+    break;
+  case 2:
+    msg += " (green)";
+    break;
+  case 4:
+    msg += " (blue)";
+    break;
+  case 13:
+    msg += " (red)";
+    break;
+  case 15:
+    msg += " (yellow)";
+    break;
+  case 18:
+    msg += " (cyan)";
+    break;
+  default:
+    msg += " (unknown: " + QString::number(con->level) + ")";
+    break;
+  }
+
+  if (!deity.isEmpty())
+    msg += QString(" [") + deity + "]";
+
+  if (con->maxHp || con->curHp)
+  {
+    lvl.sprintf(" (%i/%i HP)", con->curHp, con->maxHp);
+    msg += lvl;
+  }
+  
+  msg += QString(" is: ") + print_faction(con->faction) + " (" 
+    + QString::number(con->faction) + ")!";
+
+  m_messages->addMessage(MT_Consider, msg);
+} // end consMessage()
+
+

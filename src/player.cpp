@@ -108,34 +108,6 @@ void Player::player(const uint8_t* data)
   const charProfileStruct* player = (const charProfileStruct*)data;
   QString messag;
 
-  printf("Player::backfill():\n");
-
-  messag.sprintf("Player: Name: '%s' Last: '%s'\n", 
- 		 player->name, player->lastName);
-  emit msgReceived(messag);
-  
-  messag.sprintf("Player: Level: %d\n", player->level);
-  emit msgReceived(messag);
-  
-  messag.sprintf("Player: PlayerMoney: P=%d G=%d S=%d C=%d\n",
-		 player->platinum, player->gold, 
-		 player->silver, player->copper);
-  emit msgReceived(messag);
-  
-  messag.sprintf("Player: BankMoney: P=%d G=%d S=%d C=%d\n",
-		 player->platinum_bank, player->gold_bank, 
-		 player->silver_bank, player->copper_bank);
-  emit msgReceived(messag);
-
-  messag.sprintf("Player: CursorMoney: P=%d G=%d S=%d C=%d\n",
-		 player->platinum_cursor, player->gold_cursor, 
-		 player->silver_cursor, player->copper_cursor);
-  emit msgReceived(messag);
-
-  messag.sprintf("Player: SharedMoney: P=%d\n",
-		player->platinum_shared);
-  emit msgReceived(messag);
-
   // fill in base Spawn class
   // set the characteristics that probably haven't changed.
   setNPC(SPAWN_SELF);
@@ -271,12 +243,6 @@ void Player::player(const uint8_t* data)
   if (showeq_params->savePlayerState)
     savePlayerState();
 
-  messag = "Player: Exp =" + Commanate(player->exp);
-  emit msgReceived(messag);
-
-  messag = "Player: ExpAA =" + Commanate(player->altexp);
-  emit msgReceived(messag);
-
   updateLastChanged();
 
   emit changeItem(this, tSpawnChangedALL);
@@ -292,13 +258,10 @@ void Player::player(const uint8_t* data)
   {
     if (player->buffs[buffnumber].spellid && player->buffs[buffnumber].duration)
     {
-      printf("You have buff %s duration left is %d in ticks.\n",(const char*)spell_name(player->buffs[buffnumber].spellid),player->buffs[buffnumber].duration);
       buff = &(player->buffs[buffnumber]);
       emit buffLoad(buff);
     }
   }
-
-  printf("PLAYERID#%d\n",id());
 }
 
 void Player::clear()
@@ -534,14 +497,6 @@ void Player::increaseSkill(const uint8_t* data)
   // notify others of the new value
   emit changeSkill (skilli->skillId, skilli->value);
 
-  QString tempStr;
-  tempStr.sprintf("Skill: %s has increased (%d)",
-		  (const char*)skill_name(skilli->skillId),
-		  skilli->value);
-
-  emit msgReceived(tempStr);
-  emit stsMessage(tempStr);
-
   if (showeq_params->savePlayerState)
     savePlayerState();
 }
@@ -681,7 +636,6 @@ void Player::updateLevel(const uint8_t* data)
   QString tempStr;
 
   tempStr.sprintf("Player: NewLevel: %d\n", levelup->level);
-  emit msgReceived(tempStr);
   emit stsMessage(tempStr);
   
   totalExp = Commanate(levelup->exp);

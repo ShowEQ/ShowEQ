@@ -77,6 +77,11 @@ class MessageShell : public QObject
 
    void syncDateTime(const QDateTime&);
 
+   void player(const uint8_t* data);
+   void increaseSkill(const uint8_t* data);
+   void updateLevel(const uint8_t* data);
+   void consMessage(const uint8_t* data, size_t, uint8_t dir);
+
  protected:
    Messages* m_messages;
    EQStr* m_eqStrings;
