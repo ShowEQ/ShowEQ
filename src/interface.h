@@ -171,12 +171,14 @@ class EQInterface:public QMainWindow
    void listMapInfo(void);
    void listInterfaceInfo(void);
    void listGroup(void);
+   void listGuild(void);
    void dumpSpawns(void);
    void dumpDrops(void);
    void dumpMapInfo(void);
    void dumpGuildInfo(void);
    void dumpSpellBook(void);
    void dumpGroup(void);
+   void dumpGuild(void);
    void launch_editor_filters(void);
    void launch_editor_zoneFilters(void);
    void toggleAutoDetectPlayerSettings(int id);
