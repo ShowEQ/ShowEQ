@@ -1,0 +1,16 @@
+<!ELEMENT seqfilters (section*) >
+<!ATTLIST seqfilters 
+ version CDATA #IMPLIED>
+
+<!ELEMENT section (property*) >
+<!ATTLIST section name CDATA #REQUIRED>
+
+<!ELEMENT oldfilter (regex, level?)>
+
+<!ELEMENT regex (#PCDATA)>
+
+<!ELEMENT level EMPTY>
+<!ATTLIST level 
+  min CDATA "0"
+  max CDATA "255">
+

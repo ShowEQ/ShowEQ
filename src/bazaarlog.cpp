@@ -7,11 +7,13 @@
  *  Copyright 2003-2004 by the respective ShowEQ Developers
  */
 
-#include <qdatetime.h>
-
 #include "bazaarlog.h"
 #include "spawnshell.h"
 #include "diagnosticmessages.h"
+
+#include <ctype.h>
+
+#include <qdatetime.h>
 
 BazaarLog::BazaarLog(EQPacket& packet, const QString& fname,
 		     QObject* parent, SpawnShell& shell, const char* name)
