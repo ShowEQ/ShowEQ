@@ -283,11 +283,11 @@
         <comment>old MoneyOnCorpseCode</comment>
         <payload dir="server" typename="moneyOnCorpseStruct" sizechecktype="match"/>
     </opcode>
-    <opcode id="0129" name="OP_MoveDoor" updated="02/10/04">
+    <opcode id="0129" name="OP_ClickDoor" updated="02/10/04">
         <comment>old DoorOpenCode</comment>
         <payload dir="both" typename="uint8_t" sizechecktype="none"/>
     </opcode>
-    <opcode id="012a" name="OP_Door" updated="02/10/04">
+    <opcode id="012a" name="OP_MoveDoor" updated="02/10/04">
         <comment>old DoorClickCode</comment>
     </opcode>
     <opcode id="012d" name="OP_Illusion" updated="02/10/04">
@@ -423,7 +423,7 @@
     <opcode id="0191" name="OP_BecomePK" updated="11/05/03">
         <comment></comment>
     </opcode>
-    <opcode id="0178" name="OP_YellForHelp" updated="02/10/04">
+    <opcode id="0193" name="OP_YellForHelp" updated="02/10/04">
         <comment></comment>
     </opcode>
     <opcode id="0198" name="OP_RandomReq" updated="02/10/04">
