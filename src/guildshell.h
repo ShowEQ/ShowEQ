@@ -15,6 +15,8 @@
 #include <qobject.h>
 #include <qdict.h>
 
+//----------------------------------------------------------------------
+// forward declarations
 class QTextStream;
 
 class NetStream;
@@ -22,6 +24,8 @@ class ZoneMgr;
 
 struct GuildMemberUpdate;
 
+//----------------------------------------------------------------------
+// GuildMember
 class GuildMember
 {
  public:
@@ -52,9 +56,13 @@ class GuildMember
   uint16_t m_zoneInstance;
 };
 
+//----------------------------------------------------------------------
+// GuildMemberDict
 typedef QDict<GuildMember> GuildMemberDict;
 typedef QDictIterator<GuildMember> GuildMemberDictIterator;
 
+//----------------------------------------------------------------------
+// GuildShell
 class GuildShell : public QObject
 {
   Q_OBJECT
@@ -65,23 +73,24 @@ class GuildShell : public QObject
   size_t maxNameLength() { return m_maxNameLength; }
 
   void dumpMembers(QTextStream& out);
+  
+  QString zoneString(uint16_t zoneid) const;
 
-  public slots:
-    void guildMemberList(const uint8_t* data, size_t len);
-    void guildMemberUpdate(const uint8_t* data, size_t len);
+ public slots:
+  void guildMemberList(const uint8_t* data, size_t len);
+  void guildMemberUpdate(const uint8_t* data, size_t len);
 
  signals:
-    void cleared();
-    void loaded();
-    void added(const GuildMember* gm);
-    void removed(const GuildMember* gm);
-    void updated(const GuildMember* gm);
+  void cleared();
+  void loaded();
+  void added(const GuildMember* gm);
+  void removed(const GuildMember* gm);
+  void updated(const GuildMember* gm);
 
  protected:
-    QString zoneString(uint16_t zoneid);
 
-    GuildMemberDict m_members;
-    size_t m_maxNameLength;
-    ZoneMgr* m_zoneMgr;
+  GuildMemberDict m_members;
+  size_t m_maxNameLength;
+  ZoneMgr* m_zoneMgr;
 };
 
