@@ -1701,17 +1701,22 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
      connect(m_dateTimeMgr, SIGNAL(syncDateTime(const QDateTime&)),
 	     m_messageShell, SLOT(syncDateTime(const QDateTime&)));
+
+     m_packet->connect2("OP_GroupUpdate", SP_Zone, DIR_Server,
+			"groupUpdateStruct", SZC_None,
+			m_messageShell, SLOT(groupUpdate(const uint8_t*, size_t, uint8_t)));
+     m_packet->connect2("OP_GroupInvite", SP_Zone, DIR_Server|DIR_Client,
+			"groupInviteStruct", SZC_Match,
+			m_messageShell, SLOT(groupInvite(const uint8_t*)));
+     m_packet->connect2("OP_GroupFollow", SP_Zone, DIR_Server|DIR_Client,
+			"groupFollowStruct", SZC_Match,
+			m_messageShell, SLOT(groupFollow(const uint8_t*)));
+     m_packet->connect2("OP_GroupDisband", SP_Zone, DIR_Server|DIR_Client,
+			"groupDisbandStruct", SZC_Match,
+			m_messageShell, SLOT(groupDisband(const uint8_t*, size_t, uint8_t)));
 #if 0 // ZBTEMP
-     connect(m_packet, SIGNAL(groupInfo(const uint8_t*, size_t, uint8_t)),
-	     m_messageShell, SLOT(groupInfo(const uint8_t*)));
-     connect(m_packet, SIGNAL(groupInvite(const uint8_t*, size_t, uint8_t)),
-	     m_messageShell, SLOT(groupInvite(const uint8_t*)));
      connect(m_packet, SIGNAL(groupDecline(const uint8_t*, size_t, uint8_t)),
 	     m_messageShell, SLOT(groupDecline(const uint8_t*)));
-     connect(m_packet, SIGNAL(groupAccept(const uint8_t*, size_t, uint8_t)),
-	     m_messageShell, SLOT(groupAccept(const uint8_t*)));
-     connect(m_packet, SIGNAL(groupDelete(const uint8_t*, size_t, uint8_t)),
-	     m_messageShell, SLOT(groupDelete(const uint8_t*)));
 #endif // ZBTEMP
    }
 
@@ -3680,10 +3685,14 @@ void EQInterface::toggle_opcode_log(int id)
   bool state = !pSEQPrefs->getPrefBool("Log", section, false);
 
   if (m_opcodeMonitorLog)
+  {
     m_opcodeMonitorLog->setLog(state);
 
+    state = m_opcodeMonitorLog->log();
+  }
+
   menuBar()->setItemChecked (id, state);
-  pSEQPrefs->setPrefBool("logs", section, state);
+  pSEQPrefs->setPrefBool("Log", section, state);
 }
 
 void EQInterface::toggle_opcode_view(int id)
