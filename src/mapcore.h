@@ -553,6 +553,8 @@ class MapData
   void setZoneLongName(const QString& name) { m_zoneShortName = name; }
   void setZoneShortName(const QString& name) { m_zoneLongName = name; }
   void setZoneZEM(uint8_t zem) { m_zoneZEM = zem; }
+  void scaleDownZ(int16_t factor);
+  void scaleUpZ(int16_t factor);
 
   // map painting
   void paintGrid(MapParameters& param, QPainter& p) const;
@@ -664,6 +666,7 @@ class MapCache
 
   // set methods
   void setAlwaysRepaint(bool val) { m_alwaysRepaint = val; }
+  void forceRepaint() { m_painted = false; }
   
  private:
   const MapData& m_mapData;

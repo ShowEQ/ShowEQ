@@ -460,10 +460,6 @@ void MapData::loadMap(const QString& fileName, bool import)
   MapLineL* currentLineL = NULL;
   MapLineM* currentLineM = NULL;
 
-  // if the same map is already loaded, don't reload it.
-  if (m_mapLoaded && (m_fileName.lower() == fileName.lower()))
-    return;
-
   // set the map filename
   setFileName(fileName);
 
@@ -1511,6 +1507,68 @@ void MapData::setLineColor(const QString& color)
 
   // set the line color
   m_editLineM->setColor(color);
+}
+
+void MapData::scaleDownZ(int16_t factor)
+{
+  // first scale down the L lines
+  MapLineL* currentLineL;
+  QPtrListIterator<MapLineL> mlit(m_lLines);
+  for (currentLineL = mlit.toFirst(); 
+       currentLineL != NULL; 
+       currentLineL = ++mlit)
+    currentLineL->setZPos(currentLineL->z() / factor);
+
+  // finish off by scaling down the M lines
+  MapLineM* currentLineM;
+  MapPoint* mData;
+  size_t numPoints;
+  size_t i;
+  QPtrListIterator<MapLineM> mmit(m_mLines);
+  for (currentLineM = mmit.toFirst(); 
+       currentLineM; 
+       currentLineM = ++mmit)
+  {
+    // get the number of points in the line
+    numPoints = currentLineM->size();
+    
+    // get the underlying array
+    mData = currentLineM->data();
+
+    for (i = 0; i < numPoints; i++)
+      mData[i].setZPos(mData[i].z() / factor);
+  }
+}
+
+void MapData::scaleUpZ(int16_t factor)
+{
+  // first scale down the L lines
+  MapLineL* currentLineL;
+  QPtrListIterator<MapLineL> mlit(m_lLines);
+  for (currentLineL = mlit.toFirst(); 
+       currentLineL != NULL; 
+       currentLineL = ++mlit)
+    currentLineL->setZPos(currentLineL->z() * factor);
+
+  // finish off by scaling down the M lines
+  MapLineM* currentLineM;
+  MapPoint* mData;
+  size_t numPoints;
+  size_t i;
+  QPtrListIterator<MapLineM> mmit(m_mLines);
+  for (currentLineM = mmit.toFirst(); 
+       currentLineM; 
+       currentLineM = ++mmit)
+  {
+    // get the number of points in the line
+    numPoints = currentLineM->size();
+    
+    // get the underlying array
+    mData = currentLineM->data();
+
+    for (i = 0; i < numPoints; i++)
+      mData[i].setZPos(mData[i].z() * factor);
+  }
 }
 
 void MapData::paintGrid(MapParameters& param, QPainter& p) const

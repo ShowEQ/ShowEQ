@@ -17,8 +17,6 @@ A full "to do" list is maintained on SourceForge
  + Support display of zone safepoint (from zone packet)
  + Support map editing
  + Support simple map optimization
- + Support rescaling the Z for a whole map to allow migration of old/borked 
-   maps.
 + New message storage, filtering, and UI.
 + Support for LoY guild information capture/display.
 + Redo the base UI so that it is loaded from a QT .ui file to make it easier
