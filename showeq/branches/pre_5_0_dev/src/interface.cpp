@@ -208,7 +208,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
 #if 1 // ZBTEMP
    // just create the message window
-   m_messageWindow = new MessageWindow(m_messages, "MessageWindow", 
+   m_messageWindow = new MessageWindow(m_messages, "MessageWindow1", 
 				       "Message Window",
 				       NULL, "messagewindow");
    addDockWindow(m_messageWindow, Bottom, false);

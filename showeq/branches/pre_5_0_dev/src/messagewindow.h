@@ -59,8 +59,16 @@ class MessageWindow : public SEQWindow
   void toggleEQDisplayTime(int);
   void toggleUseColor(int);
   void toggleWrapText(int);
+  void setTypeColor(int);
+  void setTypeBGColor(int);
+  void setColor();
+  void setBGColor();
+  void setFont();
+  void setCaption();
+  virtual void restoreFont();
 
   void mousePressEvent(QMouseEvent* e);
+  void clicked(int para, int pos);
 
  protected:
   Messages* m_messages;
@@ -69,6 +77,7 @@ class MessageWindow : public SEQWindow
   MessageBrowser* m_messageWindow;
   uint32_t m_enabledTypes;
   QColor m_defaultColor;
+  QColor m_defaultBGColor;
   QString m_dateTimeFormat;
   QString m_eqDateTimeFormat;
   bool m_lockedText;
@@ -77,6 +86,8 @@ class MessageWindow : public SEQWindow
   bool m_displayEQDateTime;
   bool m_useColor;
   bool m_wrapText;
+  QColor* m_typeColors;
+  QColor* m_typeBGColors;
 };
 
 #endif // _MESSAGEWINDOW_H_
