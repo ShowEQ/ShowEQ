@@ -487,3 +487,4 @@ void OPCodeMonitorPacketLog::packet(const uint8_t* data, size_t len,
   }
 }
 
+#include "packetlog.moc"

@@ -223,3 +223,6 @@ EditorWindow::EditorWindow(const char *fileName)
          break;
      }
  }
+
+ #include "editor.moc"
+ 

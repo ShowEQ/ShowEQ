@@ -321,3 +321,5 @@ QString NetDiag::print_addr(in_addr_t  addr)
 
    return paddr;
 }
+
+#include "netdiag.moc"

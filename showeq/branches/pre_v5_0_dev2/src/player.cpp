@@ -1441,3 +1441,5 @@ void Player::restorePlayerState(void)
     clear();
   }
 }
+
+#include "player.moc"

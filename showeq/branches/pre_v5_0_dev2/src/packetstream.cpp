@@ -835,3 +835,5 @@ void EQPacketStream::handlePacket(EQUDPIPPacketFormat& packet)
        processCache();
   } /* end ARQ processing */
 }
+
+#include "packetstream.moc"

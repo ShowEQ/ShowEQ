@@ -6065,3 +6065,4 @@ void EQInterface::setDockEnabled(QDockWindow* dw, bool enable)
   QMainWindow::setDockEnabled(dw, DockRight, enable);
 }
 
+#include "interface.moc"
