@@ -8,12 +8,10 @@
 #include "spawnshell.h"
 #include "filtermgr.h"
 #include "player.h"
-#include "packet.h"
 
 SpawnListWindow2::SpawnListWindow2(Player* player, 
 				   SpawnShell* spawnShell,
 				   CategoryMgr* categoryMgr,
-				   EQPacket* packet,
 				   QWidget* parent, const char* name)
   : SEQWindow("SpawnList2", "ShowEQ - Spawns", parent, name),
     m_player(player),
@@ -42,7 +40,8 @@ SpawnListWindow2::SpawnListWindow2(Player* player,
   int fpm = pSEQPrefs->getPrefInt("FPM", preferenceName(), 10);
   m_delay = 60000L / fpm;
 
-  QVBoxLayout* vLayout = new QVBoxLayout(this);
+  //QVBoxLayout* vLayout = new QVBoxLayout(this);
+  QBoxLayout* vLayout = new QVBoxLayout(boxLayout());
   QHBoxLayout* hLayout= new QHBoxLayout(vLayout);
 
   // create the spawn list combo box
@@ -760,7 +759,7 @@ void SpawnListWindow2::mouseDoubleClickEvent(QListViewItem* litem)
 
   const Item* item = ((SpawnListItem*)litem)->item();
   if (item != NULL)
-    printf("%s\n",(const char*)item->filterString());
+    printf("%s\n",(const char*)filterString(item));
 }
 
 

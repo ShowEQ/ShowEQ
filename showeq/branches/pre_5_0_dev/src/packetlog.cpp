@@ -12,6 +12,7 @@
 
 #include "packetlog.h"
 #include "packetformat.h"
+#include "packetinfo.h"
 #include "decode.h"
 
 PacketLog::PacketLog(EQPacket& packet, const QString& fname, 
@@ -103,11 +104,11 @@ void PacketLog::logData (const uint8_t* data,
 }
 
 /* Logs packet data in a human-readable format */
-void PacketLog::logData (const uint8_t* data,
-			 size_t       len,
-			 uint8_t        dir,
-			 uint16_t       opcode,
-			 const QString& origPrefix)
+void PacketLog::logData(const uint8_t* data,
+			size_t len,
+			uint8_t dir,
+			uint16_t opcode,
+			const QString& origPrefix)
 {
   if (!open())
     return;
@@ -120,11 +121,76 @@ void PacketLog::logData (const uint8_t* data,
     m_out << origPrefix << " ";
   
   // data direction and size
-  m_out << ((dir == DIR_SERVER) ? "[Server->Client] " : "[Client->Server] ")
+  m_out << ((dir == DIR_Server) ? "[Server->Client] " : "[Client->Server] ")
       << "[Size: " << QString::number(len) << "]" << endl;
 
   // output opcode info
   m_out << opCodeToString(opcode) << endl;
+
+  flush();
+
+  // make sure there is a len before attempting to output it
+  if (len)
+    outputData(len, data);
+  else
+    m_out << endl;
+
+  flush();
+}
+
+/* Logs packet data in a human-readable format */
+void PacketLog::logData(const uint8_t* data,
+			size_t len,
+			uint8_t dir,
+			uint16_t opcode,
+			const EQPacketOPCode* opcodeEntry,
+			const QString& origPrefix)
+{
+  if (!open())
+    return;
+
+  // timestamp
+  m_out << QDateTime::currentDateTime().toString(m_timeDateFormat) << " ";
+
+  // append direction and opcode information
+  if (!origPrefix.isEmpty())
+    m_out << origPrefix << " ";
+  
+  // data direction and size
+  m_out << ((dir == DIR_Server) ? "[Server->Client] " : "[Client->Server] ")
+      << "[Size: " << QString::number(len) << "]" << endl;
+
+  // output opcode info
+  m_out << opCodeToString(opcode) << endl;
+
+  if (opcodeEntry)
+  {
+    m_out << "[Name: " << opcodeEntry->name() << "][Updated: " 
+	  << opcodeEntry->updated() << "]";
+    const EQPacketPayload* payload = opcodeEntry->find(data, len, dir);
+    if (payload)
+    {
+      m_out << "[Type: " << payload->typeName() << " (" 
+	    << payload->typeSize() << ")";
+      switch (payload->sizeCheckType())
+      {
+      case SZC_Match:
+	m_out << " ==]";
+	break;
+      case SZC_Modulus:
+	m_out << " %]";
+	break;
+      case SZC_None:
+	m_out << " nc]";
+	break;
+      default:
+	m_out << " " << payload->sizeCheckType() << "]";
+	break;
+      }
+    }
+
+    m_out  << endl;
+  }
 
   flush();
 
@@ -166,7 +232,7 @@ void PacketLog::logData(const EQUDPIPPacketFormat& packet)
   if (packet.payloadLength() >= 2)
   {
     QString tempStr;
-    uint16_t opcode = eqntohuint16(packet.payload());
+    uint16_t opcode = *(uint16_t*)(packet.payload());
     m_out << opCodeToString(opcode) << endl;
 
 #ifdef PACKET_PEDANTIC
@@ -198,7 +264,7 @@ void PacketLog::printData(const uint8_t* data, size_t len, uint8_t dir,
     ::putchar('\n');
   
   ::printf("%s [Size: %d]%s\n",
-	   ((dir == DIR_SERVER) ? "[Server->Client]" : "[Client->Server]"),
+	   ((dir == DIR_Server) ? "[Server->Client]" : "[Client->Server]"),
 	   len, (const char*)opCodeToString(opcode));
 
   if (len)
@@ -257,9 +323,10 @@ void PacketStreamLog::rawStreamPacket(const uint8_t* data, size_t len,
 }
 
 void PacketStreamLog::decodedStreamPacket(const uint8_t* data, size_t len, 
-				     uint8_t dir, uint16_t opcode)
+					  uint8_t dir, uint16_t opcode, 
+					  const EQPacketOPCode* opcodeEntry)
 {
-  logData(data, len, dir, opcode, "[Decoded]");
+  logData(data, len, dir, opcode, opcodeEntry, "[Decoded]");
 }
 
 /////////////////////////////////////
@@ -272,11 +339,12 @@ UnknownPacketLog::UnknownPacketLog(EQPacket& packet, const QString& fname,
 }
 
 void UnknownPacketLog::packet(const uint8_t* data, size_t len, uint8_t dir, 
-			      uint16_t opcode, bool unknown)
+			      uint16_t opcode, 
+			      const EQPacketOPCode* opcodeEntry, bool unknown)
 {
   if (unknown)
   {
-    logData(data, len, dir, opcode);
+    logData(data, len, dir, opcode, opcodeEntry);
    
     if (m_view)
       printData(data, len, dir, opcode, "Unknown");
@@ -382,7 +450,9 @@ void OPCodeMonitorPacketLog::init(QString monitoredOPCodes)
 }
 
 void OPCodeMonitorPacketLog::packet(const uint8_t* data, size_t len, 
-				    uint8_t dir, uint16_t opcode, bool unknown)
+				    uint8_t dir, uint16_t opcode, 
+				    const EQPacketOPCode* opcodeEntry, 
+				    bool unknown)
 {
   unsigned int uiOpCodeIndex = 0;
   unsigned int uiIndex = 0;
@@ -409,7 +479,7 @@ void OPCodeMonitorPacketLog::packet(const uint8_t* data, size_t len,
       printData(data, len, dir, opcode, opCodeName);
     
     if (m_log)
-      logData(data, len, dir, opcode, opCodeName);
+      logData(data, len, dir, opcode, opcodeEntry,opCodeName);
   }
 }
 

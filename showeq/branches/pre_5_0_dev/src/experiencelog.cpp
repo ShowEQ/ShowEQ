@@ -5,11 +5,6 @@
  *  http://www.sourceforge.net/projects/seq
  */
 
-#include <qgrid.h>
-#include <qtimer.h>
-#include <qhbox.h>
-#include <qvgroupbox.h>
-#include <qmessagebox.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -19,6 +14,14 @@
 #include "util.h"
 #include "group.h"
 #include "player.h"
+#include "datalocationmgr.h"
+
+#include <qgrid.h>
+#include <qtimer.h>
+#include <qhbox.h>
+#include <qvgroupbox.h>
+#include <qmessagebox.h>
+#include <qfileinfo.h>
 
 #define DEBUGEXP
 
@@ -134,14 +137,15 @@ const QString &ExperienceRecord::getZoneName() const
 
 ExperienceWindow::~ExperienceWindow() 
 {
-
-   if (logfd > -1)
-     ::close(logfd);
+  if (m_log)
+    ::fclose(m_log);
 }
 
-ExperienceWindow::ExperienceWindow( Player* player, GroupMgr* groupMgr,
-				    QWidget* parent, const char* name) 
+ExperienceWindow::ExperienceWindow(DataLocationMgr* dataLocMgr, 
+				   Player* player, GroupMgr* groupMgr,
+				   QWidget* parent, const char* name) 
   : SEQWindow("Experience", "ShowEQ - Experience", parent, name),
+    m_dataLocMgr(dataLocMgr),
     m_player(player),
     m_group(groupMgr)
 {
@@ -183,7 +187,7 @@ ExperienceWindow::ExperienceWindow( Player* player, GroupMgr* groupMgr,
    m_menu_bar = new QMenuBar( this );
    m_menu_bar->insertItem( "&View", m_view_menu );
 
-   m_layout = new QVBoxLayout( this );
+   m_layout = new QVBoxLayout(boxLayout());
    m_layout->addSpacing( m_menu_bar->height() + 5 );
 
    QGroupBox *listGBox = new QVGroupBox( "Experience Log", this );
@@ -250,20 +254,18 @@ ExperienceWindow::ExperienceWindow( Player* player, GroupMgr* groupMgr,
    connect( timer, SIGNAL(timeout()), SLOT(updateAverage()));
    timer->start(15*1000); // calculate every 15 seconds
 
-//   setMinimumSize( sizeHint() );
+   QFileInfo fileInfo = m_dataLocMgr->findWriteFile("logs", "exp.log");
 
-   logfd = open(LOGDIR "/exp.log", O_RDWR | O_CREAT | O_APPEND);
-   if (logfd < 0)
+   m_log = fopen(fileInfo.absFilePath(), "a");
+   if (m_log == 0)
    {
       m_log_exp = 0;
       printf("Error opening exp.log, no exp will be logged this session\n");
    }
-   else
-   {
-      m_log_exp = 1;
-      logstr = fdopen(logfd, "a");
-   }
 
+   fileInfo = m_dataLocMgr->findWriteFile("logs", "newexp.log");
+
+   m_newExpLogFile = fileInfo.absFilePath();
 }
 
 void ExperienceWindow::savePrefs()
@@ -339,7 +341,7 @@ void ExperienceWindow::addExpRecord(const QString &mob_name,
    FILE* newlogfp = NULL;
 
    // open the file for append
-   newlogfp = fopen(LOGDIR "/newexp.log", "a");
+   newlogfp = fopen(m_newExpLogFile, "a");
 
    if (newlogfp != NULL)
    {   
@@ -632,19 +634,19 @@ void ExperienceWindow::viewClear()
 
 void ExperienceWindow::logexp(long xp_gained, int mob_level) 
 {
-   if (!m_log_exp || logstr == NULL) /* sanity */
+   if (!m_log_exp || (!m_log)) /* sanity */
       return;
 
-   fprintf(logstr, "1 %d %d %ld %d %d %d", 
+   fprintf(m_log, "1 %d %d %ld %d %d %d", 
 	   (int)time(NULL), mob_level, 
       xp_gained, m_player->level(), 
       m_player->classVal(), m_group->groupSize());
 
    for (int i=0; i < m_group->groupSize(); i++)
-      fprintf(logstr, " %d", m_group->memberBySlot(i)->level());
+      fprintf(m_log, " %d", m_group->memberBySlot(i)->level());
 
-   fprintf(logstr, "\n"); 
-   fflush(logstr); /* some people like to tail -f and see live data :) */
+   fprintf(m_log, "\n"); 
+   fflush(m_log); /* some people like to tail -f and see live data :) */
 }
 
 void ExperienceWindow::calculateZEM(long xp_gained, int mob_level) 

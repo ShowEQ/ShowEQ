@@ -17,6 +17,29 @@
 #include "util.h"
 #include "main.h"
 
+#ifdef __FreeBSD__
+long int lroundf(float x)
+  //closest int away from 0
+{
+  if (x < 0)
+    return -lrint(-x);
+  else
+    return lrint(x);
+}
+
+long int lrint(double x)
+{
+  long int l=(long int)(x+.5);
+  return l;
+}
+
+long int lrintf(float x)
+{
+  return lrint(x);
+}
+#endif
+
+
 struct spellInfoStruct 
 {
   const char* name;
@@ -172,39 +195,6 @@ void spawndb (const dbSpawnStruct *dbSpawn)
          puts("Error opening spawn file '" SPAWNFILE "'");
       }
    }
-}
-
-void petdb(const petStruct *spawn)
-{
-   FILE *pdb;
-   struct petStruct s;
-   int found=0;
-
-   if ((pdb = fopen (LOGDIR "/pet.db", "r")) != NULL)
-   {
-      while (fread (&s, sizeof(petStruct), 1, pdb))
-      {
-	 // Unique on owner class, owner level and pet level
-	 if ((spawn->owner.class_==s.owner.class_) && 
-	     (spawn->owner.level==s.owner.level) &&
-	     (spawn->pet.level==s.pet.level))
-	 {
-	    found=1;
-	    break;
-	 }
-      }
-
-      fclose (pdb);
-   }
-
-   if (!found)
-   {
-      if ((pdb = fopen (LOGDIR "/pet.db", "a")) != NULL)
-      {
-	 fwrite (spawn, sizeof(petStruct), 1, pdb);
-	 fclose (pdb);
-      }
-   }   
 }
 
 QString print_races (uint16_t races)
@@ -1015,31 +1005,4 @@ uint32_t calcCRC32(const uint8_t* p,
   return crc ^ 0xFFFFFFFF;
 }
 
-
-bool findFile( QString& filename )
-{
-  bool                    found = false;
-  
-  QFileInfo               fi( filename );
-  QDir                    dir( fi.dirPath( true ) );
-  QString                 fileLower = fi.fileName().lower();
-  
-  QStringList             dirEntries = dir.entryList();
-  
-  for ( QStringList::Iterator it = dirEntries.begin();
-	it != dirEntries.end();
-	++it )
-  {
-    QString entry( (*it).lower() );
-    if ( entry == fileLower )
-    {
-      filename = fi.dirPath( true );
-      filename += "/";
-      filename += *it;
-      found = true;
-      break;
-    }
-  }
-  return found;
-}
 

@@ -88,7 +88,7 @@ MsgDialog::MsgDialog(QWidget *parent, const char *name,
   qDebug("MsgDialog() '%s' List passed by ref with %d elements", 
        name, list.count());
 #endif
-
+  setCloseMode(QDockWindow::Always);
    m_bScrollLock = FALSE;
    m_nButtons = 0;
    m_nIndent = 5;   // num of spaces to indent wrapped lines
@@ -110,7 +110,7 @@ MsgDialog::MsgDialog(QWidget *parent, const char *name,
    installEventFilter(this);
    
    // top-level layout; a vertical box to contain all widgets and sublayouts
-   QBoxLayout *topLayout = new QVBoxLayout(this);
+   QBoxLayout *topLayout = new QVBoxLayout(boxLayout());
   
    // Make an hbox that will hold the textbox and the row of filterbuttons
    QBoxLayout *middleLayout = new QHBoxLayout(topLayout);

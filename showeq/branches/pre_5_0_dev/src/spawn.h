@@ -36,6 +36,10 @@
 // forward declarations
 class SpawnShell;
 
+struct spawnStruct;
+struct makeDropStruct;
+struct doorStruct;
+
 //----------------------------------------------------------------------
 // enumerated types
 // type of item

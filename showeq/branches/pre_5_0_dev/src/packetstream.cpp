@@ -15,6 +15,7 @@
 #include "decode.h"
 #include "packetstream.h"
 #include "packetformat.h"
+#include "packetinfo.h"
 
 //----------------------------------------------------------------------
 // Macros
@@ -28,6 +29,12 @@
 
 // this define is used to diagnose decompression/decoding 
 //#define PACKET_DECODE_DIAG
+
+// this define is used to debug packet info 
+//#define PACKET_INFO_DIAG
+
+// diagnose structure size changes
+#define PACKET_PAYLOAD_SIZE_DIAG 1
 
 // used to translate EQStreamID to a string for debug and reporting
 static const char* const EQStreamStr[] = {"client-world", "world-client", "client-zone", "zone-client"};
@@ -46,8 +53,11 @@ const int16_t arqSeqWrapCutoff = 1024;
 // Constructor
 EQPacketStream::EQPacketStream(EQStreamID streamid, uint8_t dir, 
 			       uint16_t arqSeqGiveUp,
+			       EQPacketOPCodeDB& opcodeDB, 
 			       QObject* parent, const char* name)
   : QObject(parent, name),
+    m_opcodeDB(opcodeDB),
+    m_dispatchers(61),  // prime number that should be plenty large
     m_streamid(streamid),
     m_dir(dir),
     m_packetCount(0),
@@ -60,6 +70,7 @@ EQPacketStream::EQPacketStream(EQStreamID streamid, uint8_t dir,
     m_decodeKey(0),
     m_validKey(true)
 {
+  m_dispatchers.setAutoDelete(true);
 }
 
 ////////////////////////////////////////////////////
@@ -73,6 +84,77 @@ EQPacketStream::~EQPacketStream()
 	 EQStreamStr[m_streamid], maxServerCacheCount);
 #endif
  
+}
+
+////////////////////////////////////////////////////
+// setup connection
+bool EQPacketStream::connect2(const QString& opcodeName, 
+			      const char* payloadType,  EQSizeCheckType szt, 
+			      const QObject* receiver, const char* member)
+{
+  const EQPacketOPCode* opcode = m_opcodeDB.find(opcodeName);
+  if (!opcode)
+  {
+    fprintf(stderr, 
+	    "connect2: Unknown opcode '%s' with payload type '%s'\n",
+	    (const char*)opcodeName, payloadType);
+    fprintf(stderr,
+	    "\tfor receiver '%s' of type '%s' to member '%s'\n",
+	    receiver->name(), receiver->className(), member);
+    return false;
+  }
+
+  EQPacketPayload* payload;
+
+  // try to find a matching payload for this opcode
+  EQPayloadListIterator pit(*opcode);
+  while ((payload = pit.current()) != 0)
+  {
+    // if all the parameters match, then use this payload
+    if ((payload->dir() & m_dir) && 
+	(payload->typeName() == payloadType) && 
+	(payload->sizeCheckType() == szt))
+      break;
+
+    ++pit;
+  }
+
+  // if no payload found, create one and issue a warning
+  if (!payload)
+  {
+    fprintf(stderr, 
+	    "connect2: Warning! opcode '%s' has no matching payload.\n",
+	    (const char*)opcodeName);
+    fprintf(stderr, "\tdir '%d' payload '%s' szt '%d'\n",
+	    m_dir, payloadType, szt);
+    fprintf(stderr, "\tfor receiver '%s' of type '%s' to member '%s'\n",
+	    receiver->name(), receiver->className(), member);
+
+    return false;
+  }
+
+  // attempt to find an existing dispatch
+  EQPacketDispatch* dispatch = m_dispatchers.find((void*)payload);
+
+  // if no existing dispatch was found, create one
+  if (!dispatch)
+  {
+    // construct a name for the dispatch
+    QCString dispatchName(256);
+    dispatchName.sprintf("PacketDispatch:%s:%s:%d:%s:%d",
+			 (const char*)name(), (const char*)opcodeName,
+			 payload->dir(), (const char*)payload->typeName(), 
+			 payload->sizeCheckType());
+
+    // create new dispatch object
+    dispatch = new EQPacketDispatch(this, dispatchName);
+
+    // insert dispatcher into dispatcher dictionary
+    m_dispatchers.insert((void*)payload, dispatch);
+  }
+
+  // attempt to connect the dispatch object to the receiver
+  return dispatch->connect(receiver, member);
 }
 
 ////////////////////////////////////////////////////
@@ -399,7 +481,9 @@ void EQPacketStream::decodePacket(uint8_t *data, size_t len, uint16_t opCode)
     if (data == NULL)
       return;
   }
-    
+
+  const EQPacketOPCode* opcodeEntry = 0;
+
   // this works, but could really use a cleanup - mvern
   while (len > 2) 
   {
@@ -423,9 +507,23 @@ void EQPacketStream::decodePacket(uint8_t *data, size_t len, uint16_t opCode)
       
       while (count > 0) 
       {
-	uint16_t size;
+	uint16_t size = 0;
+
+	opcodeEntry = m_opcodeDB.find(opCode);
+
+	if (opcodeEntry)
+	{
+	  size = opcodeEntry->implicitLen();
+#ifdef PACKET_DECODE_DIAG // ZBTEMP
+	  fprintf(stderr, "opcode %04x implicitlen %d\n",
+		  opCode, size);
+#endif
+	}
+#ifdef PACKET_DECODE_DIAG
+	else 
+	  fprintf(stderr, "No opcodeEntry for %04x\n", opCode);
+#endif 
 	
-	size = implicitlen(opCode);
 	if (size == 0) 
 	{ // Not an implicit length opcode
 	  if (dptr[0] == 0xff) 
@@ -458,8 +556,7 @@ void EQPacketStream::decodePacket(uint8_t *data, size_t len, uint16_t opCode)
 	printf("sending from %s: 0x%04x, %d\n", 
 	       EQStreamStr[m_streamid], opCode, size);
 #endif
-	emit decodedPacket(dptr, size, m_dir, opCode);
-	emit dispatchData(dptr, size, m_dir, opCode);
+	dispatchPacket(dptr, size, opCode, opcodeEntry);
 	
 	// next
 	dptr += size;
@@ -501,8 +598,7 @@ void EQPacketStream::decodePacket(uint8_t *data, size_t len, uint16_t opCode)
 	  printf("sending from %s: 0x%04x, %d\n", 
 		 EQStreamStr[m_streamid], opCode, size);
 #endif
-	  emit decodedPacket(dptr, left, m_dir, opCode);
-	  emit dispatchData(dptr, left, m_dir, opCode);
+	  dispatchPacket(dptr, left, opCode, m_opcodeDB.find(opCode));
 	}
       }
 
@@ -516,8 +612,7 @@ void EQPacketStream::decodePacket(uint8_t *data, size_t len, uint16_t opCode)
   printf ("sending from %s: 0x%04x, %d\n",
 	  EQStreamStr[m_streamid], opCode, size);
 #endif
-  emit decodedPacket(data, len, m_dir, opCode);
-  emit dispatchData(data, len, m_dir, opCode);
+  dispatchPacket(data, len, opCode, m_opcodeDB.find(opCode));
 }
 
 ////////////////////////////////////////////////////
@@ -534,10 +629,85 @@ void EQPacketStream::processPayload(uint8_t* data, size_t len)
   if (opCode & FLAG_DECODE)
     decodePacket(data, len, opCode);
   else
+    dispatchPacket(data, len, opCode, m_opcodeDB.find(opCode));
+}
+
+void EQPacketStream::dispatchPacket(const uint8_t* data, size_t len, 
+				    uint16_t opCode, 
+				    const EQPacketOPCode* opcodeEntry)
+{
+  emit decodedPacket(data, len, m_dir, opCode, opcodeEntry);
+
+  bool unknown = true;
+
+  // unless there is an opcode entry, there is nothing to dispatch...
+  if (opcodeEntry)
   {
-    emit decodedPacket(data, len, m_dir, opCode);
-    emit dispatchData(data, len, m_dir, opCode);
+    EQPacketPayload* payload;
+    EQPacketDispatch* dispatch;
+
+#ifdef PACKET_INFO_DIAG
+    fprintf(stderr, 
+	    "dispatchPacket: attempting to dispatch opcode %#04x '%s'\n",
+	    opcodeEntry->opcode(), (const char*)opcodeEntry->name());
+#endif
+
+    // iterate over the payloads in the opcode entry, and dispatch matches
+    EQPayloadListIterator pit(*opcodeEntry);
+    bool found = false;
+    while ((payload = pit.current()) != 0)
+    {
+      // see if this packet matches
+      if (payload->match(data, len, m_dir))
+      {
+	found = true;
+	unknown = false; // 
+
+#ifdef PACKET_INFO_DIAG
+	fprintf(stderr, 
+		"\tmatched payload, find dispatcher in dict (%d/%d)\n",
+		m_dispatchers.count(), m_dispatchers.size());
+#endif
+
+	// find the dispather for the payload
+	dispatch = m_dispatchers.find((void*)payload);
+	
+	// if found, dispatch
+	if (dispatch)
+	{
+#ifdef PACKET_INFO_DIAG
+	  fprintf(stderr, "\tactivating signal...\n");
+#endif
+	  dispatch->activate(data, len, m_dir);
+	}
+      }
+
+      // go to next possible payload
+      ++pit;
+    }
+
+ #ifdef PACKET_PAYLOAD_SIZE_DIAG
+    if (!found && !opcodeEntry->isEmpty())
+    {
+      fprintf(stderr, "Warning: %s  (%#04x) (dataLen: %d) doesn't match:\n",
+	      (const char*)opcodeEntry->name(), opcodeEntry->opcode(), len);
+      while ((payload = pit.current()) != 0)
+      {
+	if (payload->dir() & m_dir)
+        {
+	  if (payload->sizeCheckType() == SZC_Match)
+	    fprintf(stderr, "\tsizeof(%s):%d\n", 
+		    (const char*)payload->typeName(), payload->typeSize());
+	  else if (payload->sizeCheckType() == SZC_Modulus)
+	    fprintf(stderr, "\tmodulus of sizeof(%s):%d\n", 
+		    (const char*)payload->typeName(), payload->typeSize());
+	}
+      }      
+    }
+#endif // PACKET_PAYLOAD_SIZE_DIAG
   }
+
+  emit decodedPacket(data, len, m_dir, opCode, opcodeEntry, unknown);
 }
 
 ////////////////////////////////////////////////////

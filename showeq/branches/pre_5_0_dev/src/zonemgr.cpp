@@ -21,6 +21,7 @@
 #include "zonemgr.h"
 #include "packet.h"
 #include "main.h"
+#include "everquest.h"
 
 //----------------------------------------------------------------------
 // constants
@@ -44,7 +45,7 @@ static const uint32_t* magic = (uint32_t*)magicStr;
 // zoneEntry(ServerZoneEntryStruct)      zoneBegin(shortName)          false
 // zoneNew(newZoneStruct)                zoneEnd(shortName, longName)  false
 //
-ZoneMgr::ZoneMgr(EQPacket* packet, QObject* parent, const char* name)
+ZoneMgr::ZoneMgr(QObject* parent, const char* name)
   : QObject(parent, name),
     m_zoning(false),
     m_zone_exp_multiplier(0.75),
@@ -54,17 +55,6 @@ ZoneMgr::ZoneMgr(EQPacket* packet, QObject* parent, const char* name)
   m_shortZoneName = "unknown";
   m_longZoneName = "unknown";
   m_zoning = false;
-
-  connect(packet, SIGNAL(zoneEntry(const ClientZoneEntryStruct*, uint32_t, uint8_t)),
-	  this, SLOT(zoneEntry(const ClientZoneEntryStruct*, uint32_t, uint8_t)));
-  connect(packet, SIGNAL(zoneEntry(const ServerZoneEntryStruct*, uint32_t, uint8_t)),
-	  this, SLOT(zoneEntry(const ServerZoneEntryStruct*, uint32_t, uint8_t)));
-  connect(packet, SIGNAL(zoneChange(const zoneChangeStruct*, uint32_t, uint8_t)),
-	  this, SLOT(zoneChange(const zoneChangeStruct*, uint32_t, uint8_t)));
-  connect(packet, SIGNAL(zoneNew(const newZoneStruct*, uint32_t, uint8_t)),
-	  this, SLOT(zoneNew(const newZoneStruct*, uint32_t, uint8_t)));
-  connect(packet, SIGNAL(zonePoints(const zonePointsStruct*, uint32_t, uint8_t)),
-	  this, SLOT(zonePoints(const zonePointsStruct*, uint32_t, uint8_t)));
 
   if (showeq_params->restoreZoneState)
     restoreZoneState();
@@ -138,8 +128,10 @@ void ZoneMgr::restoreZoneState(void)
   }
 }
 
-void ZoneMgr::zoneEntry(const ClientZoneEntryStruct* zsentry, uint32_t len, uint8_t dir)
+void ZoneMgr::zoneEntryClient(const uint8_t* data, size_t len, uint8_t dir)
 {
+  const ClientZoneEntryStruct* zsentry = (const ClientZoneEntryStruct*)data;
+
   m_shortZoneName = "unknown";
   m_longZoneName = "unknown";
 
@@ -152,8 +144,9 @@ void ZoneMgr::zoneEntry(const ClientZoneEntryStruct* zsentry, uint32_t len, uint
     saveZoneState();
 }
 
-void ZoneMgr::zoneEntry(const ServerZoneEntryStruct* zsentry, uint32_t len, uint8_t dir)
+void ZoneMgr::zoneEntryServer(const uint8_t* data, size_t len, uint8_t dir)
 {
+  const ServerZoneEntryStruct* zsentry = (const ServerZoneEntryStruct*)data;
   m_shortZoneName = zoneNameFromID(zsentry->zoneId);
 
   m_zoning = false;
@@ -164,12 +157,13 @@ void ZoneMgr::zoneEntry(const ServerZoneEntryStruct* zsentry, uint32_t len, uint
     saveZoneState();
 }
 
-void ZoneMgr::zoneChange(const zoneChangeStruct* zoneChange, uint32_t len, uint8_t dir)
+void ZoneMgr::zoneChange(const uint8_t* data, size_t len, uint8_t dir)
 {
+  const zoneChangeStruct* zoneChange = (const zoneChangeStruct*)data;
   m_shortZoneName = zoneNameFromID(zoneChange->zoneId);
   m_zoning = true;
 
-  if (dir == DIR_SERVER)
+  if (dir == DIR_Server)
     emit zoneChanged(m_shortZoneName);
     emit zoneChanged(zoneChange, len, dir);
 
@@ -177,8 +171,11 @@ void ZoneMgr::zoneChange(const zoneChangeStruct* zoneChange, uint32_t len, uint8
     saveZoneState();
 }
 
-void ZoneMgr::zoneNew(const newZoneStruct* zoneNew, uint32_t len, uint8_t dir)
+void ZoneMgr::zoneNew(const uint8_t* data, size_t len, uint8_t dir)
 {
+  const newZoneStruct* zoneNew = (const newZoneStruct*)data;
+  m_safePoint.setPoint(lrintf(zoneNew->safe_x), lrintf(zoneNew->safe_y),
+		       lrintf(zoneNew->safe_z));
   m_zone_exp_multiplier = zoneNew->zone_exp_multiplier;
 
   // ZBNOTE: Apparently these come in with the localized names, which means we 
@@ -216,8 +213,9 @@ void ZoneMgr::zoneNew(const newZoneStruct* zoneNew, uint32_t len, uint8_t dir)
     saveZoneState();
 }
 
-void ZoneMgr::zonePoints(const zonePointsStruct* zp, uint32_t len, uint8_t)
+void ZoneMgr::zonePoints(const uint8_t* data, size_t len, uint8_t)
 {
+  const zonePointsStruct* zp = (const zonePointsStruct*)data;
   // note the zone point count
   m_zonePointCount = zp->count;
 

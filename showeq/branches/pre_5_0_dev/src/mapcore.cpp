@@ -432,44 +432,13 @@ void MapData::loadMap(const QString& fileName)
   // clear any existing map data
   clear();
 
+  /* Kind of stupid to try a non-existant map, don't you think? */
+  if (fileName.contains("/.map") != 0)
+    return;
+
   const char* filename = (const char*)fileName;
 
-  fh = fopen ((const char*)filename, "r");
-
-  /* Perhaps some lacky forgot to use the correct case for the map name?
-     
-     Let's try dumping a list of files in the map directory and comparing
-     (wihout regard to case) the filename with other map files... */
-  if (errno == ENOENT)
-  {
-    struct dirent **eps;
-    int n;
-    
-    n = scandir (MAPDIR, &eps, NULL, alphasort);
-    if (n >= 0)
-    {
-      for (int cnt = 0; cnt < n; ++cnt)
-      {
-	if (strstr(eps[cnt]->d_name, ".map") > 0)
-	{
-	  char chEntry[128];
-	  
-	  sprintf(chEntry, "%s/%s", MAPDIR, eps[cnt]->d_name);
-
-	  if (strcasecmp (chEntry, filename) == 0)
-	  {
-	    filename = chEntry;
-	    fh = fopen(filename, "r");
-	    break;
-	  }
-	}
-      }
-    }
-  }
-
-  /* Kind of stupid to try a non-existant map, don't you think? */
-  if (strstr (filename, "/.map"))
-    return;
+  fh = fopen (filename, "r");
 
   if (fh == NULL)
   {
@@ -541,52 +510,6 @@ void MapData::loadMap(const QString& fileName)
     strcpy (tempstr, strtok (line, ","));
     switch (tempstr[0]) 
     {
-    case 'A':  //Creates aggro ranges.
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an A marker with no Name expression!\n", 
-		filelines, filename);
-	break;
-      }
-      name = tempStr;
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an A marker with no Range radius!\n", 
-		filelines, filename);
-	break;
-      }
-      rangeVal = atoi(tempStr);
-
-      // create and add a new aggro object
-      m_aggros.append(new MapAggro(name, rangeVal));
-
-      break;
-    case 'H':  //Sets global height for L lines.
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an H marker with no Z!\n", 
-		filelines, filename);
-	break;
-      }
-      globHeight = atoi(tempStr);
-      globHeightSet = true;
-      break;
-    case 'Z':  // Quick and dirty ZEM implementation
-      tempStr = strtok (NULL, ",\n");
-      if (tempStr == NULL) 
-      {
-	fprintf(stderr, "Line %d in map '%s' has an Z marker with no ZEM!\n", 
-		filelines, filename);
-	break;
-      }
-      m_zoneZEM = atoi(tempStr);
-#ifdef DEBUGMAPLOAD
-      printf("ZEM set to %d\n", m_zoneZEM);
-#endif
-      break;
     case 'L':
 #ifdef DEBUGMAPLOAD
       printf("L record  [%d]: %s\n", filelines, line);
@@ -829,8 +752,55 @@ void MapData::loadMap(const QString& fileName)
       quickCheckPos(mx, my);
 
       break;
+    case 'A':  //Creates aggro ranges.
+      tempStr = strtok (NULL, ",\n");
+      if (tempStr == NULL) 
+      {
+	fprintf(stderr, "Line %d in map '%s' has an A marker with no Name expression!\n", 
+		filelines, filename);
+	break;
+      }
+      name = tempStr;
+      tempStr = strtok (NULL, ",\n");
+      if (tempStr == NULL) 
+      {
+	fprintf(stderr, "Line %d in map '%s' has an A marker with no Range radius!\n", 
+		filelines, filename);
+	break;
+      }
+      rangeVal = atoi(tempStr);
+
+      // create and add a new aggro object
+      m_aggros.append(new MapAggro(name, rangeVal));
+
+      break;
+    case 'H':  //Sets global height for L lines.
+      tempStr = strtok (NULL, ",\n");
+      if (tempStr == NULL) 
+      {
+	fprintf(stderr, "Line %d in map '%s' has an H marker with no Z!\n", 
+		filelines, filename);
+	break;
+      }
+      globHeight = atoi(tempStr);
+      globHeightSet = true;
+      break;
+    case 'Z':  // Quick and dirty ZEM implementation
+      tempStr = strtok (NULL, ",\n");
+      if (tempStr == NULL) 
+      {
+	fprintf(stderr, "Line %d in map '%s' has an Z marker with no ZEM!\n", 
+		filelines, filename);
+	break;
+      }
+      m_zoneZEM = atoi(tempStr);
+#ifdef DEBUGMAPLOAD
+      printf("ZEM set to %d\n", m_zoneZEM);
+#endif
+      break;
     }
   }
+
   fclose (fh);
 
   // calculate the bounding rect
@@ -852,7 +822,7 @@ void MapData::loadMap(const QString& fileName)
   printf("Loaded map: '%s'\n", filename);
 }
 
-void MapData::saveMap() const
+void MapData::saveMap(const QString& fileName) const
 {
 #ifdef DEBUG
   debug ("saveMap()");
@@ -860,7 +830,11 @@ void MapData::saveMap() const
   FILE * fh;
   uint32_t i;
 
-  const char* filename = (const char*)m_fileName;
+  const char* filename;
+  if (!fileName.isEmpty())
+    filename = (const char*)fileName;
+  else 
+    filename = (const char*)m_fileName;
 
   if ((fh = fopen(filename, "w")) == NULL) 
   {

@@ -14,6 +14,7 @@
 
 #include "spells.h"
 #include "everquest.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -271,8 +272,13 @@ void Spells::loadSpells(const QString& spellsFileName)
 #if (QT_VERSION > 0x030100)
       text = QString::fromUcs2((uint16_t*)textData.data());
 #else
-      fprintf(stderr, "Spells::loadSpells(): Upgrade your version of Qt to at least 3.1 to properly handle UTF-16 encoded files!\n");
-      text = textData;
+      if (sizeof(QChar) == 2)
+	text.setUnicode(QChar*(textData.data()), textData.size() / 2);
+      else
+      {
+	fprintf(stderr, "Spells::loadSpells(): Upgrade your version of Qt to at least 3.1 to properly handle UTF-16 encoded files!\n");
+	text = textData;
+      }
 #endif
     }
 

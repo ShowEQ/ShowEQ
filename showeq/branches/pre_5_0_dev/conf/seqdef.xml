@@ -2092,19 +2092,19 @@
    <comment>log encrypted packets to encrypted log file</comment>
   </property>
   <property name="GlobalLogFilename" >
-   <string value="/usr/local/share/showeq/global.log" />
+   <string value="global.log" />
    <comment>Global log file (enabled with LogAllPackets)</comment>
   </property>
   <property name="ZoneLogFilename" >
-   <string value="/usr/local/share/showeq/zone.log" />
+   <string value="zone.log" />
    <comment>Zone log file (enabled with LogZonePackets)</comment>
   </property>
   <property name="UnknownZoneLogFilename" >
-   <string value="/usr/local/share/showeq/unknownzone.log" />
+   <string value="unknownzone.log" />
    <comment>Unknown Zone log file (enabled with LogUnknownZonePackets)</comment>
   </property>
   <property name="EncryptedLogFilenameBase" >
-   <string value="/usr/local/share/showeq/encrypted" />
+   <string value="encrypted" />
    <comment>Encrypted log file (enabled with LogEncrypted)</comment>
   </property>
   <property name="PktLoggerMask" >
@@ -2112,7 +2112,7 @@
    <comment></comment>
   </property>
   <property name="PktLoggerFilename" >
-   <string value="/usr/local/share/showeq/packet.log" />
+   <string value="packet.log" />
    <comment></comment>
   </property>
  </section>
@@ -2156,7 +2156,7 @@
 <!-- Filter options -->
  <section name="Filters" >
   <property name="FilterFile" >
-   <string value="/usr/local/share/showeq/filters.conf" />
+   <string value="global.xml" />
    <comment>Name of default filter file</comment>
   </property>
   <property name="LogLocates" >
@@ -2470,11 +2470,11 @@
    <comment>Dock Compass</comment>
   </property>
   <property name="FormatFile" >
-   <string value="/usr/local/share/showeq/eqstr_us.txt" />
+   <string value="eqstr_us.txt" />
    <comment>Location of file containing formatted strings</comment>
   </property>
   <property name="SpellsFile" >
-   <string value="/usr/local/share/showeq/spells_us.txt" />
+   <string value="spells_us.txt" />
    <comment>Location of file containing spell information</comment>
   </property>
   <property name="NoBank" >
@@ -2482,11 +2482,11 @@
    <comment>set to true to print bank/inventory items to stdout</comment> 
   </property>
   <property name="GuildsFile" >
-   <string value="/usr/local/share/showeq/guilds2.dat" />
+   <string value="guilds2.dat" />
    <comment>Location of file containing guild strings</comment>
   </property>
   <property name="GuildsDumpFile" >
-   <string value="/usr/local/share/showeq/guilds.txt" />
+   <string value="guilds.txt" />
    <comment>Location to write plain text file containing guild strings</comment>
   </property>
  </section>
@@ -2588,7 +2588,7 @@ If any argument is left blank, it is filled in with its default...
    <bool value="false" />
   </property>
   <property name="LogFilename" >
-   <string value="/usr/local/share/showeq/opcodemonitor.log" />
+   <string value="opcodemonitor.log" />
   </property>
  </section>
 <!-- ============================================================= -->

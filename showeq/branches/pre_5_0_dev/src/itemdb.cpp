@@ -5,7 +5,7 @@
  * http://seq.sourceforge.net/
  */
 
-static char* itemdbid = "@(#) $Id$";
+static char* itemdbid = "@(#) $Id$ $Name$";
 
 #include <unistd.h>
 #include <stdio.h>
@@ -1852,8 +1852,9 @@ void EQItemDB::logItem(const char* serializedItem, size_t len)
   fclose(lh);
 }
 
-void EQItemDB::item(const itemPacketStruct* item, uint32_t size, uint8_t)
+void EQItemDB::item(const uint8_t* data, size_t size, uint8_t)
 {
+  const itemPacketStruct* item = (const itemPacketStruct*)data;
   if (m_logItemPackets)
   {
     time_t now;
@@ -1908,11 +1909,12 @@ void EQItemDB::item(const itemPacketStruct* item, uint32_t size, uint8_t)
   AddItem(item->serializedItem); 
 }
 
-void EQItemDB::playerItem(const char* serializedItem, uint32_t size, uint8_t)
+void EQItemDB::playerItem(const uint8_t* data, size_t size, uint8_t)
 {
+  const char* serializedItem = (const char*)data;
   FILE *lh = 0;
   time_t now;
-  const char* ctimeStr;
+  const char* ctimeStr = NULL;
 
   if (m_logItemPackets)
   {
@@ -1949,8 +1951,9 @@ void EQItemDB::playerItem(const char* serializedItem, uint32_t size, uint8_t)
     fclose(lh);
 }
 
-void EQItemDB::itemInfo(const itemInfoStruct* item, uint32_t size, uint8_t)
+void EQItemDB::itemInfo(const uint8_t* data, size_t size, uint8_t)
 {
+  const itemInfoStruct* item = (const itemInfoStruct*)data;
   if (m_logItemPackets)
   {
     time_t now;

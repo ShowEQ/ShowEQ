@@ -50,7 +50,7 @@
 #include "spawnmonitor.h"
 #include "player.h"
 #include "spawnshell.h"
-#include "itemdb.h"
+#include "datalocationmgr.h"
 
 
 //----------------------------------------------------------------------
@@ -225,9 +225,11 @@ void MapLabel::mousePressEvent(QMouseEvent*)
 
 //----------------------------------------------------------------------
 // MapMgr
-MapMgr::MapMgr(SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
+MapMgr::MapMgr(DataLocationMgr* dataLocMgr, 
+	       SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
 	       QWidget* dialogParent, QObject* parent, const char* name)
   : QObject(parent, name),
+    m_dataLocMgr(dataLocMgr),
     m_spawnShell(spawnShell),
     m_player(player),
     m_dialogParent(dialogParent)
@@ -264,14 +266,13 @@ MapMgr::MapMgr(SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
   QString shortZoneName = zoneMgr->shortZoneName();
   if (!shortZoneName.isEmpty())
   {
-    QString fileName;
-  
     // construct the map file name
-    fileName.sprintf("%s/%s.map", 
-		     MAPDIR, (const char*)shortZoneName);
+    QString fileName = shortZoneName + ".map";
     
+    QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
+
     // load the map
-    loadFileMap(fileName);
+    loadFileMap(fileInfo.absFilePath());
   }
 }
 
@@ -298,13 +299,12 @@ void MapMgr::zoneBegin(const QString& shortZoneName)
   // signal that the map has been unloaded
   emit mapUnloaded();
   
-  QString fileName;
+  QString fileName = shortZoneName + ".map";
   
-  // construct the map file name
-  fileName.sprintf("%s/%s.map", MAPDIR, (const char*)shortZoneName);
+  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
   
   // load the map
-  loadFileMap(fileName);
+  loadFileMap(fileInfo.absFilePath());
 }
 
 void MapMgr::zoneChanged(const QString& shortZoneName)
@@ -320,13 +320,12 @@ void MapMgr::zoneChanged(const QString& shortZoneName)
   // signal that the map has been unloaded
   emit mapUnloaded();
 
-  QString fileName;
+  QString fileName = shortZoneName + ".map";
   
-  // construct the map file name
-  fileName.sprintf("%s/%s.map", MAPDIR, (const char*)shortZoneName);
+  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
   
   // load the map
-  loadFileMap(fileName);
+  loadFileMap(fileInfo.absFilePath());
 }
 
 void MapMgr::zoneEnd(const QString& shortZoneName, const QString& longZoneName)
@@ -336,14 +335,13 @@ void MapMgr::zoneEnd(const QString& shortZoneName, const QString& longZoneName)
 	 (const char*)longZoneName, (const char*)shortZoneName);
 #endif /* DEBUGMAP */
 
-  QString fileName;
+  QString fileName = shortZoneName + ".map";
   
-  // construct the map file name
-  fileName.sprintf("%s/%s.map", MAPDIR, (const char*)shortZoneName);
+  QFileInfo fileInfo = m_dataLocMgr->findExistingFile("maps", fileName);
   
   // load the map if it's not already loaded
-  if (fileName != m_mapData.fileName())
-    loadFileMap(fileName);
+  if (fileInfo.absFilePath() != m_mapData.fileName())
+    loadFileMap(fileInfo.absFilePath());
 }
 
 void MapMgr::loadMap ()
@@ -351,10 +349,11 @@ void MapMgr::loadMap ()
 #ifdef DEBUGMAP
   debug ("loadMap()");
 #endif /* DEBUGMAP */
-  
+
   QString fileName;
 
-  fileName = QFileDialog::getOpenFileName(MAPDIR, "*.map");
+  // create a file dialog the defaults to the currently open map
+  fileName = QFileDialog::getOpenFileName(m_mapData.fileName(), "*.map");
 
   if (fileName.isEmpty ())
     return;
@@ -417,7 +416,11 @@ void MapMgr::saveMap ()
 #ifdef DEBUGMAP
   debug ("saveMap()");
 #endif /* DEBUGMAP */
-  m_mapData.saveMap();
+  QFileInfo fileInfo(m_mapData.fileName());
+
+  fileInfo = m_dataLocMgr->findWriteFile("maps", fileInfo.fileName(), false);
+
+  m_mapData.saveMap(fileInfo.absFilePath());
 }
 
 void MapMgr::addItem(const Item* item)
@@ -4904,11 +4907,11 @@ MapFrame::MapFrame(FilterMgr* filterMgr,
   QLabel* tmpLabel;
 
   // setup the vertical box
-  m_vertical = new QVBoxLayout(this);
-  m_vertical->setAutoAdd(true);
+  m_vertical = new QVBoxLayout(boxLayout());
 
   // setup the top control window
   m_topControlBox = new QHBox(this);
+  m_vertical->addWidget(m_topControlBox);
   m_topControlBox->setSpacing(1);
   m_topControlBox->setMargin(0);
   tmpPrefString = "ShowTopControlBox";
@@ -4924,9 +4927,11 @@ MapFrame::MapFrame(FilterMgr* filterMgr,
   m_map = new Map(mapMgr, player, spawnshell, zoneMgr, spawnMonitor,
 		  m_mapPreferenceName, m_runtimeFilterFlagMask, 
 		  this, mapName);
+  m_vertical->addWidget(m_map);
 
   // setup bottom control window
   m_bottomControlBox = new QHBox(this);
+  m_vertical->addWidget(m_bottomControlBox);
   m_bottomControlBox->setSpacing(1);
   m_bottomControlBox->setMargin(0);
   tmpPrefString = "ShowBottomControlBox";

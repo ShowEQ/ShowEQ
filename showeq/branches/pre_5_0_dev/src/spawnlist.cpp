@@ -32,13 +32,11 @@
 #include "filtermgr.h"
 #include "util.h"
 #include "player.h"
-#include "packet.h"
 
 // ------------------------------------------------------
 SpawnList::SpawnList(Player* player, 
 		     SpawnShell* spawnShell,
 		     CategoryMgr* categoryMgr,
-		     EQPacket* packet,
 		     QWidget *parent, const char* name)
   : SEQListView("SpawnList", parent, name),
     m_categoryMgr(categoryMgr),
@@ -1141,15 +1139,12 @@ SpawnListMenu* SpawnList::menu()
 SpawnListWindow::SpawnListWindow(Player* player, 
 				 SpawnShell* spawnShell,
 				 CategoryMgr* categoryMgr,
-				 EQPacket* packet,
 				 QWidget* parent, const char* name)
   : SEQWindow("SpawnList", "ShowEQ - Spawns", parent, name)
 {
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setAutoAdd(true);
-  
-  m_spawnList = new SpawnList(player, spawnShell, categoryMgr, packet,
+  m_spawnList = new SpawnList(player, spawnShell, categoryMgr, 
 			      this, name);
+  setWidget(m_spawnList);
 }
 
 SpawnListWindow::~SpawnListWindow()

@@ -44,27 +44,27 @@ public:
   virtual ~Player();
 
  public slots:
-   void backfill(const charProfileStruct* player); 
+   void player(const uint8_t* player); 
    void clear();
    void reset();
 #if 0 // ZBTEMP
-   //void wearItem(const playerItemStruct* itemp);
-   //void removeItem(const itemItemStruct* item);
+   //void wearItem(const uint8_t* itemp);
+   //void removeItem(const uint8_t* item);
 #endif // ZBTEMP
-   void increaseSkill(const skillIncStruct* skilli);
-   void manaChange(const manaDecrementStruct* mana);
-   void updateExp(const expUpdateStruct* exp);
-   void updateAltExp(const altExpUpdateStruct* altexp);
-   void updateLevel(const levelUpUpdateStruct* levelup);
-   void updateNpcHP(const hpNpcUpdateStruct* hpupdate);
-   void updateSpawnMaxHP(const SpawnUpdateStruct* su);
-   void updateStamina(const staminaStruct* stam);
+   void increaseSkill(const uint8_t* skilli);
+   void manaChange(const uint8_t* mana);
+   void updateExp(const uint8_t* exp);
+   void updateAltExp(const uint8_t* altexp);
+   void updateLevel(const uint8_t* levelup);
+   void updateNpcHP(const uint8_t* hpupdate);
+   void updateSpawnInfo(const uint8_t* su);
+   void updateStamina(const uint8_t* stam);
    void setLastKill(const QString& name, uint8_t level);
    void zoneChanged(void);
    void zoneBegin(const ServerZoneEntryStruct* zsentry);
-   void playerUpdate(const playerSelfPosStruct* pupdate, uint32_t, uint8_t);
-   void consMessage(const considerStruct * con, uint32_t, uint8_t dir);
-   void tradeSpellBookSlots(const tradeSpellBookSlotsStruct*, uint32_t, uint8_t);
+   void playerUpdateSelf(const uint8_t* pupdate, size_t, uint8_t);
+   void consMessage(const uint8_t* con, size_t, uint8_t dir);
+   void tradeSpellBookSlots(const uint8_t*, size_t, uint8_t);
 
    void setPlayerID(uint16_t playerID);
    void checkDefaults(void) { setDefaults(); } // Update our default values

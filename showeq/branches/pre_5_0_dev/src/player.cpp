@@ -14,19 +14,8 @@
 
 #include "player.h"
 #include "util.h"
+#include "packetcommon.h"
 
-#ifdef __FreeBSD__
-long int lrint(double x)
-{
-  long int l=(long int)(x+.5);
-  return l;
-}
-
-long int lrintf(float x)
-{
-  return lrint(x);
-}
-#endif
 
 //#define DEBUG_PLAYER
 
@@ -58,7 +47,7 @@ Player::Player (QObject* parent,
   debug("Player()");
 #endif
 
-  connect(m_zoneMgr, SIGNAL(zoneBegin(const ServerZoneEntryStruct*, uint32_t, uint8_t)),
+  connect(m_zoneMgr, SIGNAL(zoneBegin(const ServerZoneEntryStruct*, size_t, uint8_t)),
           this, SLOT(zoneBegin(const ServerZoneEntryStruct*)));
   connect(m_zoneMgr, SIGNAL(zoneChanged(const QString&)),
           this, SLOT(zoneChanged()));
@@ -114,8 +103,9 @@ Player::~Player()
 {
 }
 
-void Player::backfill(const charProfileStruct* player)
+void Player::player(const uint8_t* data)
 {
+  const charProfileStruct* player = (const charProfileStruct*)data;
   QString messag;
 
   printf("Player::backfill():\n");
@@ -295,19 +285,20 @@ void Player::backfill(const charProfileStruct* player)
   tmp.rename(QString("bankfile.") + QString::number(getpid()),
 	     QString("bankfile.") + player->name);
 
-	//Added by Halcyon
-	int buffnumber;
-	const struct spellBuff *buff;
-	for (buffnumber=0;buffnumber<15;buffnumber++)
-	{
-		if (player->buffs[buffnumber].spellid && player->buffs[buffnumber].duration)
-		{
-			printf("You have buff %s duration left is %d in ticks.\n",(const char*)spell_name(player->buffs[buffnumber].spellid),player->buffs[buffnumber].duration);
-			buff = &(player->buffs[buffnumber]);
-			emit buffLoad(buff);
-		}
-	}
-	printf("PLAYERID#%d\n",id());
+  //Added by Halcyon
+  int buffnumber;
+  const struct spellBuff *buff;
+  for (buffnumber=0;buffnumber<15;buffnumber++)
+  {
+    if (player->buffs[buffnumber].spellid && player->buffs[buffnumber].duration)
+    {
+      printf("You have buff %s duration left is %d in ticks.\n",(const char*)spell_name(player->buffs[buffnumber].spellid),player->buffs[buffnumber].duration);
+      buff = &(player->buffs[buffnumber]);
+      emit buffLoad(buff);
+    }
+  }
+
+  printf("PLAYERID#%d\n",id());
 }
 
 void Player::clear()
@@ -534,8 +525,9 @@ void Player::removeItem(const itemItemStruct* item)
 }
 #endif // ZBTEMP
 
-void Player::increaseSkill(const skillIncStruct* skilli)
+void Player::increaseSkill(const uint8_t* data)
 {
+  const skillIncStruct* skilli = (const skillIncStruct*)data;
   // save the new skill value
   m_playerSkills[skilli->skillId] = skilli->value;
 
@@ -554,8 +546,9 @@ void Player::increaseSkill(const skillIncStruct* skilli)
     savePlayerState();
 }
 
-void Player::manaChange(const manaDecrementStruct *mana)
+void Player::manaChange(const uint8_t* data)
 {
+  const manaDecrementStruct *mana = (const manaDecrementStruct*)data;
   // update the players mana
   m_mana = mana->newMana;
 
@@ -568,8 +561,9 @@ void Player::manaChange(const manaDecrementStruct *mana)
     savePlayerState();
 }
 
-void Player::updateAltExp(const altExpUpdateStruct* altexp)
+void Player::updateAltExp(const uint8_t* data)
 {
+  const altExpUpdateStruct* altexp = (const altExpUpdateStruct*)data;
   QString totalAltExp;
   QString leftAltExp;
   QString incrementAltExp;
@@ -605,8 +599,9 @@ void Player::updateAltExp(const altExpUpdateStruct* altexp)
     savePlayerState();
 }
 
-void Player::updateExp(const expUpdateStruct* exp)
+void Player::updateExp(const uint8_t* data)
 {
+  const expUpdateStruct* exp = (const expUpdateStruct*)data;
   QString totalExp;
   QString incrementExp;
   QString leftExp;
@@ -676,8 +671,9 @@ void Player::updateExp(const expUpdateStruct* exp)
     savePlayerState();
 }
 
-void Player::updateLevel(const levelUpUpdateStruct *levelup)
+void Player::updateLevel(const uint8_t* data)
 {
+  const levelUpUpdateStruct *levelup = (const levelUpUpdateStruct *)data;
   QString totalExp;
   QString gainedExp;
   QString leftExp;
@@ -741,8 +737,10 @@ void Player::updateLevel(const levelUpUpdateStruct *levelup)
   emit changeItem(this, tSpawnChangedLevel);
 }
 
-void Player::updateNpcHP(const hpNpcUpdateStruct* hpupdate)
+void Player::updateNpcHP(const uint8_t* data)
 {
+  const hpNpcUpdateStruct* hpupdate = (const hpNpcUpdateStruct*)data;
+
   if (hpupdate->spawnId != id())
     return;
 
@@ -761,10 +759,13 @@ void Player::updateNpcHP(const hpNpcUpdateStruct* hpupdate)
     savePlayerState();
 }
 
-/* depreciated? */
-void Player::updateSpawnMaxHP(const SpawnUpdateStruct *su)
+void Player::updateSpawnInfo(const uint8_t* data)
 {
+  const SpawnUpdateStruct *su = (const SpawnUpdateStruct *)data;
   if (su->spawnId != id())
+    return;
+
+  if (su->subcommand != 17)
     return;
 
   m_curHP = su->arg1;
@@ -781,8 +782,9 @@ void Player::updateSpawnMaxHP(const SpawnUpdateStruct *su)
     savePlayerState();
 }
 
-void Player::updateStamina(const staminaStruct *stam)
+void Player::updateStamina(const uint8_t* data)
 {
+  const staminaStruct *stam = (const staminaStruct *)data;
   m_food = stam->food;
   m_water = stam->water;
   m_fatigue = stam->fatigue;
@@ -855,11 +857,13 @@ void Player::zoneBegin(const ServerZoneEntryStruct* zsentry)
   emit changeItem(this, tSpawnChangedALL);
 }
 
-void Player::playerUpdate(const playerSelfPosStruct *pupdate, uint32_t, uint8_t dir)
+void Player::playerUpdateSelf(const uint8_t* data, size_t, uint8_t dir)
 {
-  if ((dir != DIR_CLIENT) && (pupdate->spawnId != id()))
+  const playerSelfPosStruct *pupdate = (const playerSelfPosStruct*)data;
+
+  if ((dir != DIR_Client) && (pupdate->spawnId != id()))
     return;
-  else if (dir == DIR_CLIENT)
+  else if (dir == DIR_Client)
     setPlayerID(pupdate->spawnId);
   
   int16_t py = int16_t(pupdate->y);
@@ -899,23 +903,27 @@ void Player::playerUpdate(const playerSelfPosStruct *pupdate, uint32_t, uint8_t 
   }
 }
 
-void Player::consMessage(const considerStruct * con, uint32_t, uint8_t dir)
+void Player::consMessage(const uint8_t* data, size_t, uint8_t dir)
 {
-  if (dir == DIR_CLIENT)
+  if (dir == DIR_Client)
     return;
+
+  const considerStruct * con = (const considerStruct*)data;
 
   if (con->playerid == con->targetid) 
     setPlayerID(con->playerid);
 }
 
-void Player::tradeSpellBookSlots(const tradeSpellBookSlotsStruct* tsb, uint32_t, uint8_t dir)
+void Player::tradeSpellBookSlots(const uint8_t* data, size_t, uint8_t dir)
 {
+  const tradeSpellBookSlotsStruct* tsb = (const tradeSpellBookSlotsStruct*)data;
+
   fprintf(stderr, "tradeSpellBookSlots(dir=%d): Swapping %d (%04x) with %d (%04x)\n",
 	  dir,
 	  tsb->slot1, m_spellBookSlots[tsb->slot1],
 	  tsb->slot2, m_spellBookSlots[tsb->slot2]);
 
-  if (dir != DIR_SERVER)
+  if (dir != DIR_Server)
     return;
 
   uint32_t spell1 = m_spellBookSlots[tsb->slot1];

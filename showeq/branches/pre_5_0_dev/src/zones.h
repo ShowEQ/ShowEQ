@@ -169,7 +169,7 @@ NULL,                    //149
 "sseru",                 //159
 "katta",                 //160
 "netherbian",            //161
-"sratemple",             //162
+"ssratemple",            //162
 "griegsend",             //163
 "thedeep",               //164
 "shadeweaver",           //165

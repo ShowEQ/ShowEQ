@@ -20,6 +20,7 @@
 #include "spawnmonitor.h"
 #include "main.h"
 #include "util.h"
+#include "datalocationmgr.h"
 
 SpawnPoint::SpawnPoint(uint16_t spawnID, 
 		       const EQPoint& loc, 
@@ -93,10 +94,11 @@ void SpawnPoint::update(const Spawn* spawn)
   m_count++;
 }
 
-SpawnMonitor::SpawnMonitor(ZoneMgr* zoneMgr,
-			   SpawnShell* spawnShell, 
+SpawnMonitor::SpawnMonitor(DataLocationMgr* dataLocMgr, 
+			   ZoneMgr* zoneMgr, SpawnShell* spawnShell, 
 			   QObject* parent, const char* name )
 : QObject( parent, name ),
+  m_dataLocMgr(dataLocMgr),
   m_spawnShell(spawnShell),
   m_spawns( 613 ),
   m_points( 211 ),
@@ -271,8 +273,13 @@ void SpawnMonitor::saveSpawnPoints()
   
   QString fileName;
   
-  fileName = QString(LOGDIR "/") + m_zoneName + ".sp";
-  
+  fileName = m_zoneName + ".sp";
+
+  QFileInfo fileInfo = 
+    m_dataLocMgr->findWriteFile("spawnpoints", fileName, false);
+
+  fileName = fileInfo.absFilePath();
+
   QString newName = fileName + ".new";
   QFile spFile( newName );
   
@@ -335,14 +342,20 @@ void SpawnMonitor::loadSpawnPoints()
 {
   QString fileName;
   
-  fileName = QString(LOGDIR "/") + m_zoneName + ".sp";
-  
-  if (!findFile(fileName))
+  fileName = m_zoneName + ".sp";
+
+  QFileInfo fileInfo = 
+    m_dataLocMgr->findExistingFile("spawnpoints", fileName, false);
+
+  if (!fileInfo.exists())
   {
-    printf("Can't find spawn point file %s\n", (const char*)fileName);
+    printf("Can't find spawn point file %s\n", 
+	   (const char*)fileInfo.absFilePath());
     return;
   }
   
+  fileName = fileInfo.absFilePath();
+
   QFile spFile(fileName);
   
   if (!spFile.open(IO_ReadOnly))
