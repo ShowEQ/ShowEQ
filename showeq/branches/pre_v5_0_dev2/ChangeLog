@@ -1,4 +1,9 @@
 Version: $Id$ $Name$
+	
+dohpaZ (11/7/04)
+------------------------
++ Updated version to 5.0.0.16
+
 dohpaZ (11/6/04)
 ------------------------
 + Minor 64-bit compatibility cleanup.
