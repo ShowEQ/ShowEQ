@@ -212,10 +212,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 			   pSEQPrefs->getPrefString("IP", section,
 						    AUTOMATIC_CLIENT_IP),
 			   pSEQPrefs->getPrefString("MAC", section, "0"),
-			   pSEQPrefs->getPrefBool("RealTimeThread", section,
-						  false),
-			   pSEQPrefs->getPrefBool("SessionTracking", 
-						  section, false),
+			   pSEQPrefs->getPrefBool("RealTimeThread", section,false),
+			   pSEQPrefs->getPrefBool("SessionTracking", section, false),
+			   pSEQPrefs->getPrefBool("CRCWarnings", section, true),
 			   pSEQPrefs->getPrefBool("Record", vpsection, false),
 			   pSEQPrefs->getPrefBool("Playback", vpsection,
 						  false),
@@ -1020,7 +1019,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_netMenu->setItemChecked(m_id_net_sessiontrack, m_packet->session_tracking());
    x = m_netMenu->insertItem("&Real Time Thread", this, SLOT(toggle_net_real_time_thread(int)));
    m_netMenu->setItemChecked(x, m_packet->realtime());
+   x = m_netMenu->insertItem("CRC &Warnings", this, SLOT(toggle_net_crc_warnings(int)));
+   m_netMenu->setItemChecked(x, m_packet->crcWarnings());
 
+   
    m_netMenu->insertSeparator(-1);
 
    // Log menu
@@ -4774,6 +4776,14 @@ void EQInterface::toggle_net_real_time_thread(int id)
   m_packet->setRealtime(realtime);
    m_netMenu->setItemChecked(id, realtime);
    pSEQPrefs->setPrefBool("RealTimeThread", "Network", realtime);
+}
+
+void EQInterface::toggle_net_crc_warnings(int id)
+{
+  bool crcWarnings = !m_packet->crcWarnings();
+  m_packet->setCRCWarnings(crcWarnings);
+  m_netMenu->setItemChecked(id, crcWarnings);
+  pSEQPrefs->setPrefBool("CRCWarnings", "Network", crcWarnings);
 }
 
 void EQInterface::set_net_monitor_next_client()

@@ -207,6 +207,7 @@ class EQInterface:public QMainWindow
    void select_opcode_file(void);
    void toggle_net_session_tracking(void);
    void toggle_net_real_time_thread(int id);
+   void toggle_net_crc_warnings(int id);
    void set_net_monitor_next_client();
    void set_net_client_IP_address();
    void set_net_client_MAC_address();

@@ -183,6 +183,7 @@ void ZoneMgr::zonePlayer(const uint8_t* data)
   m_longZoneName = zoneLongNameFromID(player->zoneId);
   m_zone_exp_multiplier = defaultZoneExperienceMultiplier;
   m_zoning = false;
+  seqDebug("zonePlayer(%s, %s)", (const char*)m_shortZoneName, (const char*)m_longZoneName);
   emit zoneBegin(m_shortZoneName);
 
   if (showeq_params->saveZoneState)

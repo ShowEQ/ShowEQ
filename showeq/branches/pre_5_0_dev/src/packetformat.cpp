@@ -184,7 +184,7 @@ void EQPacketFormat::init()
 bool EQPacketFormat::validate()
 { 
   m_isValid = ((m_packet != NULL) && 
-	       ((m_length >= 4) && (crc32() == calcCRC32()))); 
+	       (crc32() == calcCRC32())); 
   return m_isValid;
 }
 

@@ -1,5 +1,12 @@
 Version: $Id$ $Name$
 
+dohpaZ (03/?/04)
+---------------------
++ Updated version to 5.0.0.8
++ prevent CRC32 checks from being done on undersized packets.
++ Added the ability to turn off the CRC Warnings to the "Network" menu.
++ Assorted minor fixes/tweaks.
+
 dohpaZ (02/19/04)
 ---------------------
 + Added ctype.h to bazaarlog.cpp to fix builds on some distros.
