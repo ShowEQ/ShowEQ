@@ -3,7 +3,6 @@ Version: $Id$ $Name$
 dohpaZ (12/?/03)
 ---------------------
 + Updated version to 5.0.0.2
-+ 
 + Updated the default ArqSeqGiveUp to 512 since with the current encryption
   scheme a single missed packet can have greater ramifications then under the
   previous one.
@@ -29,6 +28,11 @@ dohpaZ (12/?/03)
     updated the documentation to reflect the new version requirement.
   + Added stdlib.h inclusion to xmlpreferences.cpp to fix the build on some
     Linux distributions.
++ Integrated patches # 855993 "Map: potimea", # 855994 "Map: potime-b", 
+  # 855995 "Map: poearth-a", # 855996 "Map: poearth-b" submitted by curioseq
++ Integrated patch "showeq-5.0.0-gcc-3.3.x.patch.gz" that fixes the gcc 3.3 
+  compatibility problem caused by a noxious bug introduced in gcc 3.3.
+
 
 dohpaZ (12/7/03)
 ---------------------
