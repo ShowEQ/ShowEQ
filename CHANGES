@@ -38,6 +38,8 @@ dohpaZ (12/?/03)
 + Added Group opcodes to zoneopcodes.xml.  Updated group structures, and 
   updated group notification support in MessageShell.
 + Major revamp of the GroupMgr.  It now actually works.
++ Fixed map loading to be more robust in the face of malformed map files.
++ Fixed line 77 of Overthere.map (which map loading was choking on).
 
 dohpaZ (12/7/03)
 ---------------------
