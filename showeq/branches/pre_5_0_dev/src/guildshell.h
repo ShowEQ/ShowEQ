@@ -9,10 +9,13 @@
  */
 
 #include <stdint.h>
+#include <time.h>
+
 #include <qstring.h>
 #include <qobject.h>
-#include <time.h>
 #include <qdict.h>
+
+class QTextStream;
 
 class NetStream;
 class ZoneMgr;
@@ -30,7 +33,9 @@ class GuildMember
   const QString& name() const { return m_name; }
   uint8_t level() const { return m_level; }
   uint8_t classVal() const { return m_class; }
+  QString classString() const;
   uint32_t guildRank() const { return m_guildRank; }
+  const QString& guildRankString() const;
   time_t lastOn() const { return m_lastOn; }
   const QString& publicNote() const { return m_publicNote; }
   uint16_t zoneId() const { return m_zoneId; }
@@ -47,12 +52,19 @@ class GuildMember
   uint16_t m_zoneInstance;
 };
 
+typedef QDict<GuildMember> GuildMemberDict;
+typedef QDictIterator<GuildMember> GuildMemberDictIterator;
+
 class GuildShell : public QObject
 {
   Q_OBJECT
  public:
   GuildShell(ZoneMgr* zoneMgr, QObject* parent = 0, const char* name = 0);
   ~GuildShell();
+  const GuildMemberDict& members() { return m_members; }
+  size_t maxNameLength() { return m_maxNameLength; }
+
+  void dumpMembers(QTextStream& out);
 
   public slots:
     void guildMemberList(const uint8_t* data, size_t len);
@@ -60,12 +72,16 @@ class GuildShell : public QObject
 
  signals:
     void cleared();
+    void loaded();
     void added(const GuildMember* gm);
     void removed(const GuildMember* gm);
     void updated(const GuildMember* gm);
 
  protected:
-    QDict<GuildMember> m_members;
+    QString zoneString(uint16_t zoneid);
+
+    GuildMemberDict m_members;
+    size_t m_maxNameLength;
     ZoneMgr* m_zoneMgr;
 };
 

@@ -1386,12 +1386,14 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    pDebugMenu->insertItem("List &Map Info", this, SLOT(listMapInfo()), ALT+CTRL+Key_M);
    pDebugMenu->insertItem("List G&uild Info", m_guildmgr, SLOT(listGuildInfo()));
    pDebugMenu->insertItem("List &Group", this, SLOT(listGroup()), ALT+CTRL+Key_G);
+   pDebugMenu->insertItem("List Guild M&embers", this, SLOT(listGuild()), ALT+CTRL+Key_E);
    pDebugMenu->insertItem("Dump Spawns", this, SLOT(dumpSpawns()), ALT+SHIFT+CTRL+Key_P);
    pDebugMenu->insertItem("Dump Drops", this, SLOT(dumpDrops()), ALT+SHIFT+CTRL+Key_D);
    pDebugMenu->insertItem("Dump Map Info", this, SLOT(dumpMapInfo()), ALT+SHIFT+CTRL+Key_M);
    pDebugMenu->insertItem("Dump Guild Info", this , SLOT(dumpGuildInfo()));
    pDebugMenu->insertItem("Dump SpellBook Info", this , SLOT(dumpSpellBook()));
    pDebugMenu->insertItem("Dump Group", this, SLOT(dumpGroup()), ALT+CTRL+SHIFT+Key_G);
+   pDebugMenu->insertItem("Dump Guild Members", this, SLOT(dumpGuild()), ALT+CTRL+SHIFT+Key_E);
    pDebugMenu->insertItem("List &Filters", m_filterMgr, SLOT(listFilters()), ALT+CTRL+Key_F);
    pDebugMenu->insertItem("List &Zone Filters", m_filterMgr, SLOT(listZoneFilters()));
 
@@ -3022,6 +3024,22 @@ void EQInterface::listGroup(void)
 }
 
 
+void EQInterface::listGuild(void)
+{
+#ifdef DEBUG
+  debug ("listGuild()");
+#endif /* DEBUG */
+  QString outText;
+
+  // open the output data stream
+  QTextStream out(&outText, IO_WriteOnly);
+
+  // dump the drops
+  m_guildShell->dumpMembers(out);
+
+  seqInfo((const char*)outText);
+}
+
 void EQInterface::dumpSpawns (void)
 {
 #ifdef DEBUG
@@ -3177,6 +3195,26 @@ void EQInterface::dumpGroup(void)
 
   // dump the drops
   m_groupMgr->dumpInfo(out);
+}
+
+void EQInterface::dumpGuild(void)
+{
+#ifdef DEBUG
+  debug ("dumpGuild()");
+#endif /* DEBUG */
+
+  QString logFile = pSEQPrefs->getPrefString("DumpGuildFilename", "Interface",
+					     "dumpguild.txt");
+
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("dumps", logFile);
+
+  // open the output data stream
+  QFile file(logFileInfo.absFilePath());
+  file.open(IO_WriteOnly);
+  QTextStream out(&file);
+
+  // dump the drops
+  m_guildShell->dumpMembers(out);
 }
 
 void
