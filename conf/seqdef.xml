@@ -2358,11 +2358,11 @@
    <comment>Display compass</comment>
   </property>
   <property name="ShowPlayerSkills" >
-   <bool value="true" />
+   <bool value="false" />
    <comment>Display Player Skill List</comment>
   </property>
   <property name="ShowPlayerStats" >
-   <bool value="true" />
+   <bool value="false" />
    <comment>Display Player Stats List</comment>
   </property>
   <property name="ShowSpawnList" >
@@ -2374,7 +2374,7 @@
    <comment>Display New Spawn List</comment>
   </property>
   <property name="ShowSpawnPointList" >
-   <bool value="false" />
+   <bool value="true" />
    <comment>Display Spawn Point List</comment>
   </property>
   <property name="ShowExpWindow" >
@@ -2386,7 +2386,7 @@
    <comment>Display Combat Window</comment>
   </property>
   <property name="ShowSpellList" >
-   <bool value="false" />
+   <bool value="true" />
    <comment>Display Spell List</comment>
   </property>
   <property name="SystimeSpawntime" >
@@ -2418,11 +2418,11 @@
    <comment>Display Map 5</comment>
   </property>
   <property name="DockedPlayerSkills" >
-   <bool value="true" />
+   <bool value="false" />
    <comment>Dock Player Skill List</comment>
   </property>
   <property name="DockedPlayerStats" >
-   <bool value="true" />
+   <bool value="false" />
    <comment>Dock Player Stats</comment>
   </property>
   <property name="DockedSpawnList" >

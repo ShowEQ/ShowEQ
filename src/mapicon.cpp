@@ -69,6 +69,30 @@ MapIcon::IconImageFunction MapIcon::s_iconImageFunctions[] =
     &MapIcon::paintDiamond,
   };
 
+//----------------------------------------------------------------------
+// MapIcon
+MapIcon::MapIcon()
+  : m_line1Distance(0),
+    m_line2Distance(0),
+    m_image(false),
+    m_imageUseSpawnColorPen(false),
+    m_imageUseSpawnColorBrush(false),
+    m_imageFlash(false),
+    m_highlight(false),
+    m_highlightUseSpawnColorPen(false),
+    m_highlightUseSpawnColorBrush(false),
+    m_highlightFlash(false),
+    m_showLine0(false),
+    m_useWalkPathPen(false),
+    m_showWalkPath(false),
+    m_showName(false)
+{
+}
+
+MapIcon::~MapIcon()
+{
+}
+
 MapIcon& MapIcon::operator=(const MapIcon& mapIcon)
 {
   m_imageBrush = mapIcon.m_imageBrush;
@@ -286,6 +310,54 @@ void MapIcon::save(const QString& prefBase, const QString& section)
   pSEQPrefs->setPrefBool(prefBase + "ShowName", section, m_showName);
 }
 
+void MapIcon::setImage(const QBrush& brush, const QPen& pen, 
+		       MapIconStyle style, MapIconSize size, bool use, 
+		       bool useSpawnColorPen, bool useSpawnColorBrush, 
+		       bool flash)
+{
+  m_imageBrush = brush;
+  m_imagePen = pen;
+  m_imageStyle = style;
+  m_imageSize = size;
+  m_image = use;
+  m_imageUseSpawnColorPen = useSpawnColorPen;
+  m_imageUseSpawnColorBrush = useSpawnColorBrush;
+  m_imageFlash = flash;
+}
+
+void MapIcon::setHighlight(const QBrush& brush, const QPen& pen, 
+			   MapIconStyle style, MapIconSize size, bool use, 
+			   bool useSpawnColorPen, bool useSpawnColorBrush, 
+			   bool flash)
+{
+  m_highlightBrush = brush;
+  m_highlightPen = pen;
+  m_highlightStyle = style;
+  m_highlightSize = size;
+  m_highlight = use;
+  m_highlightUseSpawnColorPen = useSpawnColorPen;
+  m_highlightUseSpawnColorBrush = useSpawnColorBrush;
+  m_highlightFlash = flash;
+}
+
+void MapIcon::setLine0(bool show, const QPen& pen)
+{
+  m_showLine0 = show;
+  m_line0Pen = pen;
+}
+
+void MapIcon::setLine1(uint32_t distance, const QPen& pen)
+{
+  m_line1Distance = distance;
+  m_line0Pen = pen;
+}
+
+void MapIcon::setLine2(uint32_t distance, const QPen& pen)
+{
+  m_line2Distance = distance;
+  m_line2Pen = pen;
+}
+
 void MapIcon::paintNone(QPainter&p, const QPoint& point, 
 			int size, int sizeWH)
 {
@@ -387,317 +459,142 @@ MapIcons::MapIcons(Player* player, const QString& preferenceName,
     m_preferenceName(preferenceName),
     m_flash(false)
 {
-  // Declare the default icon type characteristics
-  // NOTE: They are only declared here instead of in a file scope global
-  //       const because QBrush, QPen, QColor, etc. can't be used until after
-  //       the QApplication instance is created.
+  // Setup the map icons with default icon type characteristics
   PenCapStyle cap = SquareCap;
   PenJoinStyle join = BevelJoin;
 
-  // see MapIcon class definition in map.h to see ordering.
-  const MapIcon mapIconDefs[tIconTypeNumTypes] =
-  {
-    // tIconTypeUnknown
-    { QBrush(), QBrush(), 
-      QPen(gray, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(), 
-      0, 0,
-      tIconStyleCircle, tIconSizeSmall,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeDrop
-    { QBrush(), QBrush(),
-      QPen(yellow, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleX, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeDoor
-    { QBrush(NoBrush), QBrush(),
-      QPen(QColor(110, 60, 0), 0, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleSquare, tIconSizeTiny,
-      tIconStyleNone, tIconSizeNone,
-      true, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnNPC
-    { QBrush(SolidPattern), QBrush(),
-      QPen(black, 0, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleCircle, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnNPCCorpse
-    { QBrush(SolidPattern), QBrush(),
-      QPen(cyan, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStylePlus, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayer
-    { QBrush(SolidPattern), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleSquare, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerCorpse
-    { QBrush(), QBrush(),
-      QPen(yellow, 2, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleSquare, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnUnknown
-    { QBrush(gray), QBrush(),
-      QPen(NoPen, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleCircle, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnConsidered
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(red, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleSquare, tIconSizeLarge,
-      false, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeam1
-    { QBrush(SolidPattern), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleUpTriangle, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeam2
-    { QBrush(SolidPattern), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleRightTriangle, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeam3
-    { QBrush(SolidPattern), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleDownTriangle, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeam4
-    { QBrush(SolidPattern), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleLeftTriangle, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeam5
-    { QBrush(SolidPattern), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleSquare, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeamOtherRace
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(gray, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleSquare, tIconSizeXLarge,
-      false, false, false, false,
-      true, false, false, true,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeamOtherDeity
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(gray, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleSquare, tIconSizeXLarge,
-      false, false, false, false,
-      true, false, false, true,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeamOtherRacePet
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(SolidLine, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeXLarge,
-      false, false, false, false,
-      true, true, false, true,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerTeamOtherDeityPet
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(SolidLine, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeXLarge,
-      false, false, false, false,
-      true, true, false, true,
-      false, false, false, false },
-    // tIconTypeSpawnPlayerOld
-    { QBrush(), QBrush(),
-      QPen(magenta, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStylePlus, tIconSizeRegular,
-      tIconStyleNone, tIconSizeNone,
-      true, false, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeItemSelected
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(magenta, 1, SolidLine, cap, join),
-      QPen(magenta), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeXXLarge,
-      false, false, false, false,
-      true, false, false, true,
-      true, false, true, false },
-    // tIconTypeFilterFlagHunt
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(gray, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, true,
-      false, false, false, false },
-    // tIconTypeFilterFlagCaution
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(yellow, 1, SolidLine, cap, join),
-      QPen(), QPen(yellow, 1, SolidLine, cap, join), QPen(), QPen(),
-      500, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, true,
-      false, false, false, false },
-    // tIconTypeFilterFlagDanger
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(red, 1, SolidLine, cap, join),
-      QPen(), QPen(red, 1, SolidLine, cap, join), QPen(yellow, 1, SolidLine, cap, join), QPen(),
-      500, 1000,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, true,
-      false, false, false, false },
-    // tIconTypeFilterLocate
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(white, 1, SolidLine, cap, join),
-      QPen(white, 1, SolidLine, cap, join), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, true,
-      true, false, false, false },
-    // tIconTypeFilterAlert
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      false, false, false, true,
-      false, false, false, false },
-    // tIconTypeFilterFiltered
-    { QBrush(Dense2Pattern), QBrush(),
-      QPen(gray, 0, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleNone, tIconSizeNone,
-      true, false, true, false,
-      false, false, false, true,
-      false, false, false, false },
-    // tIconTypeFilterTracer
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(yellow, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, false,
-      false, false, true, false },
-    // tIconTypeRuntimeFiltered
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(white, 1, SolidLine, cap, join),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, true,
-      false, false, false, false },
-    // tIconTypeSpawnPoint
-    { QBrush(SolidPattern), QBrush(),
-      QPen(darkGray, 1, SolidLine, cap, join), QPen(),
-      QPen(), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStylePlus, tIconSizeSmall,
-      tIconStyleNone, tIconSizeNone,
-      true, true, false, false,
-      false, false, false, false,
-      false, false, false, false },
-    // tIconTypeSpawnPointSelected
-    { QBrush(), QBrush(NoBrush),
-      QPen(), QPen(blue, 1, SolidLine, cap, join),
-      QPen(blue), QPen(), QPen(), QPen(),
-      0, 0,
-      tIconStyleNone, tIconSizeNone,
-      tIconStyleCircle, tIconSizeLarge,
-      false, false, false, false,
-      true, false, false, true,
-      true, false, false, false },
-  };
+  m_mapIcons[tIconTypeUnknown]
+    .setImage(QBrush(), QPen(gray, 1, SolidLine, cap, join),
+	      tIconStyleCircle, tIconSizeSmall,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeDrop]
+    .setImage(QBrush(), QPen(yellow, 1, SolidLine, cap, join),
+	      tIconStyleX, tIconSizeRegular,
+	      true, false, false, false);
+  m_mapIcons[tIconTypeDoor]
+    .setImage(QBrush(NoBrush), QPen(QColor(110, 60, 0)),
+	      tIconStyleSquare, tIconSizeTiny,
+	      true, false, false, false);
+  m_mapIcons[tIconTypeSpawnNPC]
+    .setImage(QBrush(SolidPattern), QPen(black, 0, SolidLine, cap, join), 
+	      tIconStyleCircle, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnNPCCorpse]
+    .setImage(QBrush(SolidPattern), QPen(cyan, 1, SolidLine, cap, join),
+	      tIconStylePlus, tIconSizeRegular,
+	      true, false, false, false);
+  m_mapIcons[tIconTypeSpawnPlayer]
+    .setImage(QBrush(SolidPattern), QPen(magenta, 1, SolidLine, cap, join),
+	      tIconStyleSquare, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnPlayerCorpse]
+    .setImage(QBrush(), QPen(yellow, 2, SolidLine, cap, join), 
+	      tIconStyleSquare, tIconSizeRegular,
+	      true, false, false, false);
+  m_mapIcons[tIconTypeSpawnUnknown]
+    .setImage(QBrush(gray), QPen(NoPen, 1, SolidLine, cap, join), 
+	      tIconStyleCircle, tIconSizeRegular,
+	      true, false, false, false);
+  m_mapIcons[tIconTypeSpawnConsidered]
+    .setHighlight(QBrush(NoBrush), QPen(red, 1, SolidLine, cap, join),
+		  tIconStyleSquare, tIconSizeLarge,
+		  true, false, false, false);
+  m_mapIcons[tIconTypeSpawnPlayerTeam1]
+    .setImage(QBrush(SolidPattern), QPen(magenta, 1, SolidLine, cap, join), 
+	      tIconStyleUpTriangle, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnPlayerTeam2]
+    .setImage(QBrush(SolidPattern), QPen(magenta, 1, SolidLine, cap, join), 
+	      tIconStyleRightTriangle, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnPlayerTeam3]
+    .setImage(QBrush(SolidPattern), QPen(magenta, 1, SolidLine, cap, join), 
+	      tIconStyleDownTriangle, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnPlayerTeam4]
+    .setImage(QBrush(SolidPattern), QPen(magenta, 1, SolidLine, cap, join), 
+	      tIconStyleLeftTriangle, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnPlayerTeam5]
+    .setImage(QBrush(SolidPattern), QPen(magenta, 1, SolidLine, cap, join), 
+	      tIconStyleSquare, tIconSizeRegular,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeSpawnPlayerTeamOtherRace]
+    .setHighlight(QBrush(NoBrush), QPen(gray, 1, SolidLine, cap, join),
+		  tIconStyleSquare, tIconSizeXLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeity]
+    .setHighlight(QBrush(NoBrush), QPen(SolidLine, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeXLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeSpawnPlayerTeamOtherRacePet]
+    .setHighlight(QBrush(NoBrush), QPen(SolidLine, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeXLarge,
+		  true, true, false, true);
+  m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeityPet]
+    .setImage(QBrush(NoBrush), QPen(SolidLine, 1, SolidLine, cap, join),
+	      tIconStyleCircle, tIconSizeXLarge,
+	      true, true, false, true);
+  m_mapIcons[tIconTypeSpawnPlayerOld]
+    .setImage(QBrush(), QPen(magenta, 1, SolidLine, cap, join), 
+	      tIconStylePlus, tIconSizeRegular,
+	      true, false, false, false);
+  m_mapIcons[tIconTypeItemSelected]
+    .setHighlight(QBrush(NoBrush), QPen(magenta, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeXXLarge,
+		  true, false, false, false);
+  m_mapIcons[tIconTypeItemSelected].setLine0(true, QPen(magenta));
+  m_mapIcons[tIconTypeItemSelected].setShowWalkPath(true);
+  m_mapIcons[tIconTypeFilterFlagHunt]
+    .setHighlight(QBrush(NoBrush), QPen(gray, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeFilterFlagCaution]
+    .setHighlight(QBrush(NoBrush), QPen(yellow, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeFilterFlagCaution]
+    .setLine1(500, QPen(yellow, 1, SolidLine, cap, join));
+  m_mapIcons[tIconTypeFilterFlagDanger]
+    .setHighlight(QBrush(NoBrush), QPen(red, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeFilterFlagDanger]
+    .setLine1(500, QPen(red, 1, SolidLine, cap, join));
+  m_mapIcons[tIconTypeFilterFlagDanger]
+    .setLine2(1000, QPen(yellow, 1, SolidLine, cap, join));
+  m_mapIcons[tIconTypeFilterFlagLocate]
+    .setHighlight(QBrush(NoBrush), QPen(white, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeFilterFlagLocate]
+    .setLine0(true, QPen(white, 1, SolidLine, cap, join));
+  m_mapIcons[tIconTypeFilterFlagAlert]
+    .setHighlight(QBrush(NoBrush), QPen(),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeFilterFlagFiltered]
+    .setImage(QBrush(Dense2Pattern), QPen(gray, 0, SolidLine, cap, join), 
+	      tIconStyleCircle, tIconSizeSmall,
+	      true, false, true, false);
+  m_mapIcons[tIconTypeFilterFlagTracer]
+    .setHighlight(QBrush(NoBrush), QPen(yellow, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, false);
+  m_mapIcons[tIconTypeRuntimeFiltered]
+    .setHighlight(QBrush(NoBrush), QPen(white, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, true);
+  m_mapIcons[tIconTypeSpawnPoint]
+    .setImage(QBrush(SolidPattern), QPen(darkGray, 1, SolidLine, cap, join),
+	      tIconStylePlus, tIconSizeSmall,
+	      true, true, false, false);
+  m_mapIcons[tIconTypeSpawnPointSelected]
+    .setHighlight(QBrush(NoBrush), QPen(blue, 1, SolidLine, cap, join),
+		  tIconStyleCircle, tIconSizeLarge,
+		  true, false, false, false);
+  m_mapIcons[tIconTypeSpawnPointSelected]
+    .setLine0(true, QPen(blue));
 
   // setup icon size maps
   m_mapIconSizes[tIconSizeNone] = &m_markerNSize; // none should never be drawn
@@ -715,14 +612,10 @@ MapIcons::MapIcons(Player* player, const QString& preferenceName,
   m_mapIconSizes[tIconSizeXXLarge] = &m_marker2Size;
   m_mapIconSizesWH[tIconSizeXXLarge] = &m_marker2SizeWH;
 
-  // setup the icons
-  for (int k = 0; k <= tIconTypeMax; k++)
-    m_mapIcons[k] = mapIconDefs[k];
-
   // setup the flash timer
   m_flashTimer = new QTimer(this);
   connect(m_flashTimer, SIGNAL(timeout()), this, SLOT(flashTick()));
-  m_flashTimer->start(166, false);
+  m_flashTimer->start(200, false);
 }
 
 MapIcons::~MapIcons()
@@ -843,9 +736,9 @@ void MapIcons::paintIcon(MapParameters& param,
 			 const QPoint& point)
 {
   // Draw Line
-  if (mapIcon.m_showLine0)
+  if (mapIcon.showLine0())
   {
-    p.setPen(mapIcon.m_line0Pen);
+    p.setPen(mapIcon.line0Pen());
     p.drawLine(param.playerXOffset(), 
 	       param.playerYOffset(),
 	       point.x(), point.y());
@@ -853,24 +746,24 @@ void MapIcons::paintIcon(MapParameters& param,
 
   // Calculate distance and draw distance related lines
   uint32_t distance = UINT32_MAX;
-  if (mapIcon.m_line1Distance || mapIcon.m_line2Distance)
+  if (mapIcon.line1Distance() || mapIcon.line2Distance())
   {
     if (!showeq_params->fast_machine)
       distance = item->calcDist2DInt(param.player());
     else
       distance = (int)item->calcDist(param.player());
 
-    if (mapIcon.m_line1Distance > distance)
+    if (mapIcon.line1Distance() > distance)
     {
-      p.setPen(mapIcon.m_line1Pen);
+      p.setPen(mapIcon.line1Pen());
       p.drawLine(param.playerXOffset(), 
 		 param.playerYOffset(),
 		 point.x(), point.y());
     }
 
-    if (mapIcon.m_line2Distance > distance)
+    if (mapIcon.line2Distance() > distance)
     {
-      p.setPen(mapIcon.m_line2Pen);
+      p.setPen(mapIcon.line2Pen());
       p.drawLine(param.playerXOffset(), 
 		 param.playerYOffset(),
 		 point.x(), point.y());
@@ -878,41 +771,41 @@ void MapIcons::paintIcon(MapParameters& param,
   }
 
   // Draw Item Name
-  if (mapIcon.m_showName)
+  if (mapIcon.showName())
   {
     QString spawnNameText = item->name();
     
     QFontMetrics fm(param.font());
     int width = fm.width(spawnNameText);
-    p.setPen(darkGray);
+    p.setPen(gray);
     p.drawText(point.x() - (width / 2),
-	       point.y() + 10, spawnNameText);
+	       point.y() + fm.height() + 1, spawnNameText);
   }
 
   // Draw Icon Image
-  if (mapIcon.m_image && 
-      (!mapIcon.m_imageFlash || m_flash) &&
-      (mapIcon.m_imageStyle != tIconStyleNone))
+  if (mapIcon.image() && 
+      (!mapIcon.imageFlash() || m_flash) &&
+      (mapIcon.imageStyle() != tIconStyleNone))
   {
-    p.setPen(mapIcon.m_imagePen);
-    p.setBrush(mapIcon.m_imageBrush);
+    p.setPen(mapIcon.imagePen());
+    p.setBrush(mapIcon.imageBrush());
 
-    mapIcon.paintIconImage(mapIcon.m_imageStyle, p, point, 
-			   *m_mapIconSizes[mapIcon.m_imageSize],
-			   *m_mapIconSizesWH[mapIcon.m_imageSize]);
+    mapIcon.paintIconImage(mapIcon.imageStyle(), p, point, 
+			   *m_mapIconSizes[mapIcon.imageSize()],
+			   *m_mapIconSizesWH[mapIcon.imageSize()]);
   }
 
   // Draw Highlight
-  if (mapIcon.m_highlight && 
-      (!mapIcon.m_highlightFlash || m_flash) &&
-      (mapIcon.m_highlightStyle != tIconStyleNone))
+  if (mapIcon.highlight() && 
+      (!mapIcon.highlightFlash() || m_flash) &&
+      (mapIcon.highlightStyle() != tIconStyleNone))
   {
-    p.setPen(mapIcon.m_highlightPen);
-    p.setBrush(mapIcon.m_highlightBrush);
+    p.setPen(mapIcon.highlightPen());
+    p.setBrush(mapIcon.highlightBrush());
 
-    mapIcon.paintIconImage(mapIcon.m_highlightStyle, p, point, 
-			   *m_mapIconSizes[mapIcon.m_highlightSize],
-			   *m_mapIconSizesWH[mapIcon.m_highlightSize]);
+    mapIcon.paintIconImage(mapIcon.highlightStyle(), p, point, 
+			   *m_mapIconSizes[mapIcon.highlightSize()],
+			   *m_mapIconSizesWH[mapIcon.highlightSize()]);
   }
 }
 
@@ -925,7 +818,7 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
 {
   // ------------------------
   // Draw Walk Path
-  if (mapIcon.m_showWalkPath ||
+  if (mapIcon.showWalkPath() ||
       (m_showNPCWalkPaths && spawn->isNPC()))
   {
     SpawnTrackListIterator trackIt(spawn->trackList());
@@ -933,10 +826,10 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
     const SpawnTrackPoint* trackPoint = trackIt.current();
     if (trackPoint)
     {
-      if (!mapIcon.m_useWalkPathPen)
+      if (!mapIcon.useWalkPathPen())
 	p.setPen(blue);
       else
-	p.setPen(mapIcon.m_walkPathPen);
+	p.setPen(mapIcon.walkPathPen());
 
       p.moveTo (param.calcXOffsetI(trackPoint->x()), 
 		param.calcYOffsetI(trackPoint->y()));
@@ -950,9 +843,9 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
   }
 
   // Draw Line
-  if (mapIcon.m_showLine0)
+  if (mapIcon.showLine0())
   {
-    p.setPen(mapIcon.m_line0Pen);
+    p.setPen(mapIcon.line0Pen());
     p.drawLine(param.playerXOffset(), 
 	       param.playerYOffset(),
 	       point.x(), point.y());
@@ -960,7 +853,7 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
 
   // calculate distance and draw distance related lines
   uint32_t distance = UINT32_MAX;
-  if (mapIcon.m_line1Distance || mapIcon.m_line2Distance || 
+  if (mapIcon.line1Distance() || mapIcon.line2Distance() || 
       m_showSpawnNames)
   {
     if (!showeq_params->fast_machine)
@@ -968,17 +861,17 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
     else
       distance = (int)location.calcDist(param.player());
     
-    if (mapIcon.m_line1Distance > distance)
+    if (mapIcon.line1Distance() > distance)
     {
-      p.setPen(mapIcon.m_line1Pen);
+      p.setPen(mapIcon.line1Pen());
       p.drawLine(param.playerXOffset(), 
 		 param.playerYOffset(),
 		 point.x(), point.y());
     }
 
-    if (mapIcon.m_line2Distance > distance)
+    if (mapIcon.line2Distance() > distance)
     {
-      p.setPen(mapIcon.m_line2Pen);
+      p.setPen(mapIcon.line2Pen());
       p.drawLine(param.playerXOffset(), 
 		 param.playerYOffset(),
 		 point.x(), point.y());
@@ -986,7 +879,7 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
   }
 
   // Draw Spawn Names
-  if (mapIcon.m_showName || 
+  if (mapIcon.showName() || 
       (m_showSpawnNames && (distance < m_fovDistance)))
   {
     QString spawnNameText;
@@ -997,65 +890,65 @@ void MapIcons::paintSpawnIcon(MapParameters& param,
     
     QFontMetrics fm(param.font());
     int width = fm.width(spawnNameText);
-    p.setPen(darkGray);
+    p.setPen(gray);
     p.drawText(point.x() - (width / 2),
-	       point.y() + 10, spawnNameText);
+	       point.y() + fm.height() + 1, spawnNameText);
   }
   
   // Draw the Icon
-  if (mapIcon.m_image && 
-      (!mapIcon.m_imageFlash || m_flash) &&
-      (mapIcon.m_imageStyle != tIconStyleNone))
+  if (mapIcon.image() && 
+      (!mapIcon.imageFlash() || m_flash) &&
+      (mapIcon.imageStyle() != tIconStyleNone))
   {
-    if (mapIcon.m_imageUseSpawnColorPen)
+    if (mapIcon.imageUseSpawnColorPen())
     {
-      QPen pen = mapIcon.m_imagePen;
+      QPen pen = mapIcon.imagePen();
       pen.setColor(m_player->pickConColor(spawn->level()));
       p.setPen(pen);
     }
     else
-      p.setPen(mapIcon.m_imagePen);
+      p.setPen(mapIcon.imagePen());
 
-    if (mapIcon.m_imageUseSpawnColorBrush)
+    if (mapIcon.imageUseSpawnColorBrush())
     {
-      QBrush brush = mapIcon.m_imageBrush;
+      QBrush brush = mapIcon.imageBrush();
       brush.setColor(m_player->pickConColor(spawn->level()));
       p.setBrush(brush);
     }
     else
-      p.setBrush(mapIcon.m_imageBrush);
+      p.setBrush(mapIcon.imageBrush());
 
-    mapIcon.paintIconImage(mapIcon.m_imageStyle, p, point, 
-			   *m_mapIconSizes[mapIcon.m_imageSize],
-			   *m_mapIconSizesWH[mapIcon.m_imageSize]);
+    mapIcon.paintIconImage(mapIcon.imageStyle(), p, point, 
+			   *m_mapIconSizes[mapIcon.imageSize()],
+			   *m_mapIconSizesWH[mapIcon.imageSize()]);
   }
 
   // Draw the highlight
-  if (mapIcon.m_highlight && 
-      (!mapIcon.m_highlightFlash || m_flash) &&
-      (mapIcon.m_highlightStyle != tIconStyleNone))
+  if (mapIcon.highlight() && 
+      (!mapIcon.highlightFlash() || m_flash) &&
+      (mapIcon.highlightStyle() != tIconStyleNone))
   {
-    if (mapIcon.m_highlightUseSpawnColorPen)
+    if (mapIcon.highlightUseSpawnColorPen())
     {
-      QPen pen = mapIcon.m_highlightPen;
+      QPen pen = mapIcon.highlightPen();
       pen.setColor(m_player->pickConColor(spawn->level()));
       p.setPen(pen);
     }
     else
-      p.setPen(mapIcon.m_highlightPen);
+      p.setPen(mapIcon.highlightPen());
 
-    if (mapIcon.m_highlightUseSpawnColorBrush)
+    if (mapIcon.highlightUseSpawnColorBrush())
     {
-      QBrush brush = mapIcon.m_highlightBrush;
+      QBrush brush = mapIcon.highlightBrush();
       brush.setColor(m_player->pickConColor(spawn->level()));
       p.setBrush(brush);
     }
     else
-      p.setBrush(mapIcon.m_highlightBrush);
+      p.setBrush(mapIcon.highlightBrush());
 
-    mapIcon.paintIconImage(mapIcon.m_highlightStyle,p, point, 
-			   *m_mapIconSizes[mapIcon.m_highlightSize],
-			   *m_mapIconSizesWH[mapIcon.m_highlightSize]);
+    mapIcon.paintIconImage(mapIcon.highlightStyle(), p, point, 
+			   *m_mapIconSizes[mapIcon.highlightSize()],
+			   *m_mapIconSizesWH[mapIcon.highlightSize()]);
   }
 }
 
@@ -1066,9 +959,9 @@ void MapIcons::paintSpawnPointIcon(MapParameters& param,
 				   const QPoint& point)
 {
   // Draw Line
-  if (mapIcon.m_showLine0)
+  if (mapIcon.showLine0())
   {
-    p.setPen(mapIcon.m_line0Pen);
+    p.setPen(mapIcon.line0Pen());
     p.drawLine(param.playerXOffset(), 
 	       param.playerYOffset(),
 	       point.x(), point.y());
@@ -1076,24 +969,24 @@ void MapIcons::paintSpawnPointIcon(MapParameters& param,
 
   // calculate distance and draw distance related lines
   uint32_t distance = UINT32_MAX;
-  if (mapIcon.m_line1Distance || mapIcon.m_line2Distance)
+  if (mapIcon.line1Distance() || mapIcon.line2Distance())
   {
     if (!showeq_params->fast_machine)
       distance = sp->calcDist2DInt(param.player());
     else
       distance = (int)sp->calcDist(param.player());
     
-    if (mapIcon.m_line1Distance > distance)
+    if (mapIcon.line1Distance() > distance)
     {
-      p.setPen(mapIcon.m_line1Pen);
+      p.setPen(mapIcon.line1Pen());
       p.drawLine(param.playerXOffset(), 
 		 param.playerYOffset(),
 		 point.x(), point.y());
     }
 
-    if (mapIcon.m_line2Distance > distance)
+    if (mapIcon.line2Distance() > distance)
     {
-      p.setPen(mapIcon.m_line2Pen);
+      p.setPen(mapIcon.line2Pen());
       p.drawLine(param.playerXOffset(), 
 		 param.playerYOffset(),
 		 point.x(), point.y());
@@ -1101,7 +994,7 @@ void MapIcons::paintSpawnPointIcon(MapParameters& param,
   }
 
   // Draw Spawn Names
-  if (mapIcon.m_showName)
+  if (mapIcon.showName())
   {
     QString spawnNameText;
     
@@ -1112,65 +1005,65 @@ void MapIcons::paintSpawnPointIcon(MapParameters& param,
     
     QFontMetrics fm(param.font());
     int width = fm.width(spawnNameText);
-    p.setPen(darkGray);
+    p.setPen(gray);
     p.drawText(point.x() - (width / 2),
-	       point.y() + 10, spawnNameText);
+	       point.y() + fm.height() + 1, spawnNameText);
   }
   
   // Draw the Icon
-  if (mapIcon.m_image && 
-      (!mapIcon.m_imageFlash || m_flash) &&
-      (mapIcon.m_imageStyle != tIconStyleNone))
+  if (mapIcon.image() && 
+      (!mapIcon.imageFlash() || m_flash) &&
+      (mapIcon.imageStyle() != tIconStyleNone))
   {
-    if (mapIcon.m_imageUseSpawnColorPen)
+    if (mapIcon.imageUseSpawnColorPen())
     {
-      QPen pen = mapIcon.m_imagePen;
+      QPen pen = mapIcon.imagePen();
       pen.setColor(pickSpawnPointColor(sp, pen.color()));
       p.setPen(pen);
     }
     else
-      p.setPen(mapIcon.m_imagePen);
+      p.setPen(mapIcon.imagePen());
 
-    if (mapIcon.m_imageUseSpawnColorBrush)
+    if (mapIcon.imageUseSpawnColorBrush())
     {
-      QBrush brush = mapIcon.m_imageBrush;
+      QBrush brush = mapIcon.imageBrush();
       brush.setColor(pickSpawnPointColor(sp, brush.color()));
       p.setBrush(brush);
     }
     else
-      p.setBrush(mapIcon.m_imageBrush);
+      p.setBrush(mapIcon.imageBrush());
 
-    mapIcon.paintIconImage(mapIcon.m_imageStyle, p, point, 
-			   *m_mapIconSizes[mapIcon.m_imageSize],
-			   *m_mapIconSizesWH[mapIcon.m_imageSize]);
+    mapIcon.paintIconImage(mapIcon.imageStyle(), p, point, 
+			   *m_mapIconSizes[mapIcon.imageSize()],
+			   *m_mapIconSizesWH[mapIcon.imageSize()]);
   }
 
   // Draw the highlight
-  if (mapIcon.m_highlight && 
-      (!mapIcon.m_highlightFlash || m_flash) &&
-      (mapIcon.m_highlightStyle != tIconStyleNone))
+  if (mapIcon.highlight() && 
+      (!mapIcon.highlightFlash() || m_flash) &&
+      (mapIcon.highlightStyle() != tIconStyleNone))
   {
-    if (mapIcon.m_highlightUseSpawnColorPen)
+    if (mapIcon.highlightUseSpawnColorPen())
     {
-      QPen pen = mapIcon.m_highlightPen;
+      QPen pen = mapIcon.highlightPen();
       pen.setColor(pickSpawnPointColor(sp, pen.color()));
       p.setPen(pen);
     }
     else
-      p.setPen(mapIcon.m_highlightPen);
+      p.setPen(mapIcon.highlightPen());
 
-    if (mapIcon.m_highlightUseSpawnColorBrush)
+    if (mapIcon.highlightUseSpawnColorBrush())
     {
-      QBrush brush = mapIcon.m_highlightBrush;
+      QBrush brush = mapIcon.highlightBrush();
       brush.setColor(pickSpawnPointColor(sp, brush.color()));
       p.setBrush(brush);
     }
     else
-      p.setBrush(mapIcon.m_highlightBrush);
+      p.setBrush(mapIcon.highlightBrush());
 
-    mapIcon.paintIconImage(mapIcon.m_highlightStyle,p, point, 
-			   *m_mapIconSizes[mapIcon.m_highlightSize],
-			   *m_mapIconSizesWH[mapIcon.m_highlightSize]);
+    mapIcon.paintIconImage(mapIcon.highlightStyle(), p, point, 
+			   *m_mapIconSizes[mapIcon.highlightSize()],
+			   *m_mapIconSizesWH[mapIcon.highlightSize()]);
   }
 }
 

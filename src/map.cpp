@@ -3582,7 +3582,9 @@ void Map::paintSpawns(MapParameters& param,
  	if (!m_player->isSameRaceTeam(spawn))
 	{
 	  mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherRace]);
-	  mapIcon.m_highlightPen.setColor(raceTeamHighlightColor(spawn));
+	  QPen p2(mapIcon.highlightPen());
+	  p2.setColor(raceTeamHighlightColor(spawn));
+	  mapIcon.setHighlightPen(p2);
 	}
       } // if decorate pvp
       // circle around pvp pets
@@ -3600,7 +3602,9 @@ void Map::paintSpawns(MapParameters& param,
  	if (!m_player->isSameDeityTeam(spawn))
  	{
  	  mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeity]);
- 	  mapIcon.m_highlightPen.setColor(deityTeamHighlightColor(spawn));
+	  QPen p2(mapIcon.highlightPen());
+	  p2.setColor(deityTeamHighlightColor(spawn));
+ 	  mapIcon.setHighlightPen(p2);
  	}
       } // if decorate pvp
  	// circle around deity pvp pets

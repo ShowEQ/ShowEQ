@@ -48,7 +48,6 @@ enum MapIconSize
   tIconSizeXLarge = 5,
   tIconSizeXXLarge = 6,
   tIconSizeMax = tIconSizeXXLarge,
-  tIconSizeNumSizes = 7,
 };
 
 enum MapIconStyle
@@ -102,19 +101,69 @@ enum MapIconType
   tIconTypeSpawnPoint,
   tIconTypeSpawnPointSelected,
   tIconTypeMax = tIconTypeSpawnPointSelected,
-  tIconTypeNumTypes,
 };
 
 //----------------------------------------------------------------------
 // MapIcon
-struct MapIcon 
+class MapIcon 
 {
  public:
+  // Constructor
+  MapIcon();
+  ~MapIcon();
+
+  // operator(s)
   MapIcon& operator=(const MapIcon& mapIcon);
+
+  // 
   void combine(const MapIcon& mapIcon);
+
+  // persistance
   void load(const QString& prefBase, const QString& section);
   void save(const QString& prefBase, const QString& section);
+
+  // convenience methods
+  void setImage(const QBrush& brush, const QPen& pen, 
+		MapIconStyle style, MapIconSize size,
+		bool use, bool useSpawnColorPen, bool useSpawnColorBrush, 
+		bool flash);
+  void setHighlight(const QBrush& brush, const QPen& pen, 
+		    MapIconStyle style, MapIconSize size,
+		    bool use, bool useSpawnColorPen, bool useSpawnColorBrush, 
+		    bool flash);
+  void setLine0(bool show, const QPen& pen);
+  void setLine1(uint32_t distance, const QPen& pen);
+  void setLine2(uint32_t distance, const QPen& pen);
   
+  // set accessors
+  void setImageBrush(const QBrush& val) { m_imageBrush = val; }
+  void setHighlightBrush(const QBrush& val) { m_highlightBrush = val; }
+  void setImagePen(const QPen& val) { m_imagePen = val; }
+  void setHighlightPen(const QPen& val) { m_highlightPen = val; }
+  void setLine0Pen(const QPen& val) { m_line0Pen = val; }
+  void setLine1Pen(const QPen& val) { m_line1Pen = val; }
+  void setLine2Pen(const QPen& val) { m_line2Pen = val; }
+  void setWalkPathPen(const QPen& val) { m_walkPathPen = val; }
+  void setLine1Distance(const uint32_t val) { m_line1Distance = val; }
+  void setLine2Distance(const uint32_t val) { m_line2Distance = val; }
+  void setImageStyle(const MapIconStyle val) { m_imageStyle = val; }
+  void setImageSize(const MapIconSize val) { m_imageSize = val; }
+  void setHighlightStyle(const MapIconStyle val) { m_highlightStyle = val; }
+  void setHighlightSize(const MapIconSize val) { m_highlightSize = val; }
+  void setImage(const bool val) { m_image = val; }
+  void setImageUseSpawnColorPen(const bool val) { m_imageUseSpawnColorPen = val; }
+  void setImageUseSpawnColorBrush(const bool val) { m_imageUseSpawnColorBrush = val; }
+  void setImageFlash(const bool val) { m_imageFlash = val; }
+  void setHighlight(const bool val) { m_highlight = val; }
+  void setHighlightUseSpawnColorPen(const bool val) { m_highlightUseSpawnColorPen = val; }
+  void setHighlightUseSpawnColorBrush(const bool val) { m_highlightUseSpawnColorBrush = val; }
+  void setHighlightFlash(const bool val) { m_highlightFlash = val; }
+  void setShowLine0(const bool val) { m_showLine0 = val; }
+  void setUseWalkPathPen(const bool val) { m_useWalkPathPen = val; }
+  void setShowWalkPath(const bool val) { m_showWalkPath = val; }
+  void setShowName(const bool val) { m_showName = val; } 
+
+  // get accessors
   const QBrush& imageBrush() const { return m_imageBrush; }
   const QBrush& highlightBrush() const { return m_highlightBrush; }
   const QPen& imagePen() const { return m_imagePen; }
@@ -142,37 +191,10 @@ struct MapIcon
   bool showWalkPath() const { return m_showWalkPath; }
   bool showName() const { return m_showName; }
 
-  void setImageBrush(const QBrush& val) { m_imageBrush = val; }
-  void setHighlightBrush(const QBrush& val) { m_highlightBrush = val; }
-  void setImagePen(const QPen& val) { m_imagePen = val; }
-  void setHighlightPen(const QPen& val) { m_highlightPen = val; }
-  void setLine0Pen(const QPen& val) { m_line0Pen = val; }
-  void setLine1Pen(const QPen& val) { m_line1Pen = val; }
-  void setLine2Pen(const QPen& val) { m_line2Pen = val; }
-  void setWalkPathPen(const QPen& val) { m_walkPathPen = val; }
-  void setLine1Distance(const uint32_t val) { m_line1Distance = val; }
-  void setLine2Distance(const uint32_t val) { m_line2Distance = val; }
-  void setImageStyle(const MapIconStyle val) { m_imageStyle = val; }
-  void setImageSize(const MapIconSize val) { m_imageSize = val; }
-  void setHighlightStyle(const MapIconStyle val) { m_highlightStyle = val; }
-  void setHighlightSize(const MapIconSize val) { m_highlightSize = val; }
-  void setImage(const bool val) { m_image = val; }
-  void setImageUseSpawnColorPen(const bool val) { m_imageUseSpawnColorPen = val; }
-  void setImageUseSpawnColorBrush(const bool val) { m_imageUseSpawnColorBrush = val; }
-  void setImageFlash(const bool val) { m_imageFlash = val; }
-  void setHighlight(const bool val) { m_highlight = val; }
-  void setHighlightUseSpawnColorPen(const bool val) { m_highlightUseSpawnColorPen = val; }
-  void setHighlightUseSpawnColorBrush(const bool val) { m_highlightUseSpawnColorBrush = val; }
-  void setHighlightFlash(const bool val) { m_highlightFlash = val; }
-  void setShowLine0(const bool val) { m_showLine0 = val; }
-  void setUseWalkPathPen(const bool val) { m_useWalkPathPen = val; }
-  void setShowWalkPath(const bool val) { m_showWalkPath = val; }
-  void setShowName(const bool val) { m_showName = val; }
-
-
   void paintIconImage(MapIconStyle style, QPainter&p, const QPoint& point, 
 		      int size, int sizeWH) const;
 
+ protected:
   typedef void (*IconImageFunction)(QPainter&p, const QPoint& point,
 				    int size, int size);
   static void paintNone(QPainter&p, const QPoint& point, 
@@ -195,7 +217,7 @@ struct MapIcon
   static void paintDiamond(QPainter&p, const QPoint& point, 
 			   int size, int sizeWH);
 
-  public:
+ protected:
   QBrush m_imageBrush;
   QBrush m_highlightBrush;
   QPen m_imagePen;
@@ -237,29 +259,36 @@ class MapIcons : public QObject
 {
   Q_OBJECT
  public:
+  // Constructor/destructor
   MapIcons(Player* player, const QString& preferenceName,
 	   QObject* parent = 0, const char* name = 0);
   ~MapIcons();
 
+  // persistance
   void load(void);
   void save(void);
 
+  // get accessors
   const QString& preferenceName(void) const { return m_preferenceName; }
   int drawSize() const { return m_drawSize; }
-  void setDrawSize(int val);
   bool showNPCWalkPaths() const { return m_showNPCWalkPaths; }
-  void setShowNPCWalkPaths(bool val);
   bool showSpawnNames() const { return m_showSpawnNames; }
-  void setShowSpawnNames(bool val);
   uint16_t fovDistance() const { return m_fovDistance; }
+
+  const MapIcon& mapIcon(MapIconType iconType);
+  const MapIcon& operator[](int iconType);
+
+ public slots:
+  // set accessors
+  void setDrawSize(int val);
+  void setShowNPCWalkPaths(bool val);
+  void setShowSpawnNames(bool val);
   void setFOVDistance(int val);
 
   // dump debug info
   void dumpInfo(QTextStream& out);
 
-  const MapIcon& mapIcon(MapIconType iconType);
-  const MapIcon& operator[](int iconType);
-
+  // painting slots
   void paintIcon(MapParameters& param, 
  		 QPainter& p, 
  		 const MapIcon& mapIcon,
@@ -313,7 +342,7 @@ class MapIcons : public QObject
 inline const MapIcon& MapIcons::mapIcon(MapIconType iconType)
 {
   // if a valid map icon was passed in, use it
-  if ((iconType < tIconTypeMax) && (iconType > tIconTypeUnknown))
+  if ((iconType <= tIconTypeMax) && (iconType > tIconTypeUnknown))
     return m_mapIcons[iconType];
 
   // otherwise return the unknown icon type
