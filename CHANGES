@@ -1,6 +1,6 @@
 Version: $Id$ $Name$
 
-dohpaZ (12/?/03)
+dohpaZ (01/?/04)
 ---------------------
 + Updated version to 5.0.0.4
 + More updates to work with 12/19/03 EQLive 
@@ -16,6 +16,8 @@ dohpaZ (12/?/03)
 + Cleaned up the textual dump of guild names
 + Added GuildShell to track the list of guild members.
 + Added support for LoY guild information capture/display.
++ Made filter2xml.pl more robust in the face of trailing spaces and Windows
+  line termination.
 + Integrated patch #861374 "Fix-three options aren't saved".
 + Integrated patch #864328 "Nedaria's Landing Map".
 + Integrated patch #864329 "Map: JaggedPine touchups".
