@@ -1,5 +1,17 @@
 Version: $Id$ $Name$
 
+dohpaZ (10/1/04)
+------------------------
++ Integrated patch #'s: 1037498, 1037496, 1037494, 1037493, 1037491
+  "Doxygen support for autoconf/automake" from tanner(Basic)
++ Added minor Doxygen related tweaks to source.
++ Added automatic Qt tag file generation for use with doxygen, along with  
+  a doxygen-installdox rule to build the html dox and link them to 
+  trolltech's website.
++ Minor bug fix related to a recently integrated patch.
++ Some more robustness modifications. 
++ Fixed a minor warning.
+
 dohpaZ (09/29/04)
 ------------------------
 + More kdevelop project related tweaks.
