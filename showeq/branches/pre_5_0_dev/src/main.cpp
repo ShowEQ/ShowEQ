@@ -172,10 +172,19 @@ int main (int argc, char **argv)
    /* Initialize the parameters with default values */
    QFileInfo configFileDefInfo = dataLocMgr.findExistingFile(".", "seqdef.xml",
 							     true, false);
+   
+   if (!configFileDefInfo.exists())
+   {
+     fprintf(stderr, 
+	     "Fatal: Couldn't find seqdef.xml!\n"
+	     "\tDid you remember to do 'make install'\n");
+     exit(-1);
+   }
+
    QString configFileDef = configFileDefInfo.absFilePath();
 
-   QFileInfo configFileInfo = dataLocMgr.findExistingFile(".", "showeq.xml",
-							  true, true);
+   QFileInfo configFileInfo = dataLocMgr.findWriteFile(".", "showeq.xml",
+						       true, true);
    QString configFile = configFileInfo.absFilePath();
 
    // scan command line arguments for a specified config file

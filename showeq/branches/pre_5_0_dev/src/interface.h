@@ -307,6 +307,8 @@ class EQInterface:public QMainWindow
    void createZoneLog(void);
    void createUnknownZoneLog(void);
    void createOPCodeMonitorLog(const QString&);
+   void insertWindowMenu(SEQWindow* window);
+   void removeWindowMenu(SEQWindow* window);
 
  public:
    Player* m_player;
@@ -366,6 +368,7 @@ class EQInterface:public QMainWindow
    QPopupMenu* m_terminalTypeFilterMenu;
    QPopupMenu* m_terminalShowUserFilterMenu;
    QPopupMenu* m_terminalHideUserFilterMenu;
+   QPopupMenu* m_windowMenu;
 
    CompassFrame* m_compass;
    MessageWindow* m_messageWindow[maxNumMessageWindows];

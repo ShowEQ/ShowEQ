@@ -4258,7 +4258,7 @@ MapFrame::MapFrame(FilterMgr* filterMgr,
   m_playerLocation->setMinimumWidth(90);
   tmpLabel->setBuddy(m_playerLocation);
   tmpPrefString = "ShowPlayerLocation";
-  if (!pSEQPrefs->getPrefBool(tmpPrefString, prefString, 1))
+  if (!pSEQPrefs->getPrefBool(tmpPrefString, prefString, false))
     m_playerLocationBox->hide();
   connect (player, SIGNAL(posChanged(int16_t,int16_t,int16_t,
 					int16_t,int16_t,int16_t,int32_t)), 

@@ -57,6 +57,9 @@ dohpaZ (12/5/03)
   derived from it could take advantage of Qt's native dockable window support.
 + Made the right-click menus of SEQWindow derived windows come up in a
   more consistent fashion.
++ Add a Window menu item to the menubar.  It contains items the control window
+  display and behaviour and also gives access to the popup menus of all 
+  active SEQWindow derived windows.
 + Added support for storing 64 bit integers, QPens, and QBrushes to the 
   XML preference system.
 + Fixed the spawn logger to log the adjusted x/y/z values for zone/new spawns..

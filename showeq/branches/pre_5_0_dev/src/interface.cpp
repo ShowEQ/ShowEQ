@@ -130,6 +130,10 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
   // disable the dock menu
   setDockMenuEnabled(false);
 
+  setCentralWidget(new QWidget(this, "filler"));
+  
+  setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum, false));
+
   for (int l = 0; l < maxNumMaps; l++)
     m_map[l] = 0;
 
@@ -350,6 +354,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    section = "Interface";
 
+   // create window menu
+   m_windowMenu = new QPopupMenu;
+
    // Initialize the experience window;
    m_expWindow = new ExperienceWindow(m_dataLocationMgr, m_player, m_groupMgr,
 				      m_zoneMgr);
@@ -368,6 +375,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    if (pSEQPrefs->getPrefBool("ShowExpWindow", section, false))
      m_expWindow->show();
 
+    // insert its menu into the window menu
+   insertWindowMenu(m_expWindow);
+
    // Initialize the combat window
    m_combatWindow = new CombatWindow(m_player);
    edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
@@ -384,6 +394,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    if (pSEQPrefs->getPrefBool("ShowCombatWindow", section, false))
      m_combatWindow->show();
+
+    // insert its menu into the window menu
+   insertWindowMenu(m_combatWindow);
 
 /////////////////
 // Main widgets
@@ -427,7 +440,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      tmpPrefName = QString("ShowMessageWindow") + tmpPrefSuffix;
 
      // and as appropriate, craete the message window
-     if (pSEQPrefs->getPrefBool(tmpPrefName, section, (i == 0)))
+     if (pSEQPrefs->getPrefBool(tmpPrefName, section, false))
        showMessageWindow(i);
    }
 
@@ -1092,114 +1105,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    setTheme(pSEQPrefs->getPrefInt("Theme", section, 2));
 
-   // Interface -> WindowCaption
-   m_windowCaptionMenu = new QPopupMenu;
-   pInterfaceMenu->insertItem( "Window &Caption", m_windowCaptionMenu);
-    
-   x = m_windowCaptionMenu->insertItem("&Main Window...");
-   m_windowCaptionMenu->setItemParameter(x, 5);
-    
-   x = m_windowCaptionMenu->insertItem("Spawn &List...");
-   m_windowCaptionMenu->setItemParameter(x, 0);
-    
-   x = m_windowCaptionMenu->insertItem("Spawn List &2...");
-   m_windowCaptionMenu->setItemParameter(x, 10);
-    
-   x = m_windowCaptionMenu->insertItem("Spawn P&oint List...");
-   m_windowCaptionMenu->setItemParameter(x, 9);
-    
-   x = m_windowCaptionMenu->insertItem("&Player Stats...");
-   m_windowCaptionMenu->setItemParameter(x, 1);
-    
-   x = m_windowCaptionMenu->insertItem("Player &Skills...");
-   m_windowCaptionMenu->setItemParameter(x, 2);
-    
-   x = m_windowCaptionMenu->insertItem("Spell L&ist...");
-   m_windowCaptionMenu->setItemParameter(x, 3);
-    
-   x = m_windowCaptionMenu->insertItem("&Compass...");
-   m_windowCaptionMenu->setItemParameter(x, 4);
-    
-   x = m_windowCaptionMenu->insertItem("&Experience Window...");
-   m_windowCaptionMenu->setItemParameter(x, 6);
-    
-   x = m_windowCaptionMenu->insertItem("Comb&at Window...");
-   m_windowCaptionMenu->setItemParameter(x, 7);
-    
-   x = m_windowCaptionMenu->insertItem("&Network Diagnostics...");
-   m_windowCaptionMenu->setItemParameter(x, 8);
-
-   // insert Map docking options 
-   // NOTE: Always insert Map docking options at the end of the Docked menu
-   for (int i = 0; i < maxNumMaps; i++)
-   {     
-        QString mapName = "Map";
-        if (i > 0)
-            mapName += QString::number(i + 1);
-        x = m_windowCaptionMenu->insertItem(mapName);
-        m_windowCaptionMenu->setItemParameter(x, i + mapCaptionBase);
-   }
-    
-   connect (m_windowCaptionMenu, SIGNAL(activated(int)), 
-	    this, SLOT(set_main_WindowCaption(int)));
-
-   // Interface -> Window Font
-   QPopupMenu* windowFontMenu = new QPopupMenu;
-   pInterfaceMenu->insertItem( "&Font", windowFontMenu);
-    
-   windowFontMenu->insertItem( "&Applicatoin Default...", 
-			       this, SLOT(set_main_Font(int)));
-
-   windowFontMenu->insertItem( "Main Window Status Font...", 
-			      this, SLOT(set_main_statusbar_Font(int)));
-   //   x = windowFontMenu->insertItem("&Main Window");
-   //   windowFontMenu->setItemParameter(x, 5);
-    
-   x = windowFontMenu->insertItem("Spawn &List...");
-   windowFontMenu->setItemParameter(x, 0);
-    
-   x = windowFontMenu->insertItem("Spawn List &2...");
-   windowFontMenu->setItemParameter(x, 10);
-    
-   x = windowFontMenu->insertItem("Spawn P&oint List...");
-   windowFontMenu->setItemParameter(x, 9);
-    
-   x = windowFontMenu->insertItem("&Player Stats...");
-   windowFontMenu->setItemParameter(x, 1);
-    
-   x = windowFontMenu->insertItem("Player &Skills...");
-   windowFontMenu->setItemParameter(x, 2);
-    
-   x = windowFontMenu->insertItem("Spell L&ist...");
-   windowFontMenu->setItemParameter(x, 3);
-    
-   x = windowFontMenu->insertItem("&Compass...");
-   windowFontMenu->setItemParameter(x, 4);
-    
-   x = windowFontMenu->insertItem("&Experience Window...");
-   windowFontMenu->setItemParameter(x, 6);
-    
-   x = windowFontMenu->insertItem("Comb&at Window...");
-   windowFontMenu->setItemParameter(x, 7);
-    
-   x = windowFontMenu->insertItem("&Network Diagnostics...");
-   windowFontMenu->setItemParameter(x, 8);
-
-   // insert Map docking options 
-   // NOTE: Always insert Map docking options at the end of the Docked menu
-   for (int i = 0; i < maxNumMaps; i++)
-   {     
-        QString mapName = "Map";
-        if (i > 0)
-            mapName += QString::number(i + 1);
-        x = m_windowCaptionMenu->insertItem(mapName);
-        m_windowCaptionMenu->setItemParameter(x, i + mapCaptionBase);
-   }
-
-   connect (windowFontMenu, SIGNAL(activated(int)), 
-	    this, SLOT(set_main_WindowFont(int)));
-
-
    // Interface -> Status Bar
    QPopupMenu* statusBarMenu = new QPopupMenu;
    statusBarMenu->setCheckable(true);
@@ -1246,18 +1151,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     
    connect (statusBarMenu, SIGNAL(activated(int)), 
 	    this, SLOT(toggle_main_statusbar_Window(int)));
-
-
-   x = pInterfaceMenu->insertItem("Save Window Sizes & Positions", 
-				  this, SLOT(toggle_main_SavePosition(int)));
-   menuBar()->setItemChecked (x, pSEQPrefs->getPrefBool("SavePosition", 
-							"Interface",
-							true));
-   x = pInterfaceMenu->insertItem("Restore Window Positions", 
-				  this, SLOT(toggle_main_UseWindowPos(int)));
-   menuBar()->setItemChecked (x, pSEQPrefs->getPrefBool("UseWindowPos", 
-							"Interface",
-							true));
 
    m_terminalMenu = new QPopupMenu;
    pInterfaceMenu->insertItem("&Terminal", m_terminalMenu);
@@ -1349,6 +1242,135 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 			       this, SLOT(select_main_FormatFile(int)));
    pInterfaceMenu->insertItem( "Spells File...", 
 			       this, SLOT(select_main_SpellsFile(int)));
+
+   // insert Window menu
+   menuBar()->insertItem("&Window", m_windowMenu);
+
+   // All of the Window menu items that don't automatically get inserted
+   // have to be manually placed in the right positions.
+
+   // Interface -> WindowCaption
+   m_windowCaptionMenu = new QPopupMenu;
+   m_windowMenu->insertItem( "Window &Caption", m_windowCaptionMenu, -1, 0);
+   
+   x = m_windowCaptionMenu->insertItem("&Main Window...");
+   m_windowCaptionMenu->setItemParameter(x, 5);
+    
+   x = m_windowCaptionMenu->insertItem("Spawn &List...");
+   m_windowCaptionMenu->setItemParameter(x, 0);
+    
+   x = m_windowCaptionMenu->insertItem("Spawn List &2...");
+   m_windowCaptionMenu->setItemParameter(x, 10);
+    
+   x = m_windowCaptionMenu->insertItem("Spawn P&oint List...");
+   m_windowCaptionMenu->setItemParameter(x, 9);
+    
+   x = m_windowCaptionMenu->insertItem("&Player Stats...");
+   m_windowCaptionMenu->setItemParameter(x, 1);
+    
+   x = m_windowCaptionMenu->insertItem("Player &Skills...");
+   m_windowCaptionMenu->setItemParameter(x, 2);
+    
+   x = m_windowCaptionMenu->insertItem("Spell L&ist...");
+   m_windowCaptionMenu->setItemParameter(x, 3);
+    
+   x = m_windowCaptionMenu->insertItem("&Compass...");
+   m_windowCaptionMenu->setItemParameter(x, 4);
+    
+   x = m_windowCaptionMenu->insertItem("&Experience Window...");
+   m_windowCaptionMenu->setItemParameter(x, 6);
+    
+   x = m_windowCaptionMenu->insertItem("Comb&at Window...");
+   m_windowCaptionMenu->setItemParameter(x, 7);
+    
+   x = m_windowCaptionMenu->insertItem("&Network Diagnostics...");
+   m_windowCaptionMenu->setItemParameter(x, 8);
+
+   // insert Map docking options 
+   // NOTE: Always insert Map docking options at the end of the Docked menu
+   for (int i = 0; i < maxNumMaps; i++)
+   {     
+        QString mapName = "Map";
+        if (i > 0)
+            mapName += QString::number(i + 1);
+        x = m_windowCaptionMenu->insertItem(mapName);
+        m_windowCaptionMenu->setItemParameter(x, i + mapCaptionBase);
+   }
+    
+   connect (m_windowCaptionMenu, SIGNAL(activated(int)), 
+	    this, SLOT(set_main_WindowCaption(int)));
+
+   // Interface -> Window Font
+   QPopupMenu* windowFontMenu = new QPopupMenu;
+   m_windowMenu->insertItem( "&Font", windowFontMenu, -1, 1);
+    
+   windowFontMenu->insertItem( "&Applicatoin Default...", 
+			       this, SLOT(set_main_Font(int)));
+
+   windowFontMenu->insertItem( "Main Window Status Font...", 
+			      this, SLOT(set_main_statusbar_Font(int)));
+   //   x = windowFontMenu->insertItem("&Main Window");
+   //   windowFontMenu->setItemParameter(x, 5);
+    
+   x = windowFontMenu->insertItem("Spawn &List...");
+   windowFontMenu->setItemParameter(x, 0);
+    
+   x = windowFontMenu->insertItem("Spawn List &2...");
+   windowFontMenu->setItemParameter(x, 10);
+    
+   x = windowFontMenu->insertItem("Spawn P&oint List...");
+   windowFontMenu->setItemParameter(x, 9);
+    
+   x = windowFontMenu->insertItem("&Player Stats...");
+   windowFontMenu->setItemParameter(x, 1);
+    
+   x = windowFontMenu->insertItem("Player &Skills...");
+   windowFontMenu->setItemParameter(x, 2);
+    
+   x = windowFontMenu->insertItem("Spell L&ist...");
+   windowFontMenu->setItemParameter(x, 3);
+    
+   x = windowFontMenu->insertItem("&Compass...");
+   windowFontMenu->setItemParameter(x, 4);
+    
+   x = windowFontMenu->insertItem("&Experience Window...");
+   windowFontMenu->setItemParameter(x, 6);
+    
+   x = windowFontMenu->insertItem("Comb&at Window...");
+   windowFontMenu->setItemParameter(x, 7);
+    
+   x = windowFontMenu->insertItem("&Network Diagnostics...");
+   windowFontMenu->setItemParameter(x, 8);
+
+   // insert Map docking options 
+   // NOTE: Always insert Map docking options at the end of the Docked menu
+   for (int i = 0; i < maxNumMaps; i++)
+   {     
+        QString mapName = "Map";
+        if (i > 0)
+            mapName += QString::number(i + 1);
+        x = m_windowCaptionMenu->insertItem(mapName);
+        m_windowCaptionMenu->setItemParameter(x, i + mapCaptionBase);
+   }
+
+   connect (windowFontMenu, SIGNAL(activated(int)), 
+	    this, SLOT(set_main_WindowFont(int)));
+
+
+   x = m_windowMenu->insertItem("Save Window Sizes && Positions", 
+				  this, SLOT(toggle_main_SavePosition(int)),
+				  0, -1, 2);
+   m_windowMenu->setItemChecked (x, pSEQPrefs->getPrefBool("SavePosition", 
+							"Interface",
+							true));
+   x = m_windowMenu->insertItem("Restore Window Positions", 
+				  this, SLOT(toggle_main_UseWindowPos(int)),
+				  0, -1, 3);
+   m_windowMenu->setItemChecked (x, pSEQPrefs->getPrefBool("UseWindowPos", 
+							"Interface",
+							true));
+
+   m_windowMenu->insertSeparator(4);
 
    // Debug menu
    QPopupMenu* pDebugMenu = new QPopupMenu;
@@ -2657,7 +2679,7 @@ EQInterface::toggle_main_SavePosition (int id)
 			   !pSEQPrefs->getPrefBool("SavePosition", 
 						   "Interface"));
 
-    menuBar()->setItemChecked(id, pSEQPrefs->getPrefBool("SavePosition", 
+    m_windowMenu->setItemChecked(id, pSEQPrefs->getPrefBool("SavePosition", 
 							 "Interface"));
 }
 
@@ -2667,7 +2689,7 @@ EQInterface::toggle_main_UseWindowPos (int id)
     pSEQPrefs->setPrefBool("UseWindowPos", "Interface", 
 			   !pSEQPrefs->getPrefBool("UseWindowPos", 
 						   "Interface"));
-    menuBar()->setItemChecked(id, pSEQPrefs->getPrefBool("UseWindowPos", 
+    m_windowMenu->setItemChecked(id, pSEQPrefs->getPrefBool("UseWindowPos", 
 							 "Interface"));
 }
 
@@ -3220,6 +3242,9 @@ EQInterface::toggle_view_ChannelMsgs(int id)
     // hide it 
     m_messageWindow[winNum]->hide();
 
+    // remove its window menu
+    removeWindowMenu(m_messageWindow[winNum]);
+
     // then delete it
     delete m_messageWindow[winNum];
 
@@ -3294,6 +3319,9 @@ EQInterface::toggle_view_SpawnList(void)
     // disable it's options sub-menu
     menuBar()->setItemEnabled(m_id_view_SpawnList_Options, false);
 
+    // remove its window menu
+    removeWindowMenu(m_spawnList);
+
     // delete the window
     delete m_spawnList;
 
@@ -3318,6 +3346,9 @@ EQInterface::toggle_view_SpawnList2(void)
 
     // hide it
     m_spawnList2->hide();
+
+    // remove its window menu
+    removeWindowMenu(m_spawnList2);
 
     // delete the window
     delete m_spawnList2;
@@ -3345,6 +3376,9 @@ EQInterface::toggle_view_SpawnPointList(void)
     // hide it
     m_spawnPointList->hide();
 
+    // remove its window menu
+    removeWindowMenu(m_spawnPointList);
+
     // delete the window
     delete m_spawnPointList;
 
@@ -3368,6 +3402,9 @@ void EQInterface::toggle_view_SpellList(void)
     
     // hide it
     m_spellList->hide();
+
+    // remove its window menu
+    removeWindowMenu(m_spellList);
 
     // delete it
     delete m_spellList;
@@ -3401,6 +3438,9 @@ void EQInterface::toggle_view_PlayerStats(void)
     // disable it's options sub-menu
     menuBar()->setItemEnabled(m_id_view_PlayerStats_Options, false);
 
+    // remove its window menu
+    removeWindowMenu(m_statList);
+
     // then delete it
     delete m_statList;
 
@@ -3432,6 +3472,9 @@ void EQInterface::toggle_view_PlayerSkills(void)
     // disable it's options sub-menu
     menuBar()->setItemEnabled(m_id_view_PlayerSkills_Options, false);
 
+    // remove its window menu
+    removeWindowMenu(m_skillList);
+
     // then delete it
     delete m_skillList;
 
@@ -3453,6 +3496,9 @@ EQInterface::toggle_view_Compass(void)
   {
     // if it's not visible, hide it
     m_compass->hide();
+
+    // remove its window menu
+    removeWindowMenu(m_compass);
 
     // then delete it
     delete m_compass;
@@ -3481,6 +3527,9 @@ void EQInterface::toggle_view_Map(int id)
     // hide it 
     m_map[mapNum]->hide();
 
+    // remove its window menu
+    removeWindowMenu(m_map[mapNum]);
+
     // then delete it
     delete m_map[mapNum];
 
@@ -3508,6 +3557,9 @@ EQInterface::toggle_view_NetDiag(void)
   {
     // if it's not visible, hide it
     m_netDiag->hide();
+
+    // remove its window menu
+    removeWindowMenu(m_netDiag);
 
     // then delete it
     delete m_netDiag;
@@ -4916,6 +4968,9 @@ void EQInterface::showMap(int i)
     // restore it's position if necessary and practical
     if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
       m_map[i]->restorePosition();
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_map[i]);
   }
       
   // make sure it's visible
@@ -4959,6 +5014,9 @@ void EQInterface::showMessageWindow(int i)
     // restore it's position if necessary and practical
     if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
       m_messageWindow[i]->restorePosition();
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_messageWindow[i]);
   }
       
   // make sure it's visible
@@ -4999,6 +5057,9 @@ void EQInterface::showSpawnList(void)
 	     m_spawnList, SLOT(savePrefs(void)));
      connect(this, SIGNAL(restoreFonts(void)),
 	     m_spawnList, SLOT(restoreFont(void)));
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_spawnList);
   }
 
   // make sure it's visible
@@ -5040,6 +5101,9 @@ void EQInterface::showSpawnList2(void)
 	     m_spawnList2, SLOT(savePrefs(void)));
      connect(this, SIGNAL(restoreFonts(void)),
 	     m_spawnList2, SLOT(restoreFont(void)));
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_spawnList2);
   }
 
   // make sure it's visible
@@ -5075,6 +5139,9 @@ void EQInterface::showSpawnPointList(void)
 	     m_spawnPointList, SLOT(savePrefs(void)));
      connect(this, SIGNAL(restoreFonts(void)),
 	     m_spawnPointList, SLOT(restoreFont(void)));
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_spawnPointList);
   }
 
   // make sure it's visible
@@ -5108,6 +5175,9 @@ void EQInterface::showStatList(void)
     if (!m_isStatListDocked &&
 	pSEQPrefs->getPrefBool("UseWindowPos", "Interface", 0)) 
       m_statList->restorePosition();
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_statList);
   }
 
   // make sure it's visible
@@ -5141,6 +5211,9 @@ void EQInterface::showSkillList(void)
     if (!m_isSkillListDocked &&
 	pSEQPrefs->getPrefBool("UseWindowPos", "Interface", 0)) 
       m_skillList->restorePosition();
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_skillList);
   }
 
   // make sure it's visible
@@ -5184,6 +5257,9 @@ void EQInterface::showSpellList(void)
     if (!m_isSpellListDocked &&
 	pSEQPrefs->getPrefBool("UseWindowPos", "Interface", 0)) 
       m_spellList->restorePosition();
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_spellList);
   }
 
   // make sure it's visible
@@ -5216,6 +5292,9 @@ void EQInterface::showCompass(void)
     // move window to new position
     if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
       m_compass->restorePosition(); 
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_compass);
  }
 
   // make sure it's visible
@@ -5243,6 +5322,9 @@ void EQInterface::showNetDiag()
     // move window to new position
     if (pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
       m_netDiag->restorePosition(); 
+
+    // insert its menu into the window menu
+    insertWindowMenu(m_netDiag);
   }
 
   // make sure it's visible
@@ -5427,5 +5509,18 @@ void EQInterface::createOPCodeMonitorLog(const QString& opCodeList)
   
   connect(m_packet, SIGNAL(decodedZonePacket(const uint8_t*, size_t, uint8_t, uint16_t, const EQPacketOPCode*, bool)),
 	  m_opcodeMonitorLog, SLOT(packet(const uint8_t*, size_t, uint8_t, uint16_t, const EQPacketOPCode*, bool)));
+}
+
+
+void EQInterface::insertWindowMenu(SEQWindow* window)
+{
+  QPopupMenu* menu = window->menu();
+  if (menu)
+    m_windowMenu->insertItem(window->caption(), menu, int(window));
+}
+
+void EQInterface::removeWindowMenu(SEQWindow* window)
+{
+  m_windowMenu->removeItem(int(window));
 }
 
