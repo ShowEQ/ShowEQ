@@ -64,7 +64,40 @@
 //----------------------------------------------------------------------
 // constants
 const int panAmmt = 8;
+static const char* iconTypePrefBaseNames[] = 
+{
+  "Unknown",
+  "Drop",
+  "Doors",
+  "SpawnNPC",
+  "SpawnNPCCorpse",
+  "SpawnPlayer",
+  "SpawnPlayerCorpse",
+  "SpawnUnknown",
+  "SpawnConsidered",
+  "SpawnPlayerTeam1",
+  "SpawnPlayerTeam2",
+  "SpawnPlayerTeam3",
+  "SpawnPlayerTeam4",
+  "SpawnPlayerTeam5",
+  "SpawnPlayerTeamOtherDeity",
+  "SpawnPlayerTeamOtherRace",
+  "SpawnPlayerTeamOtherDeityPet",
+  "SpawnPlayerTeamOtherRacePet",
+  "SpawnPlayerOld",
+  "FilterFlagHunt",
+  "FilterFlagCaution",
+  "FilterFlagDanger",
+  "FilterFlagLocate",
+  "FilterFlagAlert",
+  "FilterFlagFiltered",
+  "FilterFlagTracer",
+  "RuntimeFiltered",
+  "SpawnPoint"
+};
 
+
+//----------------------------------------------------------------------
 // CLineDlg
 CLineDlg::CLineDlg(QWidget *parent, QString name, MapMgr *mapMgr) 
   : QDialog(parent, name, FALSE)
@@ -1300,6 +1333,333 @@ void MapMenu::select_fovMode(int itemId)
 }
 
 //----------------------------------------------------------------------
+// MapIcon
+MapIcon::IconImageFunction MapIcon::s_iconImageFunctions[] = 
+  {
+    &MapIcon::paintNone,
+    &MapIcon::paintCircle,
+    &MapIcon::paintSquare,
+    &MapIcon::paintPlus,
+    &MapIcon::paintX,
+    &MapIcon::paintUpTriangle,
+    &MapIcon::paintRightTriangle,
+    &MapIcon::paintDownTriangle,
+    &MapIcon::paintLeftTriangle,
+    &MapIcon::paintStar,
+    &MapIcon::paintDiamond,
+  };
+
+MapIcon& MapIcon::operator=(const MapIcon& mapIcon)
+{
+  m_imageBrush = mapIcon.m_imageBrush;
+  m_highlightBrush = mapIcon.m_highlightBrush;
+  m_imagePen = mapIcon.m_imagePen;
+  m_highlightPen = mapIcon.m_highlightPen;
+  m_line0Pen = mapIcon.m_line0Pen;
+  m_line1Pen = mapIcon.m_line1Pen;
+  m_line2Pen = mapIcon.m_line2Pen;
+  m_walkPathPen = mapIcon.m_walkPathPen;
+  m_line1Distance = mapIcon.m_line1Distance;
+  m_line2Distance = mapIcon.m_line2Distance;
+  m_imageStyle = mapIcon.m_imageStyle;
+  m_imageSize = mapIcon.m_imageSize;
+  m_highlightStyle = mapIcon.m_highlightStyle;
+  m_highlightSize = mapIcon.m_highlightSize;
+  m_image = mapIcon.m_image;
+  m_imageUseSpawnColorPen = mapIcon.m_imageUseSpawnColorPen;
+  m_imageUseSpawnColorBrush = mapIcon.m_imageUseSpawnColorBrush;
+  m_imageFlash = mapIcon.m_imageFlash;
+  m_highlight = mapIcon.m_highlight;
+  m_highlightUseSpawnColorPen = mapIcon.m_highlightUseSpawnColorPen;
+  m_highlightUseSpawnColorBrush = mapIcon.m_highlightUseSpawnColorPen;
+  m_highlightFlash = mapIcon.m_highlightFlash;
+  m_showLine0 = mapIcon.m_showLine0;
+  m_useWalkPathPen = mapIcon.m_useWalkPathPen;
+  m_showWalkPath = mapIcon.m_showWalkPath;
+  m_showName = mapIcon.m_showName;
+
+  return *this;
+}
+
+void MapIcon::combine(const MapIcon& mapIcon)
+{
+  // try our best to generate the combined result of the two MapIcons
+
+  // use image information
+  if (mapIcon.m_image)
+  {
+    m_image = mapIcon.m_image;
+    if (mapIcon.m_imageStyle != tIconStyleNone)
+      m_imageStyle = mapIcon.m_imageStyle;
+    if (mapIcon.m_imageSize != tIconSizeNone)
+      m_imageSize = mapIcon.m_imageSize;
+    m_imageBrush = mapIcon.m_imageBrush;
+    m_imagePen = mapIcon.m_imagePen;
+    m_imageUseSpawnColorPen = mapIcon.m_imageUseSpawnColorPen;
+    m_imageUseSpawnColorBrush = mapIcon.m_imageUseSpawnColorBrush;
+    if (mapIcon.m_imageFlash)
+      m_imageFlash = mapIcon.m_imageFlash;
+  }
+
+  // use highlight information
+  if (mapIcon.m_highlight)
+  {
+    m_highlight = mapIcon.m_highlight;
+    if (mapIcon.m_highlightStyle != tIconStyleNone)
+      m_highlightStyle = mapIcon.m_highlightStyle;
+    if (mapIcon.m_highlightSize != tIconSizeNone)
+      m_highlightSize = mapIcon.m_highlightSize;
+    m_highlightBrush = mapIcon.m_highlightBrush;
+    m_highlightPen = mapIcon.m_highlightPen;
+    m_highlightUseSpawnColorPen = mapIcon.m_highlightUseSpawnColorPen;
+    m_highlightUseSpawnColorBrush = mapIcon.m_highlightUseSpawnColorBrush;
+    if (mapIcon.m_highlightFlash)
+      m_highlightFlash = mapIcon.m_highlightFlash;
+  }
+
+  // use walk path pen info iff set
+  if (mapIcon.m_useWalkPathPen)
+  {
+    m_useWalkPathPen = mapIcon.m_useWalkPathPen;
+    m_walkPathPen = mapIcon.m_walkPathPen;
+  }
+
+  // use showWalkPath info iff set
+  if (mapIcon.m_showWalkPath)
+    m_showWalkPath = mapIcon.m_showWalkPath;
+
+  // use showLine0 info iff set
+  if (mapIcon.m_showLine0)
+  {
+    m_showLine0 = mapIcon.m_showLine0;
+    m_line0Pen = mapIcon.m_line0Pen;
+  }
+  
+  // use line1 info iff set and larger then current setting
+  if ((mapIcon.m_line1Distance) && (m_line1Distance < mapIcon.m_line1Distance))
+  {
+    m_line1Distance = mapIcon.m_line1Distance;
+    m_line1Pen = mapIcon.m_line1Pen;
+  }
+
+  // use line2 info iff set and larger then current setting
+  if ((mapIcon.m_line2Distance) && (m_line2Distance < mapIcon.m_line2Distance))
+  {
+    m_line2Distance = mapIcon.m_line2Distance;
+    m_line2Pen = mapIcon.m_line2Pen;
+  }
+
+  // use showName info iff set
+  if (mapIcon.m_showName)
+    m_showName = mapIcon.m_showName;
+}
+
+void MapIcon::load(const QString& prefBase, const QString& section)
+{
+  // Initialize the image related members
+  m_imageBrush = pSEQPrefs->getPrefBrush(prefBase + "ImageBrush", section, m_imageBrush);
+  m_imagePen = pSEQPrefs->getPrefPen(prefBase + "ImagePen", section, m_imagePen);
+  m_imageStyle = (MapIconStyle)pSEQPrefs->getPrefInt(prefBase + "ImageStyle", 
+						     section, m_imageStyle);
+  m_imageSize = (MapIconSize)pSEQPrefs->getPrefInt(prefBase + "ImageSize", 
+						   section, m_imageSize);
+  m_image = pSEQPrefs->getPrefBool(prefBase + "UseImage", section, m_image);
+  m_imageUseSpawnColorPen =
+    pSEQPrefs->getPrefBool(prefBase + "ImageUseSpawnColorPen", section, 
+			   m_imageUseSpawnColorPen);
+  m_imageUseSpawnColorBrush =
+    pSEQPrefs->getPrefBool(prefBase + "ImageUseSpawnColorBrush", section,
+			   m_imageUseSpawnColorBrush);
+  m_imageFlash =
+    pSEQPrefs->getPrefBool(prefBase + "ImageFlash", section, m_imageFlash);
+
+  // Initialize the Highlight related members
+  m_highlightBrush = 
+    pSEQPrefs->getPrefBrush(prefBase + "HighlightBrush", section, m_highlightBrush);
+  m_highlightPen = pSEQPrefs->getPrefPen(prefBase + "HighlightPen", section, m_highlightPen);
+  m_highlightStyle = 
+    (MapIconStyle)pSEQPrefs->getPrefInt(prefBase + "HighlightStyle", section,
+					m_highlightStyle);
+  m_highlightSize =
+    (MapIconSize)pSEQPrefs->getPrefInt(prefBase + "HighlightSize", section,
+				       m_highlightSize);
+  m_highlight = 
+    pSEQPrefs->getPrefBool(prefBase + "UseHighlight", section, m_highlight);
+  m_highlightUseSpawnColorPen =
+    pSEQPrefs->getPrefBool(prefBase + "HighlightUseSpawnColorPen", section, 
+			   m_highlightUseSpawnColorPen);
+  m_highlightUseSpawnColorBrush =
+    pSEQPrefs->getPrefBool(prefBase + "HighlightUseSpawnColorBrush", section,
+			   m_highlightUseSpawnColorBrush);
+  m_highlightFlash =
+    pSEQPrefs->getPrefBool(prefBase + "HighlightFlash", section, 
+			   m_highlightFlash);
+
+  // Initialize the line stuff
+  m_line0Pen = pSEQPrefs->getPrefPen(prefBase + "Line0Pen", section, m_line0Pen);
+  m_showLine0 = pSEQPrefs->getPrefBool(prefBase + "ShowLine0", section,
+				       m_showLine0);
+  m_line1Pen = pSEQPrefs->getPrefPen(prefBase + "Line1Pen", section, m_line1Pen);
+  m_line1Distance = pSEQPrefs->getPrefInt(prefBase + "Line1Distance", section, 
+					  m_line1Distance);
+  m_line2Pen = pSEQPrefs->getPrefPen(prefBase + "Line2Pen", section, m_line2Pen);
+  m_line2Distance = pSEQPrefs->getPrefInt(prefBase + "Line2Distance", section,
+					  m_line2Distance);
+
+  // Initialize the Walk Path related member variables
+  m_walkPathPen = pSEQPrefs->getPrefPen(prefBase + "WalkPathPen", section, m_walkPathPen);
+  m_useWalkPathPen = pSEQPrefs->getPrefBool(prefBase + "UseWalkPathPen", 
+					    section, m_useWalkPathPen);
+  m_showWalkPath = pSEQPrefs->getPrefBool(prefBase + "ShowWalkPath", section,
+					  m_showWalkPath);
+
+  // Initialize whatever's left
+  m_showName = pSEQPrefs->getPrefBool(prefBase + "ShowName", section,
+				      m_showName);
+}
+
+
+void MapIcon::save(const QString& prefBase, const QString& section)
+{
+  // Save the image related members
+  pSEQPrefs->setPrefBrush(prefBase + "ImageBrush", section, m_imageBrush);
+  pSEQPrefs->setPrefPen(prefBase + "ImagePen", section, m_imagePen);
+  pSEQPrefs->setPrefInt(prefBase + "ImageStyle", section, m_imageStyle);
+  pSEQPrefs->setPrefInt(prefBase + "ImageSize", section, m_imageSize);
+  pSEQPrefs->setPrefBool(prefBase + "UseImage", section, m_image);
+  pSEQPrefs->setPrefBool(prefBase + "ImageUseSpawnColorPen", section, 
+			 m_imageUseSpawnColorPen);
+  pSEQPrefs->setPrefBool(prefBase + "ImageUseSpawnColorBrush", section,
+			 m_imageUseSpawnColorBrush);
+  pSEQPrefs->setPrefBool(prefBase + "ImageFlash", section, m_imageFlash);
+
+  // Save the Highlight related members
+  pSEQPrefs->setPrefBrush(prefBase + "HighlightBrush", section, 
+			  m_highlightBrush);
+  pSEQPrefs->setPrefPen(prefBase + "HighlightPen", section, m_highlightPen);
+  pSEQPrefs->setPrefInt(prefBase + "HighlightStyle", section, 
+			m_highlightStyle);
+  pSEQPrefs->setPrefInt(prefBase + "HighlightSize", section, m_highlightSize);
+  pSEQPrefs->setPrefBool(prefBase + "UseHighlight", section, m_highlight);
+  pSEQPrefs->setPrefBool(prefBase + "HighlightUseSpawnColorPen", section, 
+			 m_highlightUseSpawnColorPen);
+  pSEQPrefs->setPrefBool(prefBase + "HighlightUseSpawnColorBrush", section,
+			 m_highlightUseSpawnColorBrush);
+  pSEQPrefs->setPrefBool(prefBase + "HighlightFlash", section, 
+			 m_highlightFlash);
+
+  // Save the line stuff
+  pSEQPrefs->setPrefPen(prefBase + "Line0Pen", section, m_line0Pen);
+  pSEQPrefs->setPrefBool(prefBase + "ShowLine0", section, m_showLine0);
+  pSEQPrefs->setPrefPen(prefBase + "Line1Pen", section, m_line1Pen);
+  pSEQPrefs->setPrefInt(prefBase + "Line1Distance", section, m_line1Distance);
+  pSEQPrefs->setPrefPen(prefBase + "Line2Pen", section, m_line2Pen);
+  pSEQPrefs->setPrefInt(prefBase + "Line2Distance", section, m_line2Distance);
+
+  // Save the Walk Path related member variables
+  pSEQPrefs->setPrefPen(prefBase + "WalkPathPen", section, m_walkPathPen);
+  pSEQPrefs->setPrefBool(prefBase + "UseWalkPathPen", section, 
+			 m_useWalkPathPen);
+  pSEQPrefs->setPrefBool(prefBase + "ShowWalkPath", section, m_showWalkPath);
+
+  // Save whatever's left
+  pSEQPrefs->setPrefBool(prefBase + "ShowName", section, m_showName);
+}
+
+void MapIcon::paintNone(QPainter&p, const QPoint& point, 
+			int size, int sizeWH)
+{
+}
+
+void MapIcon::paintCircle(QPainter&p, const QPoint& point, 
+			  int size, int sizeWH)
+{
+  p.drawEllipse(point.x() - size, point.y() - size, sizeWH, sizeWH);
+}
+
+void MapIcon::paintSquare(QPainter&p, const QPoint& point, 
+			  int size, int sizeWH)
+{
+  p.drawRect(point.x() - size, point.y() - size, sizeWH, sizeWH);
+}
+
+void MapIcon::paintPlus(QPainter&p, const QPoint& point, int size, int sizeWH)
+{
+    p.drawLine(point.x(), point.y() - size, point.x(), point.y() + size );
+    p.drawLine(point.x() - size, point.y(), point.x() + size, point.y() );
+}
+
+void MapIcon::paintX(QPainter&p, const QPoint& point, int size, int sizeWH)
+{
+    p.drawLine(point.x() - size, point.y() - size,
+	       point.x() + size, point.y() + size);
+    p.drawLine(point.x() - size, point.y() + size,
+	       point.x() + size, point.y() - size);
+}
+
+void MapIcon::paintUpTriangle(QPainter&p, const QPoint& point, 
+			      int size, int sizeWH)
+{
+  QPointArray atri(3);
+  atri.setPoint(0, point.x(), point.y() - sizeWH);
+  atri.setPoint(1, point.x() + size, point.y() + size);
+  atri.setPoint(2, point.x() - size, point.y() + size);
+  p.drawPolygon(atri);
+}
+
+void MapIcon::paintRightTriangle(QPainter&p, const QPoint& point,
+				 int size, int sizeWH)
+{
+  QPointArray atri(3);
+  atri.setPoint(0, point.x() + sizeWH, point.y());
+  atri.setPoint(1, point.x() - size,  point.y() + size);
+  atri.setPoint(2, point.x() - size,  point.y() - size);
+  p.drawPolygon(atri);
+}
+
+void MapIcon::paintDownTriangle(QPainter&p, const QPoint& point, 
+				int size, int sizeWH)
+{
+  QPointArray atri(3);
+  atri.setPoint(0, point.x(), point.y() + sizeWH);
+  atri.setPoint(1, point.x() + size, point.y() - size);
+  atri.setPoint(2, point.x() - size, point.y() - size);
+  p.drawPolygon(atri);
+}
+
+void MapIcon::paintLeftTriangle(QPainter&p, const QPoint& point, 
+				int size, int sizeWH)
+{
+  QPointArray atri(3);
+  atri.setPoint(0, point.x() - sizeWH, point.y());
+  atri.setPoint(1, point.x() + size, point.y() + size);
+  atri.setPoint(2, point.x() + size, point.y() - size);
+  p.drawPolygon(atri);
+}
+
+void MapIcon::paintStar(QPainter&p, const QPoint& point, int size, int sizeWH)
+{
+  p.drawLine(point.x(), point.y() - size, point.x(), point.y() + size);
+  p.drawLine(point.x() - size, point.y(), point.x() + size, point.y());
+  p.drawLine(point.x() - size, point.y() - size,
+	     point.x() + size, point.y() + size);
+  p.drawLine(point.x() - size, point.y() + size,
+	     point.x() + size, point.y() - size);
+}
+
+void MapIcon::paintDiamond(QPainter&p, const QPoint& point, 
+			   int size, int sizeWH)
+{
+  QPointArray diamond(4);
+  diamond.setPoint(0, point.x(), point.y() +  size);
+  diamond.setPoint(1, point.x() + size, point.y());
+  diamond.setPoint(2, point.x(), point.y() - size);
+  diamond.setPoint(3, point.x() - size, point.y());
+  p.drawPolygon(diamond);
+}
+
+
+//----------------------------------------------------------------------
 // Map
 Map::Map(MapMgr* mapMgr, 
 	 Player* player, 
@@ -1326,11 +1686,340 @@ Map::Map(MapMgr* mapMgr,
   debug ("Map()");
 #endif /* DEBUGMAP */
 
+  // Declare the default icon type characteristics
+  // NOTE: They are only declared here instead of in a file scope global
+  //       const because QBrush, QPen, QColor, etc. can't be used until after
+  //       the QApplication instance is created.
+  PenCapStyle cap = SquareCap;
+  PenJoinStyle join = BevelJoin;
+
+  // see MapIcon class definition in map.h to see ordering.
+  const MapIcon mapIconDefs[tIconTypeNumTypes] =
+  {
+    // tIconTypeUnknown
+    { QBrush(), QBrush(), 
+      QPen(gray, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(), 
+      0, 0,
+      tIconStyleCircle, tIconSizeSmall,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeDrop
+    { QBrush(), QBrush(),
+      QPen(yellow, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleX, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeDoor
+    { QBrush(NoBrush), QBrush(),
+      QPen(QColor(110, 60, 0), 0, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleSquare, tIconSizeTiny,
+      tIconStyleNone, tIconSizeNone,
+      true, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnNPC
+    { QBrush(SolidPattern), QBrush(),
+      QPen(black, 0, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleCircle, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnNPCCorpse
+    { QBrush(SolidPattern), QBrush(),
+      QPen(cyan, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStylePlus, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayer
+    { QBrush(SolidPattern), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleSquare, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerCorpse
+    { QBrush(), QBrush(),
+      QPen(yellow, 2, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleSquare, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnUnknown
+    { QBrush(gray), QBrush(),
+      QPen(NoPen, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleCircle, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnConsidered
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(red, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleSquare, tIconSizeLarge,
+      false, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeam1
+    { QBrush(SolidPattern), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleUpTriangle, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeam2
+    { QBrush(SolidPattern), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleRightTriangle, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeam3
+    { QBrush(SolidPattern), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleDownTriangle, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeam4
+    { QBrush(SolidPattern), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleLeftTriangle, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeam5
+    { QBrush(SolidPattern), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleSquare, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeamOtherRace
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(gray, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleSquare, tIconSizeXLarge,
+      false, false, false, false,
+      true, false, false, true,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeamOtherDeity
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(gray, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleSquare, tIconSizeXLarge,
+      false, false, false, false,
+      true, false, false, true,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeamOtherRacePet
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(SolidLine, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeXLarge,
+      false, false, false, false,
+      true, true, false, true,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerTeamOtherDeityPet
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(SolidLine, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeXLarge,
+      false, false, false, false,
+      true, true, false, true,
+      false, false, false, false },
+    // tIconTypeSpawnPlayerOld
+    { QBrush(), QBrush(),
+      QPen(magenta, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStylePlus, tIconSizeRegular,
+      tIconStyleNone, tIconSizeNone,
+      true, false, false, false,
+      false, false, false, false,
+      false, false, false, false },
+    // tIconTypeFilterFlagHunt
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(gray, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      true, false, false, true,
+      false, false, false, false },
+    // tIconTypeFilterFlagCaution
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(yellow, 1, SolidLine, cap, join),
+      QPen(), QPen(yellow, 1, SolidLine, cap, join), QPen(), QPen(),
+      500, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      true, false, false, true,
+      false, false, false, false },
+    // tIconTypeFilterFlagDanger
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(red, 1, SolidLine, cap, join),
+      QPen(), QPen(red, 1, SolidLine, cap, join), QPen(yellow, 1, SolidLine, cap, join), QPen(),
+      500, 1000,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      true, false, false, true,
+      false, false, false, false },
+    // tIconTypeFilterLocate
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(white, 1, SolidLine, cap, join),
+      QPen(white, 1, SolidLine, cap, join), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      true, false, false, true,
+      true, false, false, false },
+    // tIconTypeFilterAlert
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      false, false, false, true,
+      false, false, false, false },
+    // tIconTypeFilterFiltered
+    { QBrush(Dense2Pattern), QBrush(),
+      QPen(gray, 0, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleNone, tIconSizeNone,
+      true, false, true, false,
+      false, false, false, true,
+      false, false, false, false },
+    // tIconTypeFilterTracer
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(yellow, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      true, false, false, false,
+      false, false, true, false },
+    // tIconTypeRuntimeFiltered
+    { QBrush(), QBrush(NoBrush),
+      QPen(), QPen(white, 1, SolidLine, cap, join),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleNone, tIconSizeNone,
+      tIconStyleCircle, tIconSizeLarge,
+      false, false, false, false,
+      true, false, false, true,
+      false, false, false, false },
+    // tIconTypeSpawnPoint
+    { QBrush(SolidPattern), QBrush(),
+      QPen(darkGray, 1, SolidLine, cap, join), QPen(),
+      QPen(), QPen(), QPen(), QPen(),
+      0, 0,
+      tIconStyleX, tIconSizeSmall,
+      tIconStyleNone, tIconSizeNone,
+      true, true, false, false,
+      false, false, false, false,
+      false, false, false, false },
+  };
+
   // save the name used for preferences 
   QString prefString = Map::preferenceName();
   QString tmpPrefString;
   QString tmpDefault;
   QString tmp;
+
+  // setup map icons
+  for (int k = 0; k < tIconTypeNumTypes; k++)
+  {
+    m_mapIcons[k] = mapIconDefs[k];
+    m_mapIcons[k].load(iconTypePrefBaseNames[k], prefString);
+  }
+
+  // setup icon size maps
+  m_mapIconSizes[tIconSizeNone] = &m_markerNSize; // none should never be drawn
+  m_mapIconSizesWH[tIconSizeNone] = &m_markerNSizeWH; // but just in case...
+  m_mapIconSizes[tIconSizeTiny] = &m_markerNSize;
+  m_mapIconSizesWH[tIconSizeTiny] = &m_markerNSizeWH;
+  m_mapIconSizes[tIconSizeSmall] = &m_marker0Size;
+  m_mapIconSizesWH[tIconSizeSmall] = &m_marker0SizeWH;
+  m_mapIconSizes[tIconSizeRegular] = &m_drawSize;
+  m_mapIconSizesWH[tIconSizeRegular] = &m_drawSizeWH;
+  m_mapIconSizes[tIconSizeLarge] = &m_marker1Size;
+  m_mapIconSizesWH[tIconSizeLarge] = &m_marker1SizeWH;
+  m_mapIconSizes[tIconSizeXLarge] = &m_marker2Size;
+  m_mapIconSizesWH[tIconSizeXLarge] = &m_marker2SizeWH;
+
+  // setup filter check ordering
+  m_filterCheckOrdering[0] = 
+    pSEQPrefs->getPrefInt("Filter0", prefString, FILTERED_FILTER);
+  m_filterCheckOrdering[1] = 
+    pSEQPrefs->getPrefInt("Filter1", prefString, TRACER_FILTER);
+  m_filterCheckOrdering[2] = 
+    pSEQPrefs->getPrefInt("Filter2", prefString, LOCATE_FILTER);
+  m_filterCheckOrdering[3] = 
+    pSEQPrefs->getPrefInt("Filter3", prefString, HUNT_FILTER);
+  m_filterCheckOrdering[4] = 
+    pSEQPrefs->getPrefInt("Filter4", prefString, ALERT_FILTER);
+  m_filterCheckOrdering[5] = 
+    pSEQPrefs->getPrefInt("Filter5", prefString, CAUTION_FILTER);
+  m_filterCheckOrdering[6] = 
+    pSEQPrefs->getPrefInt("Filter6", prefString, DANGER_FILTER);
 
   tmpPrefString = "Caption";
   tmpDefault = QString("ShowEQ - ") + prefString;
@@ -1415,6 +2104,11 @@ Map::Map(MapMgr* mapMgr,
   else 
     m_marker0Size = val;
   m_marker0SizeWH = m_marker0Size << 1; // 2 x size
+  if (val > 2)
+    m_markerNSize = val - 2;
+  else
+    m_markerNSize = 1;
+  m_markerNSizeWH = m_markerNSize << 1; // 2 x size
 
   tmpPrefString = "FOVMode";
   m_fovMode = (FOVMode)pSEQPrefs->getPrefInt(tmpPrefString, prefString, 
@@ -1495,10 +2189,10 @@ Map::Map(MapMgr* mapMgr,
   m_mapCache.setAlwaysRepaint(pSEQPrefs->getPrefBool(tmpPrefString, prefString, false));
 
   tmpPrefString = "DeityPvP";
-  m_deityPvP = pSEQPrefs->getPrefBool(tmpPrefString, prefString, showeq_params->deitypvp);
+  m_deityPvP = pSEQPrefs->getPrefBool(tmpPrefString, prefString, false);
 
   tmpPrefString = "RacePvP";
-  m_racePvP = pSEQPrefs->getPrefBool(tmpPrefString, prefString, showeq_params->pvp);
+  m_racePvP = pSEQPrefs->getPrefBool(tmpPrefString, prefString, false);
 
   // Accelerators
   QAccel *accel = new QAccel(this);
@@ -1607,6 +2301,9 @@ void Map::savePrefs(void)
   QString prefString = preferenceName();
   QString tmpPrefString;
 
+  // setup map icons
+  for (int k = 0; k < tIconTypeNumTypes; k++)
+    m_mapIcons[k].save(iconTypePrefBaseNames[k], prefString);
 }
 
 MapMenu* Map::menu()
@@ -2140,7 +2837,11 @@ void Map::setDrawSize(int val)
   else 
     m_marker0Size = val;
   m_marker0SizeWH = m_marker0Size << 1; // 2 x size
-
+  if (val > 2)
+    m_markerNSize = val - 2;
+  else
+    m_markerNSize = 1;
+  m_markerNSizeWH = m_markerNSize << 1; // 2 x size
   QString tmpPrefString = "DrawSize";
   pSEQPrefs->setPrefInt(tmpPrefString, preferenceName(), m_drawSize);
   
@@ -2429,9 +3130,14 @@ void Map::setDeityPvP(bool val)
 { 
   m_deityPvP = val; 
 
-  QString tmpPrefString = "DeityPvP";
-  pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_deityPvP);
+  pSEQPrefs->setPrefBool("DeityPvP", preferenceName(), m_deityPvP);
   
+  if (m_deityPvP && m_racePvP)
+  {
+    m_racePvP = false;
+    pSEQPrefs->setPrefBool("RacePvP", preferenceName(), m_racePvP);
+  }
+
   if(!m_cacheChanges)
     refreshMap ();
 }
@@ -2440,8 +3146,13 @@ void Map::setRacePvP(bool val)
 { 
   m_racePvP = val; 
   
-  QString tmpPrefString = "RacePvP";
-  pSEQPrefs->setPrefBool(tmpPrefString, preferenceName(), m_racePvP);
+  pSEQPrefs->setPrefBool("RacePvP", preferenceName(), m_racePvP);
+
+  if (m_racePvP && m_deityPvP)
+  {
+    m_deityPvP = false;
+    pSEQPrefs->setPrefBool("DeityPvP", preferenceName(), m_deityPvP);
+  }
 
   if(!m_cacheChanges)
     refreshMap ();
@@ -3037,6 +3748,10 @@ void Map::paintMap (QPainter * p)
     // invert flash value
     m_flash = !m_flash;
 
+#if 0 // ZBTEMP
+    fprintf(stderr, "m_flash=%d\n", m_flash);
+#endif
+
     // reset last flash time, only real diff between start() and restart() is 
     // that restart returns the elapsed time since start() was called, 
     // which we don't need
@@ -3133,7 +3848,8 @@ void Map::paintPlayerBackground(MapParameters& param, QPainter& p)
 		 m_param.playerYOffset() - m_scaledFOVDistance, 
 		 sizeWH, sizeWH);
   
-  if(m_fovStyle == Qt::SolidPattern) p.setRasterOp(Qt::CopyROP);
+  if(m_fovStyle == Qt::SolidPattern) 
+    p.setRasterOp(Qt::CopyROP);
   
 }
 
@@ -3199,8 +3915,9 @@ void Map::paintDrops(MapParameters& param,
   ItemConstIterator it(itemMap);
   const Item* item;
   const QRect& screenBounds = m_param.screenBounds();
-  int ixlOffset;
-  int iylOffset;
+  MapIcon mapIcon;
+  uint32_t filterFlags;
+  uint8_t flag;
 
   // all drops are the same color
   p.setPen(yellow);
@@ -3211,25 +3928,37 @@ void Map::paintDrops(MapParameters& param,
     // get the item from the list
     item = it.current();
 
+    filterFlags = item->filterFlags();
+ 
     // make sure drop is within bounds
     if (!inRect(screenBounds, item->x(), item->y()) ||
 	(m_spawnDepthFilter &&
 	 ((item->z() > m_param.playerHeadRoom()) ||
-	  (item->z() < m_param.playerFloorRoom()))))
+	  (item->z() < m_param.playerFloorRoom()))) || 
+	(!m_showFiltered && (filterFlags & FILTER_FLAG_FILTERED)))
       continue;
 
-    ixlOffset = param.calcXOffsetI(item->x());
-    iylOffset = param.calcYOffsetI(item->y());
-
-    //fixed size:
-    p.drawLine(ixlOffset - m_drawSize,
-		 iylOffset - m_drawSize,
-		 ixlOffset + m_drawSize,
-		 iylOffset + m_drawSize);
-    p.drawLine(ixlOffset - m_drawSize,
-		 iylOffset + m_drawSize,
-		 ixlOffset + m_drawSize,
-		 iylOffset - m_drawSize);
+    mapIcon = m_mapIcons[tIconTypeDrop];
+    
+    // only bother checking for specific flags if any are set...
+    if (filterFlags != 0)
+    {
+      for (int i = 0; i < SIZEOF_FILTERS; i++)
+      {
+ 	flag = m_filterCheckOrdering[i];
+ 	if (filterFlags & (1 << flag))
+ 	  mapIcon.combine(m_mapIcons[tIconTypeFilterFlagBase + flag]);
+      }
+    }
+    
+    // check runtime filter flags
+    if(item->runtimeFilterFlags() & m_runtimeFilterFlagMask)
+      mapIcon.combine(m_mapIcons[tIconTypeRuntimeFiltered]);
+    
+    // paint the icon
+    paintIcon(param, p, mapIcon, item,
+ 	      QPoint(param.calcXOffsetI(item->x()),
+ 		     param.calcYOffsetI(item->y())));
   }
 }
 
@@ -3243,8 +3972,9 @@ void Map::paintDoors(MapParameters& param,
   ItemConstIterator it(itemMap);
   const Item* item;
   const QRect& screenBounds = m_param.screenBounds();
-  int ixlOffset;
-  int iylOffset;
+  MapIcon mapIcon;
+  uint32_t filterFlags;
+  uint8_t flag;
 
   // doors only come in one color
   p.setPen(QColor (110, 60, 0));
@@ -3255,19 +3985,169 @@ void Map::paintDoors(MapParameters& param,
     // get the item from the list
     item = it.current();
 
+    filterFlags = item->filterFlags();
+
     // make sure doors are within bounds
     if (!inRect(screenBounds, item->x(), item->y()) ||
 	(m_spawnDepthFilter &&
 	 ((item->z() > m_param.playerHeadRoom()) ||
-	  (item->z() < m_param.playerFloorRoom()))))
+	  (item->z() < m_param.playerFloorRoom()))) || 
+	(!m_showFiltered && (filterFlags & FILTER_FLAG_FILTERED)))
       continue;
 
-    ixlOffset = param.calcXOffsetI(item->x());
-    iylOffset = param.calcYOffsetI(item->y());
+    mapIcon = m_mapIcons[tIconTypeDoor];
 
-    p.drawRect(ixlOffset,iylOffset, m_drawSize, m_drawSize);
+    // only bother checking for specific flags if any are set...
+    if (filterFlags != 0)
+    {
+      for (int i = 0; i < SIZEOF_FILTERS; i++)
+      {
+	flag = m_filterCheckOrdering[i];
+	if (filterFlags & (1 << flag))
+	  mapIcon.combine(m_mapIcons[tIconTypeFilterFlagBase + flag]);
+      }
+    }
+
+    // check runtime filter flags
+    if(item->runtimeFilterFlags() & m_runtimeFilterFlagMask)
+      mapIcon.combine(m_mapIcons[tIconTypeRuntimeFiltered]);
+
+    // paint the icon
+    paintIcon(param, p, mapIcon, item, 
+	      QPoint(param.calcXOffsetI(item->x()),
+		     param.calcYOffsetI(item->y())));
   }
 }		     
+
+const QColor& Map::raceTeamHighlightColor(const Spawn* spawn) const
+{
+  uint8_t playerLevel = m_player->level();
+  int diff = spawn->level() - playerLevel;
+  if (diff < -8)  //They are much easier than you.
+    return green; 
+  if (diff > 8)  //They are much harder than you.
+    return darkRed; 
+
+  if (diff < 0) 
+    diff *= -1;
+  
+  // if we are within 8 levels of other player
+  if (diff <= 8)
+  {
+    // they are in your range
+    switch ( (spawn->level() - playerLevel) + 8)
+    {
+      // easy
+    case 0:  // you are 8 above them
+    case 1:  // you are 7 above them
+      return green; 
+      break;
+    case 2:  // you are 6 above them
+    case 3:  // you are 5 above them
+      return darkGreen; 
+      break;
+      
+      // moderate
+    case 4:  // you are 4 above them
+    case 5:  // you are 3 above them
+      return blue; 
+      break;
+	      case 6:  // you are 2 above them
+    case 7:  // you are 1 above them
+      return darkBlue; 
+      break;
+      
+      // even
+    case 8:  // you are even with them
+      return white; 
+      break;
+		
+      // difficult 
+    case 9:  // you are 1 below them
+    case 10:  // you are 2 below them
+      return yellow; 
+      break;
+		
+      // downright hard
+    case 11:  // you are 3 below them
+    case 12:  // you are 4 below them
+      return magenta; 
+      break;
+    case 13:  // you are 5 below them
+    case 14:  // you are 6 below them
+      return red; 
+      break;
+    case 15:  // you are 7 below them
+    case 16:  // you are 8 below them
+      return darkRed; 
+      break;
+    }
+  }
+  
+  return black;
+}
+
+const QColor& Map::deityTeamHighlightColor(const Spawn* spawn) const
+{
+  uint8_t playerLevel = m_player->level();
+  int diff = spawn->level() - playerLevel;
+  if (diff < -5)  //They are much easier than you.
+    return green; 
+  if (diff > 5)  //They are much harder than you.
+    return darkRed; 
+
+  if (diff < 0) 
+    diff *= -1;
+
+  // if we are within 8 levels of other player
+  if (diff <= 5)
+  {
+    // they are in your range
+    switch ( (spawn->level() - playerLevel) + 5)
+    {
+      // easy
+    case 0:  // you are 5 above them
+    case 1:  // you are 4 above them
+      return green; 
+      break;
+    case 2:  // you are 3 above them
+      return darkGreen; 
+      break;
+      
+      // moderate
+    case 3:  // you are 2 above them
+      return blue; 
+      break;
+    case 4:  // you are 1 above them
+      return darkBlue; 
+      break;
+      
+      // even
+    case 5:  // you are even with them
+      return white; 
+      break;
+      
+      // difficult 
+    case 6:  // you are 1 below them
+      return yellow; 
+      break;
+      
+      // downright hard
+    case 7:  // you are 2 below them
+    case 8:  // you are 3 below them
+      return magenta; 
+      break;
+    case 9:  // you are 4 below them
+      return red; 
+      break;
+    case 10:  // you are 5 below them
+      return darkRed; 
+      break;
+    }
+  }
+
+  return black;
+}
 
 void Map::paintSpawns(MapParameters& param,
 		      QPainter& p,
@@ -3280,28 +4160,31 @@ void Map::paintSpawns(MapParameters& param,
   ItemConstIterator it(itemMap);
   const Item* item;
   QPointArray  atri(3);
-  uint32_t distance = UINT32_MAX;
   QString spawnNameText;
   QFontMetrics fm(param.font());
   EQPoint spawnOffset;
   EQPoint location;
   QPen tmpPen;
-  uint8_t playerLevel = m_player->level();
+  uint8_t flag;
   int spawnOffsetXPos, spawnOffsetYPos;
   uint16_t range;
   int scaledRange;
   int sizeWH;
   uint32_t filterFlags;
   const QRect& screenBounds = m_param.screenBounds();
+  MapIcon mapIcon;
   bool up2date = false;
 
   /* Paint the spawns */
   const Spawn* spawn;
   // iterate over all spawns in of the current type
-  for (; it.current(); ++it)
+  while (it.current())
   {
     // get the item from the list
     item = it.current();
+
+    // increment iterator to the next spawn
+    ++it;
 
 #ifdef DEBUGMAP
     spawn = spawnType(item);
@@ -3320,636 +4203,168 @@ void Map::paintSpawns(MapParameters& param,
 
     filterFlags = item->filterFlags();
 
-    // only paint if the spawn is not filtered or the m_showFiltered flag is on
-    if (((!m_spawnDepthFilter || 
-	  ((item->z() <= m_param.playerHeadRoom()) && 
-	   (item->z() >= m_param.playerFloorRoom()))) &&
-	 ((!(filterFlags & FILTER_FLAG_FILTERED)) || m_showFiltered) &&
-	 (!spawn->isUnknown() || m_showUnknownSpawns)) ||
-	(item == m_selectedItem))
-	 
-    {
-      // get the approximate position of the spawn
-      up2date = spawn->approximatePosition(m_animate, drawTime, location);
-
-      // check that the spawn is within the screen bounds
-      if (!inRect(screenBounds, location.x(), location.y()))
-	  continue; // not in bounds, next...
-
-      // calculate the spawn's offset location
-      spawnOffsetXPos = m_param.calcXOffsetI(location.x());
-      spawnOffsetYPos = m_param.calcYOffsetI(location.y());
-
-      //--------------------------------------------------
-#ifdef DEBUGMAP
-      seqDebug("Draw Spawn Names");
-#endif
-      // Draw Spawn Names if selected and distance is less than the FOV 
-      // distance
-      if (m_showSpawnNames)
-      {
-	if (!showeq_params->fast_machine)
-	  distance = location.calcDist2DInt(param.player());
-	else
-	  distance = (int)location.calcDist(param.player());
-
-	if (distance < m_fovDistance)
-	{
-	  spawnNameText.sprintf("%2d: %s",
-				spawn->level(),
-				(const char*)spawn->name());
-	  int width = fm.width(spawnNameText);
-	  p.setPen(darkGray);
-	  p.drawText(spawnOffsetXPos - (width / 2),
-		     spawnOffsetYPos + 10, spawnNameText);
-	}
-      }
-
-      //--------------------------------------------------
-#ifdef DEBUGMAP
-      seqDebug("Draw velocities");
-#endif
-      /* Draw velocities */
-      if (m_showVelocityLines &&
-	  (spawn->deltaX() || spawn->deltaY())) // only if has a delta
-      {
-	p.setPen (darkGray);
-	p.drawLine (spawnOffsetXPos,
-		      spawnOffsetYPos,
-		      spawnOffsetXPos - spawn->deltaX(),
-		      spawnOffsetYPos - spawn->deltaY());
-      }
-
-      //
-      // Misc decorations
-      //
-
-      //--------------------------------------------------
-#ifdef DEBUGMAP
-      seqDebug("Draw corpse, team, and filter boxes");
-#endif
-      // handle regular NPC's first, since they are generally the most common
-      if (spawn->isNPC())
-      {
-	if (!(filterFlags & FILTER_FLAG_FILTERED))
-	{
-	  // set pen to black
-	  p.setPen(black);
-
-          if (spawn->typeflag() == 65)
-             p.setBrush(magenta);
-          else
-          {
-             if ((spawn->typeflag() == 66) || (spawn->typeflag() == 67))
-                p.setBrush(darkMagenta);
-             else
-             {
-	        // set brush to spawn con color
-	        p.setBrush(m_player->pickConColor(spawn->level()));
-             }
-          }
-	}
-	else
-	{
-	  // use gray brush
-	  p.setBrush(gray);
-	  
-	  // and use spawn con color
-	  p.setPen(m_player->pickConColor(spawn->level())); 
-	}
-
-	if(m_flash && (spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask))
-	  p.setPen(white);
-
-	// draw the regular spawn dot
-	p.drawEllipse (spawnOffsetXPos - m_drawSize, 
-		       spawnOffsetYPos - m_drawSize, 
-		       m_drawSizeWH, m_drawSizeWH);
-	  
-	// retrieve the spawns aggro range
-	range = m_mapMgr->spawnAggroRange(spawn);
-
-	// if aggro range is known (non-zero), draw the aggro range circle
-	if (range != 0)
-	{
-	  scaledRange = fixPtMulII(m_param.ratioIFixPt(), 
-				   MapParameters::qFormat, range);
-	  sizeWH = scaledRange << 1;
-
-	  p.setBrush(NoBrush);
-	  p.setPen(red); 
-
-	  p.drawEllipse(spawnOffsetXPos - scaledRange, 
-			spawnOffsetYPos - scaledRange, 
-			sizeWH, 
-			sizeWH);
-	}
-
-	// if enabled show the spawns walk path
-	if (m_showNPCWalkPaths)
-	{
-	  SpawnTrackListIterator trackIt(spawn->trackList());
+    if (((m_spawnDepthFilter &&
+	  ((item->z() > m_param.playerHeadRoom()) ||
+	   (item->z() < m_param.playerFloorRoom()))) || 
+	 (!m_showFiltered && (filterFlags & FILTER_FLAG_FILTERED)) ||
+	 (!m_showUnknownSpawns && spawn->isUnknown())) &&
+	(item != m_selectedItem))
+      continue;
+ 
+    // get the approximate position of the spawn
+    up2date = spawn->approximatePosition(m_animate, drawTime, location);
     
-	  const SpawnTrackPoint* trackPoint = trackIt.current();
-	  if (trackPoint)
-	  {
-	    p.setPen (blue);
-	    p.moveTo (m_param.calcXOffsetI(trackPoint->x()), 
-		      m_param.calcYOffsetI(trackPoint->y()));
-      
-	    while ((trackPoint = ++trackIt) != NULL)
-	    {
-	      p.lineTo (m_param.calcXOffsetI (trackPoint->x()), 
-			m_param.calcYOffsetI (trackPoint->y()));
-	    }
-      
-	    p.lineTo (spawnOffsetXPos, spawnOffsetYPos);
-	  }
-	}
-      }
-      else if (spawn->isOtherPlayer())
-      {
-	if (!up2date)
-	{
-	  if(m_flash && (spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask))
-	    p.setPen(white);
-	  else if ((filterFlags & FILTER_FLAG_FILTERED))
-	    p.setPen(gray);
-	  else
-	    p.setPen(magenta);
-
-	  p.drawLine(spawnOffsetXPos, 
-		     spawnOffsetYPos - m_drawSize,
-		     spawnOffsetXPos,
-		     spawnOffsetYPos + m_drawSize);
-	  p.drawLine(spawnOffsetXPos - m_drawSize, spawnOffsetYPos,
-		     spawnOffsetXPos + m_drawSize, spawnOffsetYPos);
-	  // don't do anything else for out of data PC data.
-	  continue;
-	}
-	if (!(filterFlags & FILTER_FLAG_FILTERED))
-	{
-	  // set pen to magenta
-	  p.setPen(magenta);
-	
-	  // set brush to spawn con color
-	  p.setBrush(m_player->pickConColor(spawn->level()));
-	}
-	else
-	{
-	  // use gray brush
-	  p.setBrush(gray);
-	  
-	  // and use spawn con color
-	  p.setPen(m_player->pickConColor(spawn->level())); 
-	}
-
-	if(m_flash && (spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask))
-	  p.setPen(white);
-
-	//Fixed size:
-	if (m_deityPvP)
-	{
-	  int dteam = spawn->deityTeam();
-	  
-	  switch(dteam)
-	  {
-	  case DTEAM_GOOD:
-	    { // Up Triangle
-	      atri.setPoint(0, spawnOffsetXPos, spawnOffsetYPos - m_drawSizeWH);
-	      atri.setPoint(1, spawnOffsetXPos + m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      p.drawPolygon(atri);
-	      break;
-	    }
-	  case DTEAM_NEUTRAL:
-	    { // Right Triangle
-	      atri.setPoint(0, spawnOffsetXPos + m_drawSizeWH, spawnOffsetYPos);
-	      atri.setPoint(1, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      p.drawPolygon ( atri);
-	      break;
-	    }
-	  case DTEAM_EVIL:
-	    { // Down Triangle
-	      atri.setPoint(0, spawnOffsetXPos, 
-			    spawnOffsetYPos + m_drawSizeWH);
-	      atri.setPoint(1, spawnOffsetXPos + m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      p.drawPolygon ( atri);
-	      break;
-	    }
-	  default:
-	    p.drawRect(spawnOffsetXPos - m_drawSize, 
-		       spawnOffsetYPos - m_drawSize, 
-		       m_drawSizeWH, m_drawSizeWH);
-	    break;
-	  }
-	}
-	else if (m_racePvP)
-	{
-	  int rteam = spawn->raceTeam();
-	  
-	  switch(rteam)
-	  {
-	  case RTEAM_HUMAN:
-	    { // Up Triangle
-	      atri.setPoint(0, spawnOffsetXPos, spawnOffsetYPos - m_drawSizeWH);
-	      atri.setPoint(1, spawnOffsetXPos + m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      p.drawPolygon(atri);
-	      break;
-	    }
-	  case RTEAM_ELF:
-	    { // Right Triangle
-	      atri.setPoint(0, spawnOffsetXPos + m_drawSizeWH, spawnOffsetYPos);
-	      atri.setPoint(1, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      p.drawPolygon ( atri);
-	      break;
-	    }
-	  case RTEAM_DARK:
-	    { // Down Triangle
-	      atri.setPoint(0, spawnOffsetXPos, 
-			    spawnOffsetYPos + m_drawSizeWH);
-	      atri.setPoint(1, spawnOffsetXPos + m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos - m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      p.drawPolygon ( atri);
-	      break;
-	    }
-	  case RTEAM_SHORT:
-	    { // Left Triangle
-	      atri.setPoint(0, spawnOffsetXPos - m_drawSizeWH, 
-			    spawnOffsetYPos);
-	      atri.setPoint(1, spawnOffsetXPos + m_drawSize, 
-			    spawnOffsetYPos + m_drawSize);
-	      atri.setPoint(2, spawnOffsetXPos + m_drawSize, 
-			    spawnOffsetYPos - m_drawSize);
-	      p.drawPolygon ( atri);
-	      break;
-	    }
-	  default:
-	    p.drawRect(spawnOffsetXPos - m_drawSize, 
-		       spawnOffsetYPos - m_drawSize, 
-		       m_drawSizeWH, m_drawSizeWH);
-	    break;
-	  }
-	}
-	else
-	  p.drawRect(spawnOffsetXPos - m_drawSize, 
-		     spawnOffsetYPos - m_drawSize, 
-		     m_drawSizeWH, m_drawSizeWH);
-      }
-      else if (spawn->NPC() == SPAWN_NPC_CORPSE) // x for NPC corpse
-      {
-	if(m_flash && (spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask))
-	  p.setPen(white);
-	else if ((filterFlags & FILTER_FLAG_FILTERED))
-	  p.setPen(gray);
-	else
-	  p.setPen(cyan);
-
-	//fixed size
-	p.drawLine(spawnOffsetXPos, 
-		   spawnOffsetYPos - m_drawSize,
-		   spawnOffsetXPos,
-		   spawnOffsetYPos + m_drawSize);
-	p.drawLine(spawnOffsetXPos - m_drawSize, spawnOffsetYPos,
-		   spawnOffsetXPos + m_drawSize, spawnOffsetYPos);
-
-	// nothing more to be done to the dead, next...
-	continue;
-      }
-      else if (spawn->NPC() == SPAWN_PC_CORPSE) // x for PC corpse
-      {
-	if(m_flash && (spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask))
-	  tmpPen = white;
-	else if ((filterFlags & FILTER_FLAG_FILTERED))
-	  tmpPen = gray;
-	else
-	  tmpPen = yellow;
-
-	tmpPen.setWidth(2);
-	p.setPen(tmpPen);
-	p.setBrush(NoBrush);
-
-	p.drawRect(spawnOffsetXPos - m_drawSize, 
-		   spawnOffsetYPos - m_drawSize, 
-		   m_drawSizeWH, m_drawSizeWH);
-
-	// nothing more to be done to the dead, next...
-	continue;
-      }
-      else if (spawn->isUnknown())
-      {
-	// set pen to black
-	p.setPen(black);
-	
-	// set brush to gray
-	p.setBrush(gray);
-
-	// draw the regular spawn dot
-	p.drawEllipse (spawnOffsetXPos - m_drawSize, 
-		       spawnOffsetYPos - m_drawSize, 
-		       m_drawSizeWH, m_drawSizeWH);
-
-	// nothing more to be done to the unknown, next...
-	continue;
-      }
-
-      // only bother checking for specific flags if any are set...
-      if (filterFlags != 0)
-      {
-	if (filterFlags & FILTER_FLAG_DANGER)
-	{
-	  if (!showeq_params->fast_machine)
-	    distance = location.calcDist2DInt(param.player());
-	  else
-	    distance = (int)location.calcDist(param.player());
-	  p.setPen(red);
-	  p.setBrush(NoBrush);
-	  if(m_flash)
-	    p.drawEllipse (spawnOffsetXPos - m_marker1Size, 
-			   spawnOffsetYPos - m_marker1Size, 
-			   m_marker1SizeWH, m_marker1SizeWH);
-	  if(distance < 500)
-	  {
-	    if(m_flash)
-	    {
-	      p.setPen(red);
-	      p.drawLine (m_param.playerXOffset(), 
-			  m_param.playerYOffset(),
-			  spawnOffsetXPos, spawnOffsetYPos);
-	    }
-	  }
-	  else if(distance < 1000)
-	  {
-	    p.setPen(yellow);
-	    p.drawLine (m_param.playerXOffset(), 
-			m_param.playerYOffset(),
-			spawnOffsetXPos, spawnOffsetYPos);
-	  }
-	}
-	else if (filterFlags & FILTER_FLAG_CAUTION)
-	{
-	  if (!showeq_params->fast_machine)
-	    distance = location.calcDist2DInt(param.player());
-	  else
-	    distance = (int)location.calcDist(param.player());
-	  p.setPen(yellow);
-	  p.setBrush(NoBrush);
-	  if(m_flash)
-	    p.drawEllipse (spawnOffsetXPos - m_marker1Size, 
-			   spawnOffsetYPos - m_marker1Size, 
-			   m_marker1SizeWH, m_marker1SizeWH);
-	  if(distance < 500)
-	  {
-	    p.drawLine (m_param.playerXOffset(), 
-			m_param.playerYOffset(),
-			spawnOffsetXPos, spawnOffsetYPos);
-	  }
-	}
-	else if (filterFlags & FILTER_FLAG_HUNT)
-	{
-	  p.setPen(gray);
-	  p.setBrush(NoBrush);
-	  if(m_flash)
-	    p.drawEllipse (spawnOffsetXPos - m_marker1Size, 
-			   spawnOffsetYPos - m_marker1Size, 
-			   m_marker1SizeWH, m_marker1SizeWH);
-	}
-	else if (filterFlags & FILTER_FLAG_LOCATE)
-	{
-	  p.setPen(white);
-	  p.setBrush(NoBrush);
-	  if(m_flash)
-	    p.drawEllipse (spawnOffsetXPos - m_marker1Size, 
-			   spawnOffsetYPos - m_marker1Size, 
-			   m_marker1SizeWH, m_marker1SizeWH);
-	  
-	  p.drawLine(m_param.playerXOffset(), 
-		     m_param.playerYOffset(),
-		     spawnOffsetXPos, spawnOffsetYPos);
-	}
-	else if (filterFlags & FILTER_FLAG_TRACER)
-        {
-	  p.setBrush(NoBrush);
-	  p.setPen(yellow);
-	  p.drawRect(spawnOffsetXPos - m_marker1Size, 
-		     spawnOffsetYPos - m_marker1Size, 
-		     m_marker1SizeWH, m_marker1SizeWH);
-	}
-      }
-
-      // if the spawn was considered, note it.
-      if (m_highlightConsideredSpawns && 
-	  spawn->considered())
-      {
-	p.setBrush(NoBrush);
-	p.setPen(red);
-	p.drawRect(spawnOffsetXPos - m_marker1Size,
-		   spawnOffsetYPos - m_marker1Size, 
-		   m_marker1SizeWH, m_marker1SizeWH);
-      }
-
-      //--------------------------------------------------
+    // check that the spawn is within the screen bounds
+    if (!inRect(screenBounds, location.x(), location.y()))
+      continue; // not in bounds, next...
+    
+    // calculate the spawn's offset location
+    spawnOffsetXPos = m_param.calcXOffsetI(location.x());
+    spawnOffsetYPos = m_param.calcYOffsetI(location.y());
+    QPoint point(spawnOffsetXPos, spawnOffsetYPos);
+    
+    
+    //--------------------------------------------------
 #ifdef DEBUGMAP
-      seqDebug("PvP handling");
+    printf("Draw velocities\n");
 #endif
-      // if PvP is not enabled, don't try to do it, continue to the next spawn
-      if (!m_racePvP && !m_deityPvP)
-	continue;
-
-      const Spawn* owner;
-
-      if (spawn->petOwnerID() != 0)
-	owner = spawnType(m_spawnShell->findID(tSpawn, spawn->petOwnerID()));
-      else 
-	owner = NULL;
-
-      // if spawn is another pc, on a different team, and within 8 levels
-      // highlight it flashing
-      if (m_flash)
+    /* Draw velocities */
+    if (m_showVelocityLines &&
+	(spawn->deltaX() || spawn->deltaY())) // only if has a delta
+    {
+      p.setPen (darkGray);
+      p.drawLine (spawnOffsetXPos,
+		  spawnOffsetYPos,
+		  spawnOffsetXPos - spawn->deltaX(),
+		  spawnOffsetYPos - spawn->deltaY());
+    }
+    
+    //
+    // Misc decorations
+    //
+    
+    //--------------------------------------------------
+#ifdef DEBUGMAP
+    printf("Draw corpse, team, and filter boxes\n");
+#endif
+    // handle regular NPC's first, since they are generally the most common
+    if (spawn->isNPC())
+    {
+      mapIcon = m_mapIcons[tIconTypeSpawnNPC];
+      
+      // retrieve the spawns aggro range
+      range = m_mapMgr->spawnAggroRange(spawn);
+      
+      // if aggro range is known (non-zero), draw the aggro range circle
+      if (range != 0)
       {
-	if (m_racePvP)
+	scaledRange = fixPtMulII(m_param.ratioIFixPt(), 
+ 				 MapParameters::qFormat, range);
+ 	sizeWH = scaledRange << 1;
+  	
+  	p.setBrush(NoBrush);
+ 	p.setPen(red); 
+ 	
+ 	p.drawEllipse(spawnOffsetXPos - scaledRange, 
+ 		      spawnOffsetYPos - scaledRange, 
+ 		      sizeWH, 
+ 		      sizeWH);
+      }
+    }
+    else if (spawn->isOtherPlayer())
+    {
+      if (!up2date)
+ 	mapIcon = m_mapIcons[tIconTypeSpawnPlayerOld];
+      else
+ 	mapIcon = m_mapIcons[tIconTypeSpawnPlayer];
+    }
+    else if (spawn->NPC() == SPAWN_NPC_CORPSE) // x for NPC corpse
+      mapIcon = m_mapIcons[tIconTypeSpawnNPCCorpse];
+    else if (spawn->NPC() == SPAWN_PC_CORPSE) // x for PC corpse
+      mapIcon = m_mapIcons[tIconTypeSpawnPlayerCorpse];
+    else if (spawn->isUnknown())
+      mapIcon = m_mapIcons[tIconTypeSpawnUnknown];
+    
+    // if the spawn was considered, note it.
+    if (m_highlightConsideredSpawns && spawn->considered())
+      mapIcon.combine(m_mapIcons[tIconTypeSpawnConsidered]);
+    
+     // only bother checking for specific flags if any are set...
+    if (filterFlags != 0)
+    {
+      for (int i = 0; i < SIZEOF_FILTERS; i++)
+      {
+	flag = m_filterCheckOrdering[i];
+	if (filterFlags & (1 << flag))
+	  mapIcon.combine(m_mapIcons[tIconTypeFilterFlagBase + flag]);
+      }
+    }
+    
+    // check runtime filter flags
+    if(spawn->runtimeFilterFlags() & m_runtimeFilterFlagMask)
+      mapIcon.combine(m_mapIcons[tIconTypeRuntimeFiltered]);
+     
+    // if PvP is not enabled, don't try to do it, 
+    // paint the current spawn and continue to the next
+    if (!m_racePvP && !m_deityPvP)
+    {
+      paintSpawnIcon(param, p, mapIcon, spawn, location, point);
+      continue;
+    }
+    
+    //--------------------------------------------------
+#ifdef DEBUGMAP
+    printf("PvP handling\n");
+#endif
+    
+    const Spawn* owner;
+    
+    if (spawn->petOwnerID() != 0)
+      owner = spawnType(m_spawnShell->findID(tSpawn, spawn->petOwnerID()));
+    else 
+      owner = NULL;
+    
+    // if spawn is another pc, on a different team, and within 8 levels
+    // highlight it flashing
+    if (m_racePvP)
+    {
+      if (spawn->isOtherPlayer())
+      {
+	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamBase -1 +
+ 				   spawn->raceTeam() ]);
+ 	
+ 	// if not the same team as us
+ 	if (!m_player->isSameRaceTeam(spawn))
 	{
-	  if (spawn->isOtherPlayer())
-	  {
-	    // if not the same team as us
-	    if (!m_player->isSameRaceTeam(spawn))
-	    {
-	      int diff = spawn->level() - playerLevel;
-	      if (diff < 0) diff *= -1;
-	      
-	      // if we are within 8 levels of other player
-	      if (diff <= 8)
-	      {
-		// they are in your range
-		switch ( (spawn->level() - playerLevel) + 8)
-		{
-		  // easy
-		case 0:  // you are 8 above them
-		case 1:  // you are 7 above them
-		  p.setPen(green); 
-		  break;
-		case 2:  // you are 6 above them
-		case 3:  // you are 5 above them
-		  p.setPen(darkGreen); 
-		  break;
-		  
-		  // moderate
-		case 4:  // you are 4 above them
-		case 5:  // you are 3 above them
-		  p.setPen(blue); 
-		  break;
-		case 6:  // you are 2 above them
-		case 7:  // you are 1 above them
-		  p.setPen(darkBlue); 
-		  break;
-		  
-		  // even
-		case 8:  // you are even with them
-		  p.setPen(white); 
-		  break;
-		  
-		  // difficult 
-		case 9:  // you are 1 below them
-		case 10:  // you are 2 below them
-		  p.setPen(yellow); 
-		  break;
-		  
-		  // downright hard
-		case 11:  // you are 3 below them
-		case 12:  // you are 4 below them
-		  p.setPen(magenta); 
-		  break;
-		case 13:  // you are 5 below them
-		case 14:  // you are 6 below them
-		  p.setPen(red); 
-		  break;
-		case 15:  // you are 7 below them
-		case 16:  // you are 8 below them
-		  p.setPen(darkRed); 
-		  break;
-		}
-		p.setBrush(NoBrush);
-		p.drawRect (spawnOffsetXPos - m_marker2Size,
-			    spawnOffsetYPos - m_marker2Size, 
-			    m_marker2SizeWH, m_marker2SizeWH);
-		p.setBrush(SolidPattern);
-	      }
-	    }
-	  } // if decorate pvp
-	  
-	  // circle around pvp pets
-	  if (owner != NULL)
-	  {
-	    if (!m_player->isSameRaceTeam(owner))
-	    {
-	      p.setBrush(NoBrush);
-	      p.setPen(m_player->pickConColor(spawn->level()));
-	      p.drawEllipse (spawnOffsetXPos - m_marker2Size,
-			     spawnOffsetYPos - m_marker2Size, 
-			     m_marker2SizeWH, m_marker2SizeWH);
-	      p.setBrush(SolidPattern);
-	    }
-	  }
-	} // end racePvp
-	else if (m_deityPvP)
-	{
-	  if (spawn->isOtherPlayer())
-	  {
-	    // if not the same team as us
-	    if (!m_player->isSameDeityTeam(spawn))
-	    {
-	      int diff = spawn->level() - playerLevel;
-	      if (diff < -5)  //They are much easier than you.
-		p.setPen(green); 
-	      if (diff > 5)  //They are much harder than you.
-		p.setPen(darkRed); 
-	      if (diff < 0) diff *= -1;
-	      // if we are within 8 levels of other player
-	      if (diff <= 5)
-	      {
-		// they are in your range
-		switch ( (spawn->level() - playerLevel) + 5)
-		{
-		  // easy
-		case 0:  // you are 5 above them
-		case 1:  // you are 4 above them
-		  p.setPen(green); 
-		  break;
-		case 2:  // you are 3 above them
-		  p.setPen(darkGreen); 
-		  break;
-		  
-		  // moderate
-		case 3:  // you are 2 above them
-		  p.setPen(blue); 
-		  break;
-		case 4:  // you are 1 above them
-		  p.setPen(darkBlue); 
-		  break;
-		  
-		  // even
-		case 5:  // you are even with them
-		  p.setPen(white); 
-		  break;
-		  
-		  // difficult 
-		case 6:  // you are 1 below them
-		  p.setPen(yellow); 
-		  break;
-		  
-		  // downright hard
-		case 7:  // you are 2 below them
-		case 8:  // you are 3 below them
-		  p.setPen(magenta); 
-		  break;
-		case 9:  // you are 4 below them
-		  p.setPen(red); 
-		  break;
-		case 10:  // you are 5 below them
-		  p.setPen(darkRed); 
-		  break;
-		}
-		p.setBrush(NoBrush);
-		p.drawRect (spawnOffsetXPos - m_marker2Size,
-			    spawnOffsetYPos - m_marker2Size, 
-			    m_marker2SizeWH, m_marker2SizeWH);
-		p.setBrush(SolidPattern);
-	      }
-	    }
-	  } // if decorate pvp
-	  
-	  // circle around deity pvp pets
-	  if (owner != NULL)
-	  {
-	    if (!m_player->isSameDeityTeam(owner))
-	    {
-	      p.setBrush(NoBrush);
-	      p.setPen(m_player->pickConColor(spawn->level()));
-	      p.drawEllipse (spawnOffsetXPos - m_marker2Size,
-			     spawnOffsetYPos - m_marker2Size,
-			     m_marker2SizeWH, m_marker2SizeWH);
-	      p.setBrush(SolidPattern);
-	    }
-	  }
-	} // end if deityPvP
-      } // end if flash 
-    } // end if should be painted
+	  mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherRace]);
+	  mapIcon.m_highlightPen.setColor(raceTeamHighlightColor(spawn));
+	}
+      } // if decorate pvp
+      // circle around pvp pets
+      else if ((owner != NULL) && !m_player->isSameRaceTeam(owner))
+ 	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherRacePet]);
+    } // end racePvp
+    else if (m_deityPvP)
+    {
+      if (spawn->isOtherPlayer())
+      {
+ 	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamBase -1 + 
+ 				   spawn->deityTeam()]);
+ 	
+ 	// if not the same team as us
+ 	if (!m_player->isSameDeityTeam(spawn))
+ 	{
+ 	  mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeity]);
+ 	  mapIcon.m_highlightPen.setColor(deityTeamHighlightColor(spawn));
+ 	}
+      } // if decorate pvp
+ 	// circle around deity pvp pets
+      else if ((owner != NULL) && !m_player->isSameDeityTeam(owner))
+ 	mapIcon.combine(m_mapIcons[tIconTypeSpawnPlayerTeamOtherDeityPet]);
+    } // end if deityPvP
+    
+    // paint the spawn icon
+    paintSpawnIcon(param, p, mapIcon, spawn, location, point);
   } // end for spawns
 
   //----------------------------------------------------------------------
@@ -4116,9 +4531,233 @@ void Map::paintSpawnPoints( MapParameters& param, QPainter& p )
     int x = m_param.calcXOffsetI(sp->x());
     int y = m_param.calcYOffsetI(sp->y());
 
-    // draw a small x at the spot
+    // draw a small + at the spot
     p.drawLine( x, y - m_marker0Size, x, y + m_marker0Size );
     p.drawLine( x - m_marker0Size, y, x + m_marker0Size, y );
+  }
+}
+
+
+void Map::paintIcon(MapParameters& param, 
+		    QPainter& p, 
+		    const MapIcon& mapIcon,
+		    const Item* item, 
+		    const QPoint& point)
+{
+  // Draw Line
+  if (mapIcon.m_showLine0)
+  {
+    p.setPen(mapIcon.m_line0Pen);
+    p.drawLine(m_param.playerXOffset(), 
+	       m_param.playerYOffset(),
+	       point.x(), point.y());
+  }
+
+  // Calculate distance and draw distance related lines
+  uint32_t distance = UINT32_MAX;
+  if (mapIcon.m_line1Distance || mapIcon.m_line2Distance)
+  {
+    if (!showeq_params->fast_machine)
+      distance = item->calcDist2DInt(param.player());
+    else
+      distance = (int)item->calcDist(param.player());
+
+    if (mapIcon.m_line1Distance > distance)
+    {
+      p.setPen(mapIcon.m_line1Pen);
+      p.drawLine(m_param.playerXOffset(), 
+		 m_param.playerYOffset(),
+		 point.x(), point.y());
+    }
+
+    if (mapIcon.m_line2Distance > distance)
+    {
+      p.setPen(mapIcon.m_line2Pen);
+      p.drawLine(m_param.playerXOffset(), 
+		 m_param.playerYOffset(),
+		 point.x(), point.y());
+    }
+  }
+
+  // Draw Item Name
+  if (mapIcon.m_showName)
+  {
+    QString spawnNameText = item->name();
+    
+    QFontMetrics fm(param.font());
+    int width = fm.width(spawnNameText);
+    p.setPen(darkGray);
+    p.drawText(point.x() - (width / 2),
+	       point.y() + 10, spawnNameText);
+  }
+
+  // Draw Icon Image
+  if (mapIcon.m_image && 
+      (!mapIcon.m_imageFlash || m_flash) &&
+      (mapIcon.m_imageStyle != tIconStyleNone))
+  {
+    p.setPen(mapIcon.m_imagePen);
+    p.setBrush(mapIcon.m_imageBrush);
+
+    mapIcon.paintIconImage(mapIcon.m_imageStyle, p, point, 
+			   *m_mapIconSizes[mapIcon.m_imageSize],
+			   *m_mapIconSizesWH[mapIcon.m_imageSize]);
+  }
+
+  // Draw Highlight
+  if (mapIcon.m_highlight && 
+      (!mapIcon.m_highlightFlash || m_flash) &&
+      (mapIcon.m_highlightStyle != tIconStyleNone))
+  {
+    p.setPen(mapIcon.m_highlightPen);
+    p.setBrush(mapIcon.m_highlightBrush);
+
+    mapIcon.paintIconImage(mapIcon.m_highlightStyle, p, point, 
+			   *m_mapIconSizes[mapIcon.m_highlightSize],
+			   *m_mapIconSizesWH[mapIcon.m_highlightSize]);
+  }
+}
+
+void Map::paintSpawnIcon(MapParameters& param, 
+			 QPainter& p, 
+			 const MapIcon& mapIcon,
+			 const Spawn* spawn, 
+			 const EQPoint& location,
+			 const QPoint& point)
+{
+  // ------------------------
+  // Draw Walk Path
+  if (mapIcon.m_showWalkPath ||
+      (m_showNPCWalkPaths && spawn->isNPC()))
+  {
+    SpawnTrackListIterator trackIt(spawn->trackList());
+    
+    const SpawnTrackPoint* trackPoint = trackIt.current();
+    if (trackPoint)
+    {
+      if (!mapIcon.m_useWalkPathPen)
+	p.setPen(blue);
+      else
+	p.setPen(mapIcon.m_walkPathPen);
+
+      p.moveTo (m_param.calcXOffsetI(trackPoint->x()), 
+		m_param.calcYOffsetI(trackPoint->y()));
+      
+      while ((trackPoint = ++trackIt) != NULL)
+	p.lineTo (m_param.calcXOffsetI (trackPoint->x()), 
+		  m_param.calcYOffsetI (trackPoint->y()));
+      
+      p.lineTo (point.x(), point.y());
+    }
+  }
+
+  // Draw Line
+  if (mapIcon.m_showLine0)
+  {
+    p.setPen(mapIcon.m_line0Pen);
+    p.drawLine(m_param.playerXOffset(), 
+	       m_param.playerYOffset(),
+	       point.x(), point.y());
+  }
+
+  // calculate distance and draw distance related lines
+  uint32_t distance = UINT32_MAX;
+  if (mapIcon.m_line1Distance || mapIcon.m_line2Distance || 
+      m_showSpawnNames)
+  {
+    if (!showeq_params->fast_machine)
+      distance = location.calcDist2DInt(param.player());
+    else
+      distance = (int)location.calcDist(param.player());
+    
+    if (mapIcon.m_line1Distance > distance)
+    {
+      p.setPen(mapIcon.m_line1Pen);
+      p.drawLine(m_param.playerXOffset(), 
+		 m_param.playerYOffset(),
+		 point.x(), point.y());
+    }
+
+    if (mapIcon.m_line2Distance > distance)
+    {
+      p.setPen(mapIcon.m_line2Pen);
+      p.drawLine(m_param.playerXOffset(), 
+		 m_param.playerYOffset(),
+		 point.x(), point.y());
+    }
+  }
+
+  // Draw Spawn Names
+  if (mapIcon.m_showName || 
+      (m_showSpawnNames && (distance < m_fovDistance)))
+  {
+    QString spawnNameText;
+    
+    spawnNameText.sprintf("%2d: %s",
+			  spawn->level(),
+			  (const char*)spawn->name());
+    
+    QFontMetrics fm(param.font());
+    int width = fm.width(spawnNameText);
+    p.setPen(darkGray);
+    p.drawText(point.x() - (width / 2),
+	       point.y() + 10, spawnNameText);
+  }
+  
+  // Draw the Icon
+  if (mapIcon.m_image && 
+      (!mapIcon.m_imageFlash || m_flash) &&
+      (mapIcon.m_imageStyle != tIconStyleNone))
+  {
+    if (mapIcon.m_imageUseSpawnColorPen)
+    {
+      QPen pen = mapIcon.m_imagePen;
+      pen.setColor(m_player->pickConColor(spawn->level()));
+      p.setPen(pen);
+    }
+    else
+      p.setPen(mapIcon.m_imagePen);
+
+    if (mapIcon.m_imageUseSpawnColorBrush)
+    {
+      QBrush brush = mapIcon.m_imageBrush;
+      brush.setColor(m_player->pickConColor(spawn->level()));
+      p.setBrush(brush);
+    }
+    else
+      p.setBrush(mapIcon.m_imageBrush);
+
+    mapIcon.paintIconImage(mapIcon.m_imageStyle, p, point, 
+			   *m_mapIconSizes[mapIcon.m_imageSize],
+			   *m_mapIconSizesWH[mapIcon.m_imageSize]);
+  }
+
+  // Draw the highlight
+  if (mapIcon.m_highlight && 
+      (!mapIcon.m_highlightFlash || m_flash) &&
+      (mapIcon.m_highlightStyle != tIconStyleNone))
+  {
+    if (mapIcon.m_highlightUseSpawnColorPen)
+    {
+      QPen pen = mapIcon.m_highlightPen;
+      pen.setColor(m_player->pickConColor(spawn->level()));
+      p.setPen(pen);
+    }
+    else
+      p.setPen(mapIcon.m_highlightPen);
+
+    if (mapIcon.m_highlightUseSpawnColorBrush)
+    {
+      QBrush brush = mapIcon.m_highlightBrush;
+      brush.setColor(m_player->pickConColor(spawn->level()));
+      p.setBrush(brush);
+    }
+    else
+      p.setBrush(mapIcon.m_highlightBrush);
+
+    mapIcon.paintIconImage(mapIcon.m_highlightStyle,p, point, 
+			   *m_mapIconSizes[mapIcon.m_highlightSize],
+			   *m_mapIconSizesWH[mapIcon.m_highlightSize]);
   }
 }
 
@@ -4316,6 +4955,9 @@ void Map::mouseMoveEvent( QMouseEvent* event )
 		     item->z(),
 		     (const char*)spawn->raceString(), 
 		     (const char*)spawn->classString());
+      if (m_deityPvP)
+	string += " Deity: " + spawn->deityName();
+
       if (spawn->isNPC())
 	string += "\tType: " + spawn->typeString();
       else

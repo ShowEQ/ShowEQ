@@ -136,6 +136,7 @@ AC_MSG_ERROR([You need at least glibc-2.2 or greater to compile ShowEQ])
 )
 
 AC_PATH_QT_MOC
+AC_PATH_QT_UIC
 AC_PATH_QT
 
 dnl The below needs to be re-defined since the Qt defines from KDE destroy it
