@@ -42,6 +42,12 @@ class PacketLog : public SEQLogger
 		uint8_t        dir,
 		uint16_t       opcode,
 		const QString& origPrefix = QString()); 
+  void logData (const uint8_t* data,
+		size_t len,
+		uint8_t dir,
+		uint16_t opcode, 
+		const EQPacketOPCode* opcodeEntry,
+		const QString& origPrefix = QString()); 
   void logData(const EQUDPIPPacketFormat& packet);
   void printData(const uint8_t* data, size_t len, uint8_t dir,
 		 uint16_t opcode, const QString& origPrefix = QString());
@@ -67,7 +73,7 @@ class PacketStreamLog : public PacketLog
    void rawStreamPacket(const uint8_t* data, size_t len, uint8_t dir, 
 			uint16_t opcode);
    void decodedStreamPacket(const uint8_t* data, size_t len, uint8_t dir, 
-			    uint16_t opcode);
+			    uint16_t opcode, const EQPacketOPCode* opcodeEntry);
 
  protected:
    bool m_raw;
@@ -97,7 +103,8 @@ class UnknownPacketLog : public PacketLog
 
  public slots:
    void packet(const uint8_t* data, size_t len, uint8_t dir, 
-	       uint16_t opcode, bool unknown);
+	       uint16_t opcode, const EQPacketOPCode* opcodeEntry,
+	       bool unknown);
 
  protected:
   bool m_view;
@@ -130,7 +137,8 @@ class OPCodeMonitorPacketLog : public PacketLog
 
  public slots:
   void packet(const uint8_t* data, size_t len, uint8_t dir, 
-	      uint16_t opcode, bool unknown);
+	      uint16_t opcode, const EQPacketOPCode* opcodeEntry, 
+	      bool unknown);
 
  protected:
 #define OPCODE_SLOTS 15

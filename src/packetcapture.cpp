@@ -104,8 +104,6 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
      exit(0);
    }
 
-   setuid(getuid()); // give up root access if running suid root
-
    if (pcap_compile(m_pcache_pcap, &bpp, filter_buf, 1, 0) == -1)
    {
       pcap_perror (m_pcache_pcap, "pcap_error:pcap_compile");

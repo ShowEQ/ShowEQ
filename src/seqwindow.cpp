@@ -17,13 +17,19 @@
 
 SEQWindow::SEQWindow(const QString prefName, const QString caption,
 		     QWidget* parent, const char* name, WFlags f)
-  : QWidget(parent, name, f),
+  : QDockWindow(parent, name, f),
     m_preferenceName(prefName)
 {
   // set the windows caption
-  QWidget::setCaption(pSEQPrefs->getPrefString("Caption", preferenceName(),
+  QDockWindow::setCaption(pSEQPrefs->getPrefString("Caption", preferenceName(),
 					       caption));
-  
+
+  // windows default to resizable
+  setResizeEnabled(true);
+
+  // windows default to be closable when not docked
+  setCloseMode(Always);
+
   // restore the font
   restoreFont();
 }
@@ -36,7 +42,8 @@ SEQWindow::~SEQWindow()
 void SEQWindow::setCaption(const QString& text)
 {
   // set the caption
-  QWidget::setCaption(text);
+  QDockWindow::setCaption(text);
+  setName((const char*)caption());
 
   // set the preference
   pSEQPrefs->setPrefString("Caption", preferenceName(), caption());

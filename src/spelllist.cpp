@@ -360,10 +360,11 @@ SpellListWindow::SpellListWindow(SpellShell* sshell,
 				 QWidget* parent, const char* name)
   : SEQWindow("SpellList", "ShowEQ - Spell List", parent, name)
 {
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setAutoAdd(true);
+  //QVBoxLayout* layout = new QVBoxLayout(this);
+  //layout->setAutoAdd(true);
   
   m_spellList = new SpellList(sshell, this, name);
+  setWidget(m_spellList);
 }
 
 SpellListWindow::~SpellListWindow()

@@ -14,10 +14,12 @@
 CompassFrame::CompassFrame(Player* player, QWidget* parent, const char* name)
   : SEQWindow("Compass", "ShowEQ - Compass", parent, name)
 {
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setAutoAdd(true);
+  setResizeEnabled(false);
+  QVBoxLayout* layout = new QVBoxLayout(boxLayout());
   m_compass = new Compass (this, "compass");
+  layout->addWidget(m_compass);
   QHBox* coordsbox = new QHBox(this);
+  layout->addWidget(coordsbox);
   m_compass->setFixedWidth(120);
   m_compass->setFixedHeight(120);
 

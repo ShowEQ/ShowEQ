@@ -66,6 +66,7 @@ class PacketLog;
 class PacketStreamLog;
 class UnknownPacketLog;
 class OPCodeMonitorPacketLog;
+class DataLocationMgr;
 
 //--------------------------------------------------
 // typedefs
@@ -91,7 +92,8 @@ class EQInterface:public QMainWindow
    Q_OBJECT
 
  public:
-   EQInterface (QWidget * parent = 0, const char *name = 0);
+   EQInterface(DataLocationMgr* dlm, 
+	       QWidget * parent = 0, const char *name = 0);
    ~EQInterface();
 
    QFont appFont;
@@ -103,44 +105,43 @@ class EQInterface:public QMainWindow
    void newSpeed(int);
    void numPacket(int, int);
    void resetPacket(int, int);
-   void attack2Hand1(const attack2Struct *);
-   void action2Message(const action2Struct *);
-   void combatKillSpawn(const newCorpseStruct *);
-   void moneyOnCorpse(const moneyOnCorpseStruct* money);
-   void item(const itemPacketStruct* item);
-   void channelMessage(const channelMessageStruct* cmsg, uint32_t, uint8_t);
-   void formattedMessage(const formattedMessageStruct* cmsg, uint32_t, uint8_t);
-   void simpleMessage(const simpleMessageStruct* cmsg, uint32_t, uint8_t);
-   void specialMessage(const specialMessageStruct* smsg, uint32_t, uint8_t);
-   void guildMOTD(const guildMOTDStruct* gmotd, uint32_t, uint8_t);
-   void random(const randomReqStruct* randr);
-   void random(const randomStruct* randr);
-   void emoteText(const emoteTextStruct* emotetext);
+   void attack2Hand1(const uint8_t*);
+   void action2Message(const uint8_t *);
+   void combatKillSpawn(const uint8_t*);
+   void moneyOnCorpse(const uint8_t* money);
+   void channelMessage(const uint8_t* cmsg, size_t, uint8_t);
+   void formattedMessage(const uint8_t* cmsg, size_t, uint8_t);
+   void simpleMessage(const uint8_t* cmsg, size_t, uint8_t);
+   void specialMessage(const uint8_t* smsg, size_t, uint8_t);
+   void guildMOTD(const uint8_t* gmotd, size_t, uint8_t);
+   void randomRequest(const uint8_t* randr);
+   void random(const uint8_t* randr);
+   void emoteText(const uint8_t* emotetext);
    void updatedDateTime(const QDateTime&);
    void syncDateTime(const QDateTime&);
-   void inspectData(const inspectDataStruct* inspt);
-   void spMessage(const spMesgStruct* spmsg);
-   void handleSpell(const memSpellStruct* mem, uint32_t, uint8_t);
-   void beginCast(const beginCastStruct* bcast);
-   void spellFaded(const spellFadedStruct* sf);
-   void interruptSpellCast(const badCastStruct *icast);
-   void startCast(const startCastStruct* cast);
-   void systemMessage(const sysMsgStruct* smsg);
-   void moneyUpdate(const moneyUpdateStruct* money);
-   void moneyThing(const moneyThingStruct* money);
-   void groupInfo(const groupMemberStruct* gmem);
-   void groupInvite(const groupInviteStruct* gmem);
-   void groupDecline(const groupDeclineStruct* gmem);
-   void groupAccept(const groupAcceptStruct* gmem);
-   void groupDelete(const groupDeleteStruct* gmem);
-   void logOut(const uint8_t*, uint32_t, uint8_t);
-   void newGroundItem(const makeDropStruct*, uint32_t, uint8_t);
-   void clientTarget(const clientTargetStruct* cts);
-   void worldMOTD(const worldMOTDStruct* motd);
-   void zoneEntry(const ClientZoneEntryStruct* zsentry);
-   void zoneEntry(const ServerZoneEntryStruct* zsentry);
-   void zoneNew(const newZoneStruct* zoneNew, uint32_t, uint8_t);
-   void zoneChanged(const zoneChangeStruct* zoneChange, uint32_t, uint8_t);
+   void inspectData(const uint8_t* inspt);
+   void spMessage(const uint8_t* spmsg);
+   void handleSpell(const uint8_t* mem, size_t, uint8_t);
+   void beginCast(const uint8_t* bcast);
+   void spellFaded(const uint8_t* sf);
+   void interruptSpellCast(const uint8_t*icast);
+   void startCast(const uint8_t* cast);
+   void systemMessage(const uint8_t* smsg);
+   void moneyUpdate(const uint8_t* money);
+   void moneyThing(const uint8_t* money);
+   void groupInfo(const uint8_t* gmem);
+   void groupInvite(const uint8_t* gmem);
+   void groupDecline(const uint8_t* gmem);
+   void groupAccept(const uint8_t* gmem);
+   void groupDelete(const uint8_t* gmem);
+   void logOut(const uint8_t*, size_t, uint8_t);
+   void newGroundItem(const uint8_t*, size_t, uint8_t);
+   void clientTarget(const uint8_t* cts);
+   void worldMOTD(const uint8_t* motd);
+   void zoneEntryClient(const ClientZoneEntryStruct* zsentry);
+   void zoneEntryServer(const ServerZoneEntryStruct* zsentry);
+   void zoneNew(const uint8_t* zoneNew, size_t, uint8_t);
+   void zoneChanged(const zoneChangeStruct*, size_t, uint8_t);
 
    void zoneBegin(const QString& shortZoneName);
    void zoneEnd(const QString& shortZoneName, const QString& longZoneName);
@@ -175,6 +176,7 @@ class EQInterface:public QMainWindow
    void listSpawns(void);
    void listDrops(void);
    void listMapInfo(void);
+   void listInterfaceInfo(void);
    void dumpSpawns(void);
    void dumpDrops(void);
    void dumpMapInfo(void);
@@ -199,7 +201,6 @@ class EQInterface:public QMainWindow
    void select_opcode_file(void);
    void toggle_net_session_tracking(void);
    void toggle_net_real_time_thread(int id);
-   void toggle_net_broken_decode(int id);
    void set_net_monitor_next_client();
    void set_net_client_IP_address();
    void set_net_client_MAC_address();
@@ -273,7 +274,6 @@ class EQInterface:public QMainWindow
    void toggle_main_SavePosition(int id);
    void toggle_main_UseWindowPos(int id);
    void toggle_main_UseStdout(int id);
-   void toggle_main_NoBank(int id);
    void toggle_opt_save_PlayerState(int id);
    void toggle_opt_save_ZoneState(int id);
    void toggle_opt_save_Spawns(int id);
@@ -313,6 +313,7 @@ class EQInterface:public QMainWindow
    MapMgr* mapMgr(void) { return m_mapMgr; }
 
  private:
+   DataLocationMgr* m_dataLocationMgr;
    MapMgr* m_mapMgr;
    SpawnListWindow* m_spawnList;
    SpawnListWindow2* m_spawnList2;

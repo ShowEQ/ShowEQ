@@ -17,8 +17,9 @@
 
 #include <qwidget.h>
 #include <qstring.h>
+#include <qdockwindow.h>
 
-class SEQWindow : public QWidget
+class SEQWindow : public QDockWindow
 {
    Q_OBJECT
 

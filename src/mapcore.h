@@ -489,7 +489,7 @@ class MapData
   // map loading/clearing/saving
   void clear();
   void loadMap(const QString& fileName);
-  void saveMap() const;
+  void saveMap(const QString& fileName) const;
 
   // accessors
   const QString& fileName() const { return m_fileName; }

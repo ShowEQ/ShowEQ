@@ -1,3 +1,33 @@
+Version: $Header$ $Name$
+
+dohpaZ (11/?/03)
+---------------------
++ Updated version to 4.9.99.1
++ OPCode and structure fixes for 11/05/03 patch.
++ Some minor optimization of door spawn handling.
++ Added zone safepoint support to ZoneMgr
++ Some dependency cleanups.
++ Fix to support people running EQ under winex.
++ Switch to using QRegExp for filter pattern matching.
++ Major cleanup/revamp of Filter handling (stage 1), filters are now stored in 
+  their own sub-directories, and now uses an XML format.
++ Created a perl script filter2xml.pl which can be used to convert existing
+  filter conf files to the new XML format.
++ Fixed the duplicate accelerator bug.  Shift+F3 is now "Reload Zone Filters",
+  and Shift+F4 is now "Save Zone Filters".  Also fixed a bug that was causing
+  the zone specific filters not to be used.
++ More major cleanup of packet handling (stage 2).  Migrated opcode,implicitlen
+  and dispatch handling to an XML based system (see worldopcodes.xml and
+  zoneopcodes.xml).
++ Modified logging of decoded world/zone packets to include which 
+  packet in the opcode DB they matched, when the entry was updated, 
+  and information about the type that is supposed to be in the payload.
++ Fixed the spawn logger to log the adjusted x/y/z values for zone/new spawns..
++ Slight improvement in map loading speeds.
++ Migrated SEQWindow to be based off of QDockWindow so that all classes 
+  derived from it could take advantage of Qt's native dockable window support.
++ Integrated patch# 832080 "freebsd-stable compile 10/24/03" from jonseq
+
 dohpaZ (10/24/03)
 ---------------------
 + Updated version to 4.3.17.1

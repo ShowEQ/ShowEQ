@@ -19,17 +19,12 @@
 #include "guild.h"
 #include "packet.h"
 
-GuildMgr::GuildMgr(QString fn, EQPacket *packet, QObject* parent, const char* name)
-                   : QObject(parent, name)
+GuildMgr::GuildMgr(QString fn, QObject* parent, const char* name)
+  : QObject(parent, name)
 {
   guildsFileName = fn;
 
-   connect(packet, SIGNAL(worldGuildList(const char*, uint32_t)),
-           this, SLOT(worldGuildList(const char*, uint32_t)));
-   connect(parent, SIGNAL(guildList2text(QString)),
-           this, SLOT(guildList2text(QString)));
-
-   readGuildList();
+  readGuildList();
 }
 
 GuildMgr::~GuildMgr()
@@ -43,13 +38,15 @@ QString GuildMgr::guildIdToName(uint16_t guildID)
   return m_guildMap[guildID];
 }
 
-void GuildMgr::worldGuildList(const char* guildData, uint32_t len)
+void GuildMgr::worldGuildList(const uint8_t* data, size_t len)
 {
-  writeGuildList(guildData, len);
+  const worldGuildListStruct* gls = (const worldGuildListStruct*)data;
+
+  writeGuildList(gls, len);
   readGuildList();
 }
 
-void GuildMgr::writeGuildList(const char* data, uint32_t len)
+void GuildMgr::writeGuildList(const worldGuildListStruct* gls, size_t len)
 {
   QFile guildsfile(guildsFileName);
 
@@ -67,8 +64,6 @@ void GuildMgr::writeGuildList(const char* data, uint32_t len)
              guildsFileName.latin1());
 
   QDataStream guildDataStream(&guildsfile);
-
-  worldGuildListStruct *gls = (worldGuildListStruct *)data;
 
   guildDataStream.writeRawBytes((char *)gls->guilds, sizeof(gls->guilds));
 

@@ -536,10 +536,11 @@ SpawnPointWindow::SpawnPointWindow(SpawnMonitor* spawnMonitor,
 				   QWidget* parent, const char* name):
         SEQWindow("SpawnPointList", "ShowEQ - Spawn Points", parent, name)
 {
-  QVBoxLayout*    layout = new QVBoxLayout( this );
-  layout->setAutoAdd( true );
+  //QVBoxLayout*    layout = new QVBoxLayout( this );
+  //layout->setAutoAdd( true );
   
   m_spawnPointList = new SpawnPointList(spawnMonitor, this, name );
+  setWidget(m_spawnPointList);
 };
 
 SpawnPointWindow::~SpawnPointWindow()

@@ -32,8 +32,8 @@ public:
 
 public slots:
     void logNewZone(const QString& zone);
-    void logZoneSpawns(const zoneSpawnsStruct* zspawns, uint32_t len);
-    void logNewSpawn(const newSpawnStruct* spawn);
+    void logZoneSpawns(const uint8_t* zspawns, size_t len);
+    void logNewSpawn(const uint8_t* spawn);
     void logKilledSpawn(const Item* item, const Item* kitem, uint16_t kid);
     void logDeleteSpawn(const Item *spawn);
 

@@ -230,10 +230,11 @@ SkillListWindow::SkillListWindow(Player* player,
 				 QWidget* parent, const char* name)
   : SEQWindow("SkillList", "ShowEQ - Skills", parent, name)
 {
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setAutoAdd(true);
+  //  QVBoxLayout* layout = new QVBoxLayout(this);
+  //layout->setAutoAdd(true);
   
   m_skillList = new SkillList(player, this, name);
+  setWidget(m_skillList);
 }
 
 SkillListWindow::~SkillListWindow()

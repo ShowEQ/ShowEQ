@@ -27,6 +27,7 @@
 #include "util.h"
 #include "itemdb.h"
 #include "guild.h"
+#include "packetcommon.h"
 
 //----------------------------------------------------------------------
 // useful macro definitions
@@ -49,7 +50,7 @@ static const char * Spawn_Corpse_Designator = "'s corpse";
 //----------------------------------------------------------------------
 // Handy utility function
 #ifdef SPAWNSHELL_NAME_VALIDATE
-static bool isValidName(const char* name, uint32_t len)
+static bool isValidName(const char* name, size_t len)
 {
   int i = 0;
 
@@ -83,13 +84,11 @@ static bool isValidName(const char* name, uint32_t len)
 SpawnShell::SpawnShell(FilterMgr& filterMgr, 
 		       ZoneMgr* zoneMgr, 
 		       Player* player,
-		       EQItemDB* itemDB,
                        GuildMgr* guildMgr)
   : QObject(NULL, "spawnshell"),
     m_zoneMgr(zoneMgr),
     m_player(player),
     m_filterMgr(filterMgr),
-    m_itemDB(itemDB),
     m_guildMgr(guildMgr),
     m_spawns(701),
     m_drops(211),
@@ -276,7 +275,7 @@ bool SpawnShell::updateFilterFlags(Item* item)
     level = ((Spawn*)item)->level();
 
   // get the filter flags
-  uint32_t flags = m_filterMgr.filterFlags(item->filterString(), level);
+  uint32_t flags = m_filterMgr.filterMask(item->filterString(), level);
 
   // see if the new filter flags are different from the old ones
   if (flags != item->filterFlags())
@@ -300,7 +299,7 @@ bool SpawnShell::updateRuntimeFilterFlags(Item* item)
     level = ((Spawn*)item)->level();
 
   // get the filter flags
-  uint32_t flags = m_filterMgr.runtimeFilterFlags(item->filterString(), level);
+  uint32_t flags = m_filterMgr.runtimeFilterMask(item->filterString(), level);
 
   // see if the new filter flags are different from the old ones
   if (flags != item->runtimeFilterFlags())
@@ -325,8 +324,9 @@ void SpawnShell::dumpSpawns(spawnItemType type, QTextStream& out)
 }
 
 // same-name slots, connecting to Packet signals
-void SpawnShell::newGroundItem(const makeDropStruct *d, uint32_t, uint8_t dir)
+void SpawnShell::newGroundItem(const uint8_t* data, size_t, uint8_t dir)
 {
+  const makeDropStruct *d = (const makeDropStruct *)data;
 #ifdef SPAWNSHELL_DIAG
    printf("SpawnShell::newGroundItem(makeDropStruct *)\n");
 #endif
@@ -334,19 +334,13 @@ void SpawnShell::newGroundItem(const makeDropStruct *d, uint32_t, uint8_t dir)
   if (m_zoneMgr->isZoning())
     return;
 
-  if (dir != DIR_SERVER)
+  if (dir != DIR_Server)
     return;
 
   if (!d)
     return;
   
-  // attempt to get the item name
   QString name;
-#if 0 // ZBTEMP: ItemNr no longer really sent down
-  if (m_itemDB != NULL)
-    name = m_itemDB->GetItemLoreName(d->itemNr);
-#endif // ZBTEMP
-
   Drop* item = (Drop*)m_drops.find(d->dropId);
   if (item != NULL)
   {
@@ -375,7 +369,7 @@ void SpawnShell::newGroundItem(const makeDropStruct *d, uint32_t, uint8_t dir)
     emit handleAlert(item, tNewSpawn);
 }
 
-void SpawnShell::removeGroundItem(const remDropStruct *d, uint32_t, uint8_t dir)
+void SpawnShell::removeGroundItem(const uint8_t* data, size_t, uint8_t dir)
 {
 #ifdef SPAWNSHELL_DIAG
   printf("SpawnShell::removeGroundItem(remDropStruct *)\n");
@@ -385,23 +379,33 @@ void SpawnShell::removeGroundItem(const remDropStruct *d, uint32_t, uint8_t dir)
   if (m_zoneMgr->isZoning())
     return;
 
-  if (dir != DIR_SERVER)
+  if (dir != DIR_Server)
     return;
+
+  const remDropStruct *d = (const remDropStruct *)data;
 
   if (d)
     deleteItem(tDrop, d->dropId);
 }
 
-void SpawnShell::newDoorSpawn(const doorStruct* d, uint32_t len, uint8_t dir)
+void SpawnShell::newDoorSpawns(const uint8_t* data, size_t len, uint8_t dir)
+{
+  int nDoors = len / sizeof(doorStruct);
+  const doorStruct* doors = (const doorStruct*)data;
+  for (int i = 0; i < nDoors; i++)
+    newDoorSpawn(doors[i], sizeof(doorStruct), dir);
+}
+
+void SpawnShell::newDoorSpawn(const doorStruct& d, size_t len, uint8_t dir)
 {
 #ifdef SPAWNSHELL_DIAG
    printf("SpawnShell::newDoorSpawn(doorStruct*)\n");
 #endif
-   Item* item = m_doors.find(d->doorId);
+   Item* item = m_doors.find(d.doorId);
    if (item != NULL)
    {
      Door* door = (Door*)item;
-     door->update(d);
+     door->update(&d);
      if (!showeq_params->fast_machine)
         item->setDistanceToPlayer(m_player->calcDist2DInt(*item));
      else
@@ -412,13 +416,13 @@ void SpawnShell::newDoorSpawn(const doorStruct* d, uint32_t len, uint8_t dir)
    }
    else
    {
-     item = (Item*)new Door(d);
+     item = (Item*)new Door(&d);
      if (!showeq_params->fast_machine)
         item->setDistanceToPlayer(m_player->calcDist2DInt(*item));
      else
         item->setDistanceToPlayer(m_player->calcDist(*item));
      updateFilterFlags(item);
-     m_doors.insert(d->doorId, item);
+     m_doors.insert(d.doorId, item);
      emit addItem(item);
    }
 
@@ -426,21 +430,25 @@ void SpawnShell::newDoorSpawn(const doorStruct* d, uint32_t len, uint8_t dir)
      emit handleAlert(item, tNewSpawn);
 }
 
-void SpawnShell::zoneSpawns(const zoneSpawnsStruct* zspawns, uint32_t len)
+void SpawnShell::zoneSpawns(const uint8_t* data, size_t len)
 {
   int spawndatasize = len / sizeof(spawnStruct);
 
+  const spawnStruct* zspawns = (const spawnStruct*)data;
+
   for (int i = 0; i < spawndatasize; i++)
-    newSpawn(zspawns->spawn[i]);
+    newSpawn(zspawns[i]);
 }
 
-void SpawnShell::newSpawn(const newSpawnStruct* spawn)
+void SpawnShell::newSpawn(const uint8_t* data)
 {
   // if zoning, then don't do anything
   if (m_zoneMgr->isZoning())
     return;
 
-  newSpawn(spawn->spawn);
+  const spawnStruct* spawn = (const spawnStruct*)data;
+
+  newSpawn(*spawn);
 }
 
 void SpawnShell::newSpawn(const spawnStruct& s)
@@ -512,13 +520,15 @@ void SpawnShell::newSpawn(const spawnStruct& s)
      emit handleAlert(item, tNewSpawn);
 }
 
-void SpawnShell::playerUpdate(const playerSpawnPosStruct *pupdate, uint32_t, uint8_t dir)
+void SpawnShell::playerUpdate(const uint8_t* data, size_t, uint8_t dir)
 {
   // if zoning, then don't do anything
   if (m_zoneMgr->isZoning())
     return;
 
-  if ((dir != DIR_CLIENT) && 
+  const playerSpawnPosStruct *pupdate = (const playerSpawnPosStruct *)data;
+
+  if ((dir != DIR_Client) && 
       (pupdate->spawnId != m_player->id())) // PC Corpse Movement
   {
     int16_t y = pupdate->y >> 3;
@@ -606,23 +616,26 @@ void SpawnShell::updateSpawn(uint16_t id,
    }
 }
 
-void SpawnShell::updateSpawns(const spawnPositionUpdate* updates)
+void SpawnShell::updateSpawns(const uint8_t* data)
 {
   // if zoning, then don't do anything
   if (m_zoneMgr->isZoning())
     return;
 
+  const spawnPositionUpdate* updates = (const spawnPositionUpdate*)data;
   updateSpawn(updates->spawnId, 
 	      updates->x >> 3, updates->y >> 3, updates->z >> 3,
 	      0,0,0,updates->heading,0,0);
 }
 
-void SpawnShell::updateSpawnMaxHP(const SpawnUpdateStruct* su)
+void SpawnShell::updateSpawnInfo(const uint8_t* data)
 {
+   const SpawnUpdateStruct* su = (const SpawnUpdateStruct*)data;
 #ifdef SPAWNSHELL_DIAG
    printf("SpawnShell::updateSpawnInfo(id=%d, sub=%d, hp=%d, maxHp=%d)\n", 
 	  su->spawnId, su->subcommand, su->arg1, su->arg2);
 #endif
+
    Item* item = m_spawns.find(su->spawnId);
    if (item != NULL)
    {
@@ -637,8 +650,9 @@ void SpawnShell::updateSpawnMaxHP(const SpawnUpdateStruct* su)
    }
 }
 
-void SpawnShell::updateNpcHP(const hpNpcUpdateStruct* hpupdate)
+void SpawnShell::updateNpcHP(const uint8_t* data)
 {
+  const hpNpcUpdateStruct* hpupdate = (const hpNpcUpdateStruct*)data;
 #ifdef SPAWNSHELL_DIAG
    printf("SpawnShell::updateNpcHP(id=%d, maxhp=%d hp=%d)\n", 
 	  hpupdate->spawnId, hpupdate->maxHP, hpupdate->curHP);
@@ -654,13 +668,15 @@ void SpawnShell::updateNpcHP(const hpNpcUpdateStruct* hpupdate)
    }
 }
 
-void SpawnShell::spawnWearingUpdate(const wearChangeStruct *wearing)
+void SpawnShell::spawnWearingUpdate(const uint8_t* data)
 {
+  const wearChangeStruct *wearing = (const wearChangeStruct *)data;
   Item* item = m_spawns.find(wearing->spawnId);
   if (item != NULL)
   {
-    Spawn* spawn = (Spawn*)item;
-    spawn->setEquipment(wearing->wearSlotId, wearing->newItemId);
+    // ZBTEMP: Find newItemID
+    //Spawn* spawn = (Spawn*)item;
+    //    spawn->setEquipment(wearing->wearSlotId, wearing->newItemId);
     uint32_t changeType = tSpawnChangedWearing;
     if (updateFilterFlags(item))
       changeType |= tSpawnChangedFilter;
@@ -671,12 +687,13 @@ void SpawnShell::spawnWearingUpdate(const wearChangeStruct *wearing)
   }
 }
 
-void SpawnShell::consMessage(const considerStruct * con, uint32_t, uint8_t dir) 
+void SpawnShell::consMessage(const uint8_t* data, size_t, uint8_t dir) 
 {
+  const considerStruct * con = (const considerStruct*)data;
   Item* item;
   Spawn* spawn;
 
-  if (dir == DIR_CLIENT)
+  if (dir == DIR_Client)
   {
     if (con->playerid != con->targetid) 
     {
@@ -818,8 +835,9 @@ void SpawnShell::consMessage(const considerStruct * con, uint32_t, uint8_t dir)
   emit msgReceived(msg);
 } // end consMessage()
 
-void SpawnShell::deleteSpawn(const deleteSpawnStruct* delspawn)
+void SpawnShell::deleteSpawn(const uint8_t* data)
 {
+  const deleteSpawnStruct* delspawn = (const deleteSpawnStruct*)data;
 #ifdef SPAWNSHELL_DIAG
    printf("SpawnShell::deleteSpawn(id=%d)\n", delspawn->spawnId);
 #endif
@@ -836,8 +854,9 @@ void SpawnShell::deleteSpawn(const deleteSpawnStruct* delspawn)
    deleteItem(tSpawn, delspawn->spawnId);
 }
 
-void SpawnShell::killSpawn(const newCorpseStruct* deadspawn)
+void SpawnShell::killSpawn(const uint8_t* data)
 {
+  const newCorpseStruct* deadspawn = (const newCorpseStruct*)data;
 #ifdef SPAWNSHELL_DIAG
    printf("SpawnShell::killSpawn(id=%d, kid=%d)\n", 
 	  deadspawn->spawnId, deadspawn->killerId);
@@ -868,8 +887,9 @@ void SpawnShell::killSpawn(const newCorpseStruct* deadspawn)
    }
 }
 
-void SpawnShell::corpseLoc(const corpseLocStruct* corpseLoc)
+void SpawnShell::corpseLoc(const uint8_t* data)
 {
+  const corpseLocStruct* corpseLoc = (const corpseLocStruct*)data;
   Item* item = m_spawns.find(corpseLoc->spawnId);
   if (item != NULL)
   {

@@ -343,10 +343,11 @@ StatListWindow::StatListWindow(Player* player,
 				 QWidget* parent, const char* name)
   : SEQWindow("StatList", "ShowEQ - Stats", parent, name)
 {
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->setAutoAdd(true);
+  //QVBoxLayout* layout = new QVBoxLayout(this);
+  //layout->setAutoAdd(true);
   
   m_statList = new StatList(player, this, name);
+  setWidget(m_statList);
 }
 
 StatListWindow::~StatListWindow()

@@ -14,6 +14,7 @@
 #include "player.h"
 #include "spawnshell.h"
 #include "spells.h"
+#include "packetcommon.h"
 
 // #define DIAG_SPELLSHELL 1 
 
@@ -328,8 +329,9 @@ void SpellShell::DeleteSpell(SpellItem *item)
 
 // slots
 
-void SpellShell::selfStartSpellCast(const startCastStruct *c)
+void SpellShell::selfStartSpellCast(const uint8_t* data)
 {
+  const startCastStruct *c = (const startCastStruct *)data;
 #ifdef DIAG_SPELLSHELL
    printf("selfStartSpellCast - id=%d on spawnid=%d\n", 
 	  c->spellId, c->targetId);
@@ -348,11 +350,13 @@ void SpellShell::buffLoad(const spellBuff* c)
    InsertSpell(c);
 }
 
-void SpellShell::buff(const buffStruct* b, uint32_t, uint8_t dir)
+void SpellShell::buff(const uint8_t* data, size_t, uint8_t dir)
 {
   // we only care about the server
-  if (dir == DIR_CLIENT)
+  if (dir == DIR_Client)
     return;
+
+  const buffStruct* b = (const buffStruct*)data;
 
   // if this is the second server packet then ignore it
   if (b->spellid == 0xffffffff)
@@ -375,8 +379,10 @@ void SpellShell::buff(const buffStruct* b, uint32_t, uint8_t dir)
     
 }
 
-void SpellShell::action(const actionStruct* a, uint32_t, uint8_t)
+void SpellShell::action(const uint8_t* data, size_t, uint8_t)
 {
+  const actionStruct* a = (const actionStruct*)data;
+
   if (a->type != 0xe7) // only things to do if action is a spell
     return;
 
@@ -422,8 +428,10 @@ void SpellShell::action(const actionStruct* a, uint32_t, uint8_t)
 //{
 //}
 
-void SpellShell::interruptSpellCast(const badCastStruct *icast)
+void SpellShell::interruptSpellCast(const uint8_t* data)
 {
+  const badCastStruct *icast = (const badCastStruct *)data;
+
    // Check the last spell in the list, if spawnId and casterId match,
    // reset spell.
 
@@ -442,9 +450,11 @@ void SpellShell::interruptSpellCast(const badCastStruct *icast)
    }
 }
 
-void SpellShell::selfFinishSpellCast(const memSpellStruct *b)
+void SpellShell::selfFinishSpellCast(const uint8_t* data)
 {
 #ifdef DIAG_SPELLSHELL
+  const memSpellStruct *b = (const memSpellStruct*)data;
+
    printf("selfFinishSpellCast - id=%d, by=%d\n", b->spellId, b->slotId);
 #endif // DIAG_SPELLSHELL
 }

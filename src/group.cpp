@@ -23,12 +23,13 @@ GroupMgr::GroupMgr(SpawnShell* spawnShell,
   m_group.setAutoDelete(false);
 }
  
-void GroupMgr::handleGroupInfo( const groupMemberStruct* gmem )
+void GroupMgr::handleGroupInfo(const uint8_t* data )
 {
 #ifndef ENABLE_GROUPMGR
   return;
 #endif
 
+  const groupInfoStruct* gmem = (const groupInfoStruct*)data;
   QString newName = gmem->membername;
   const Spawn* member;
 

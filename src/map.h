@@ -61,6 +61,7 @@ class MapMgr;
 class Map;
 class MapFilterLineEdit;
 class MapFrame;
+class DataLocationMgr;
 
 //----------------------------------------------------------------------
 // enumerated types
@@ -119,7 +120,8 @@ class MapMgr : public QObject
    Q_OBJECT
 
  public:
-   MapMgr(SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
+   MapMgr(DataLocationMgr* dataLocMgr, 
+	  SpawnShell* spawnShell, Player* player, ZoneMgr* zoneMgr,
 	  QWidget* dialogParent, 
 	  QObject* parent = 0, const char* name = "mapmgr");
    virtual ~MapMgr();
@@ -181,6 +183,7 @@ class MapMgr : public QObject
   void mapUpdated(void);
 
  private:
+  DataLocationMgr* m_dataLocMgr;
   SpawnShell* m_spawnShell;
   Player* m_player;
   QWidget* m_dialogParent;

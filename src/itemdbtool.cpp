@@ -27,7 +27,7 @@
 #include "db3conv.h"
 #endif
 
-static const char *id="@(#) $Id$";
+static const char *id="@(#) $Id$ $Name$";
 
 ///////////////////////////////////
 // TODO:
@@ -461,7 +461,7 @@ void displayVersion(EQItemDB* itemDB)
 
   /////////////////////////////////
   // Display database file information
-  printstat(LOGDIR, "LOGDIR");
+  printstat(PKGDATADIR, "PKGDATADIR");
   
   QString dbExt;
 

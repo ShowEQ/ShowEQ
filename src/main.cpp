@@ -30,6 +30,9 @@
 #endif
 
 #include <qaccel.h>
+#if 1 // ZBTEMP
+#include <qdir.h>
+#endif
 
 #include "interface.h"
 #include "main.h"
@@ -37,13 +40,14 @@
 #include "xmlpreferences.h"      // prefrence file class
 #include "conf.h"              // autoconf/configure definitions
 #include "itemdb.h"
+#include "datalocationmgr.h"
 
-static const char *id="$Id$";
+static const char *id="@(#) $Id$ $Name$";
 
 /* **********************************
    defines used for option processing
    ********************************** */
-#define OPTION_LIST "i:rf:g::j:::s:aeo:CncFAKSVvPNbtL:xWX:Y:Z:"
+#define OPTION_LIST "i:rf:g::j:::s:aeo:CncFKSVvPNtL:xWX:Y:Z:"
 
 /* For long options without any short (single letter) equivalent, we'll
    assign single char nonprinting character equivalents, as is common
@@ -64,9 +68,6 @@ static const char *id="$Id$";
 #define   SYSTIME_SPAWNTIME_OPTION      22
 #define   SPAWNLOG_FILENAME_OPTION      23
 #define   DISABLE_SPAWNLOG_OPTION       24
-#define   NO_BANK_INFO                  25
-#define   ITEMDB_LORE_FILENAME_OPTION   26
-#define   ITEMDB_NAME_FILENAME_OPTION   27
 #define   ITEMDB_DATA_FILENAME_OPTION   28
 #define   ITEMDB_RAW_FILENAME_OPTION    29
 #define   ITEMDB_DATABASES_ENABLED      30
@@ -106,14 +107,12 @@ static struct option option_list[] = {
   {"filter-case-sensitive",        no_argument,        NULL,  'C'},
   {"use-retarded-coords",          no_argument,        NULL,  'c'},
   {"fast-machine",                 no_argument,        NULL,  'F'},
-  {"spawn-alert",                  no_argument,        NULL,  'A'},
   {"create-unknown-spawns",        no_argument,        NULL,  'K'},
   {"show-unknown-spawns",          no_argument,        NULL,  'K'},
   {"select-on-consider",           no_argument,        NULL,  'S'},
   {"select-on-target",             no_argument,        NULL,  'e'},
   {"no-promiscuous",               no_argument,        NULL,  'P'},
   {"show-packet-numbers",          no_argument,        NULL,  'N'},
-  {"broken-decode",                no_argument,        NULL,  'b'},
   {"show-selected",                no_argument,        NULL,  't'},
   {"spawn-path-length",            required_argument,  NULL,  'L'},
   {"log-spawns",                   no_argument,        NULL,  'x'},
@@ -135,9 +134,6 @@ static struct option option_list[] = {
   {"log-raw",                      no_argument,        NULL,  RAW_LOG_OPTION},
   {"systime-spawntime",            no_argument,        NULL,  SYSTIME_SPAWNTIME_OPTION},
   {"spawnlog-filename",            required_argument,  NULL,  SPAWNLOG_FILENAME_OPTION},
-  {"no-bank",                      no_argument,        NULL,  NO_BANK_INFO},    
-  {"itemdb-lore-filename",         required_argument,  NULL, ITEMDB_LORE_FILENAME_OPTION},
-  {"itemdb-name-filename",         required_argument,  NULL, ITEMDB_NAME_FILENAME_OPTION},
   {"itemdb-data-filename",         required_argument,  NULL, ITEMDB_DATA_FILENAME_OPTION},
   {"itemdb-raw-data-filename",     required_argument,  NULL, ITEMDB_RAW_FILENAME_OPTION},
   {"itemdb-databases-enabled",     required_argument,  NULL, ITEMDB_DATABASES_ENABLED},
@@ -168,22 +164,37 @@ int main (int argc, char **argv)
    //   QApplication::setStyle( new QWindowsStyle );
    QApplication qapp (argc, argv);
 
+#if 1 // ZBTEMP
+   fprintf(stderr, "home='%s'\n", (const char*)QDir::home().absPath());
+   fprintf(stderr, "homedirpath='%s'\n", (const char*)QDir::homeDirPath());
+   fprintf(stderr, "rootdirpath='%s'\n", (const char*)QDir::rootDirPath());
+   fprintf(stderr, "currentdirpath='%s'\n", (const char*)QDir::currentDirPath());
+#endif
+   // create the data location manager (with user data under ~/.showeq
+   DataLocationMgr dataLocMgr(".showeq");
+
    /* Initialize the parameters with default values */
-   char *configfile = LOGDIR "/showeq.xml";
+   QFileInfo configFileDefInfo = dataLocMgr.findExistingFile(".", "seqdef.xml",
+							     true, false);
+   QString configFileDef = configFileDefInfo.absFilePath();
+
+   QFileInfo configFileInfo = dataLocMgr.findExistingFile(".", "showeq.xml",
+							  true, true);
+   QString configFile = configFileInfo.absFilePath();
 
    // scan command line arguments for a specified config file
    int i = 1;
    while (i < argc)
    {
       if ((argv[i][0] == '-') && (argv[i][1] == 'o'))
-         configfile = strdup(argv[i + 1]);
+         configFile = argv[i + 1];
 
       i ++;
    }
 
    /* NOTE: See preferencefile.cpp for info on how to use prefrences class */
-   printf("Using config file '%s'\n", configfile);
-   pSEQPrefs = new XMLPreferences(LOGDIR "/seqdef.xml", configfile);
+   printf("Using config file '%s'\n", (const char*)configFile);
+   pSEQPrefs = new XMLPreferences(configFileDef, configFile);
 
    showeq_params = new ShowEQParams;
 
@@ -191,18 +202,7 @@ int main (int argc, char **argv)
 
    /* TODO: Add some sanity checks to the MAC address option.  cpphack */
    section = "Network";
-   showeq_params->device = pSEQPrefs->getPrefString("Device", section, "eth0");
-   showeq_params->ip = strdup(pSEQPrefs->getPrefString("IP", section,
-						       AUTOMATIC_CLIENT_IP));
-   showeq_params->mac_address = strdup(pSEQPrefs->getPrefString("MAC", section, "0"));
-   showeq_params->realtime = pSEQPrefs->getPrefBool("RealTimeThread", section,   false);
    showeq_params->promisc = pSEQPrefs->getPrefBool("NoPromiscuous", section, true);
-   showeq_params->arqSeqGiveUp = pSEQPrefs->getPrefInt("ArqSeqGiveUp", section, 96);
-   showeq_params->session_tracking = pSEQPrefs->getPrefBool("SessionTracking", section, 0);
-   showeq_params->broken_decode = pSEQPrefs->getPrefBool("BrokenDecode", section, 0);
-
-   if (showeq_params->broken_decode)
-      printf("Disabling decoder due to showeq.xml preferences\n");
 
    section = "Interface";
    /* Allow map depth filtering */
@@ -215,10 +215,6 @@ int main (int argc, char **argv)
    showeq_params->deitypvp = pSEQPrefs->getPrefBool("DeityPvPTeamColoring", section, false);
    showeq_params->keep_selected_visible = pSEQPrefs->getPrefBool("KeepSelected", section, true);
 
-   showeq_params->no_bank = pSEQPrefs->getPrefBool("NoBank", section, true);
-
-   section = "Interface_StatusBar";
-   showeq_params->showEQTime = pSEQPrefs->getPrefBool("ShowEQTime",section,false);
    section = "Misc";
    showeq_params->fast_machine = pSEQPrefs->getPrefBool("FastMachine", section, true);
    showeq_params->createUnknownSpawns = pSEQPrefs->getPrefBool("CreateUnknownSpawns", section, true);
@@ -229,14 +225,11 @@ int main (int argc, char **argv)
    showeq_params->showSpellMsgs = pSEQPrefs->getPrefBool("ShowSpellMessages", section, true);
 
    section = "Filters";
-   showeq_params->filterfile = pSEQPrefs->getPrefString("FilterFile", section, LOGDIR "/filters.conf");
    showeq_params->spawnfilter_audio = pSEQPrefs->getPrefBool("Audio", section, false);
    showeq_params->spawnfilter_loglocates = pSEQPrefs->getPrefBool("LogLocates", section, 0);
    showeq_params->spawnfilter_logcautions = pSEQPrefs->getPrefBool("LogCautions", section, 0);
    showeq_params->spawnfilter_loghunts = pSEQPrefs->getPrefBool("LogHunts", section, 0);
    showeq_params->spawnfilter_logdangers = pSEQPrefs->getPrefBool("LogDangers", section, 0);
-   showeq_params->spawnfilter_case = pSEQPrefs->getPrefBool("IsCaseSensitive", section, 0);
-   showeq_params->spawn_alert_plus_plus = pSEQPrefs->getPrefBool("AlertInfo", section, 0);
 
    /* Default Level / Race / Class preferences */
    section = "Defaults";
@@ -248,25 +241,10 @@ int main (int argc, char **argv)
    showeq_params->defaultClass = pSEQPrefs->getPrefInt("DefaultClass", section, 1);
    showeq_params->defaultDeity = pSEQPrefs->getPrefInt("DefaultDeity", section, DEITY_AGNOSTIC);
 
-   /* VPacket (Packet Recording / Playback) */
-   section = "VPacket";
-   showeq_params->playbackpackets = pSEQPrefs->getPrefBool("Playback", section,  false);
-   showeq_params->recordpackets = pSEQPrefs->getPrefBool("Record", section, false);
-   showeq_params->playbackspeed = pSEQPrefs->getPrefBool("PlaybackRate", section, false);
-
    section = "SpawnList";
    showeq_params->showRealName = pSEQPrefs->getPrefBool("ShowRealName", section, false);
 
    /* Different files for different kinds of raw data */
-
-   // item database parameters
-   section = "ItemDB";
-   showeq_params->ItemLoreDBFilename = pSEQPrefs->getPrefString("LoreDBFilename", section, LOGDIR "/itemlore");
-   showeq_params->ItemNameDBFilename = pSEQPrefs->getPrefString("NameDBFilename", section, LOGDIR "/itemname");
-   showeq_params->ItemDataDBFilename = pSEQPrefs->getPrefString("DataDBFilename", section, LOGDIR "/itemdata");
-   showeq_params->ItemRawDataDBFileName = pSEQPrefs->getPrefString("RawDataDBFilename", section, LOGDIR "/itemrawdata");
-   showeq_params->ItemDBTypes = pSEQPrefs->getPrefInt("DatabasesEnabled", section, (EQItemDB::DATA_DB|EQItemDB::RAW_DATA_DB));
-   showeq_params->ItemDBEnabled = pSEQPrefs->getPrefBool("Enabled", section, 1);
 
    section = "SaveState";
    showeq_params->saveZoneState = 
@@ -297,15 +275,18 @@ int main (int argc, char **argv)
          /* Set the interface */
          case 'i':
          {            
-            showeq_params->device = optarg;
-            break;
+	   pSEQPrefs->setPrefString("Device", "Network", optarg, 
+				    XMLPreferences::Runtime);
+	   break;
          }
 
 
          /* Set pcap thread to realtime */
          case 'r':
          {  
-            showeq_params->realtime = 1;
+	   pSEQPrefs->setPrefBool("RealTimeThread", "Network", true, 
+				  XMLPreferences::Runtime);
+				  
             break;
          }
 
@@ -313,9 +294,10 @@ int main (int argc, char **argv)
          /* Set the spawn filter file */
          case 'f':
          {
-            showeq_params->filterfile             = optarg;
+	   pSEQPrefs->setPrefString("FilterFile", "Filters", optarg, 
+				    XMLPreferences::Runtime);
             
-            break;
+	   break;
          }
 
 
@@ -326,8 +308,10 @@ int main (int argc, char **argv)
                pSEQPrefs->setPrefString("Filename", "VPacket", optarg, 
 					XMLPreferences::Runtime);
 
-            showeq_params->playbackpackets = 1;
-            showeq_params->recordpackets   = 0;
+	    pSEQPrefs->setPrefBool("Playback", "VPacket", true, 
+				   XMLPreferences::Runtime);
+	    pSEQPrefs->setPrefBool("Record", "VPacket", false, 
+				   XMLPreferences::Runtime);
             
             break;
          }
@@ -339,8 +323,10 @@ int main (int argc, char **argv)
                pSEQPrefs->setPrefString("Filename", "VPacket", optarg, 
 					XMLPreferences::Runtime);
 
-            showeq_params->recordpackets   = 1;
-            showeq_params->playbackpackets = 0;
+	    pSEQPrefs->setPrefBool("Playback", "VPacket", false, 
+				   XMLPreferences::Runtime);
+	    pSEQPrefs->setPrefBool("Record", "VPacket", true, 
+				   XMLPreferences::Runtime);
             
             break;
          }
@@ -362,8 +348,9 @@ int main (int argc, char **argv)
          /* Make filter case sensitive */
          case 'C':
          {
-            showeq_params->spawnfilter_case = 1;
-            break;
+	   pSEQPrefs->setPrefBool("IsCaseSensitive", "Filters", true,
+				  XMLPreferences::Runtime);
+	   break;
          }
 
          /* Use retarded coordinate system yxz */
@@ -378,13 +365,6 @@ int main (int argc, char **argv)
          case 'F':
          {
             showeq_params->fast_machine = 1;
-            break;
-         }
-
-         /* Cool spawn alert */
-         case 'A':
-         {
-            showeq_params->spawn_alert_plus_plus = 1;
             break;
          }
 
@@ -425,16 +405,6 @@ int main (int argc, char **argv)
          case 'N':
          {
             showeq_params->net_stats = 1;
-            break;
-         }
-
-
-         /* 'b'roken decode -- don't deal with spawn packets */
-         case 'b':
-         {
-            showeq_params->broken_decode = 1;
-            
-            printf("Disabling decoder due to command-line parameter\n");
             break;
          }
 
@@ -531,16 +501,20 @@ int main (int argc, char **argv)
          /* IP address to track */
          case IPADDR_OPTION:
          {
-            showeq_params->ip = strdup(optarg);
-            break;
+	   pSEQPrefs->setPrefString("IP", "Network", optarg, 
+				    XMLPreferences::Runtime);
+
+	   break;
          }
 
 
          /* MAC address to track for those on DHCP */
          case MACADDR_OPTION:
          {
-            showeq_params->mac_address = optarg;
-            break;
+	   pSEQPrefs->setPrefString("MAC", "Network", optarg, 
+				    XMLPreferences::Runtime);
+
+	   break;
          }
 
 
@@ -609,7 +583,8 @@ int main (int argc, char **argv)
 
          case PLAYBACK_SPEED_OPTION:
          {
-            showeq_params->playbackspeed = atoi(optarg);
+	   pSEQPrefs->setPrefInt("PlaybackRate", "VPacket", atoi(optarg), 
+				 XMLPreferences::Runtime);
             break;
          }
 
@@ -624,7 +599,7 @@ int main (int argc, char **argv)
 
          /* Display spawntime in UNIX time (time_t) instead of hh:mm format */
          case SYSTIME_SPAWNTIME_OPTION:
-         {
+         { 
             showeq_params->systime_spawntime = 1;
             break;
          }
@@ -635,46 +610,32 @@ int main (int argc, char **argv)
 				  XMLPreferences::Runtime);
 	   break;
          }
-
-         case NO_BANK_INFO:
-         {
-         	showeq_params->no_bank = TRUE;
-         	break;
-         }
-         
-         case ITEMDB_LORE_FILENAME_OPTION:
-         {
-            showeq_params->ItemLoreDBFilename = optarg;
-            break;
-         }
-         
-         case ITEMDB_NAME_FILENAME_OPTION:
-         {
-            showeq_params->ItemNameDBFilename = optarg;
-            break;
-         }
          
          case ITEMDB_DATA_FILENAME_OPTION:
-         {
-            showeq_params->ItemDataDBFilename = optarg;
-            break;
+	   {
+	     pSEQPrefs->setPrefString("DataDBFilename", "ItemDB", optarg,
+				      XMLPreferences::Runtime);
+	     break;
          }
          
          case ITEMDB_RAW_FILENAME_OPTION:
          {
-            showeq_params->ItemRawDataDBFileName = optarg;
+	     pSEQPrefs->setPrefString("RawDataDBFilename", "ItemDB", optarg,
+				      XMLPreferences::Runtime);
             break;
          }
 
          case ITEMDB_DATABASES_ENABLED:
          {
-            showeq_params->ItemDBTypes = atoi(optarg);
-            break;
+	   pSEQPrefs->setPrefInt("DatabasesEnabled", "ItemDB", atoi(optarg),
+				 XMLPreferences::Runtime);
+	   break;
          }
 	 
          case ITEMDB_DISABLE:
 	 {
-	   showeq_params->ItemDBEnabled = false;
+	   pSEQPrefs->setPrefBool("Enabled", "ItemDB", false, 
+				 XMLPreferences::Runtime);
 	   break;
 	 }
 
@@ -726,15 +687,6 @@ int main (int argc, char **argv)
       where pre_worked was a precondition for further analysis.
    */
 
-   if (showeq_params->broken_decode)   
-    printf( "***DECRYPTION DISABLED***\n\n"
-    
-            "Decoder has been manually disabled by either -b, the BrokenDecode option,\n"
-            "or a missing libEQ.cpp.\n\n"
-            
-            "(There should be a more detailed message above)\n"
-          );
-
    int ret;
 
    // just to add a scope to better control when the main interface gets 
@@ -742,7 +694,7 @@ int main (int argc, char **argv)
    if  (1)
    {
      /* The main interface widget */
-     EQInterface intf (0, "interface");
+     EQInterface intf(&dataLocMgr, 0, "interface");
      qapp.setMainWidget (&intf);
    
      /* Start the main loop */
@@ -851,7 +803,6 @@ void displayOptions(const char* progName)
   printf ("      --playback-speed=SPEED            -1 = Paused, 0 = Max, 1 = Slow, 9 = Fast\n");
   printf ("  -g, --record-file=FILENAME            Record packets to FILENAME to playback\n");
   printf ("                                        with the -j option\n");
-  printf ("  -b, --broken-decode                   Broken decode -- Don't attempt to decode\n");
   printf ("                                        the spawn packets (i.e. Your CPU is VERY\n");
   printf ("                                        slow)\n");
   printf ("  -t, --show-selected                   Track spawn movements (no path trace)\n");
@@ -868,8 +819,6 @@ void displayOptions(const char* progName)
   printf ("      --unknown-zone-log-filename=FILE  Use FILE for above packet logging\n");
   printf ("      --log-raw                   Log some unprocessed raw data\n");
   printf ("      --spawnlog-filename=FILE          Use FILE instead of spawnlog.txt\n");
-  printf ("      --itemdb-lore-filename=FILE       Use FILE instead of itemlore\n");
-  printf ("      --itemdb-name-filename=FILE       Use FILE instead of itemname\n");
   printf ("      --itemdb-data-filename=FILE       Use FILE instead of itemdata\n");
   printf ("      --itemdb-raw-data-filename=FILE   Use FILE instead of itemrawdata\n");
   printf ("      --itemdb-databases-enabled=DBS    Use DBS to enable different item\n");
