@@ -10,6 +10,8 @@
 
 #include "messagefilter.h"
 
+#include "main.h"
+
 //----------------------------------------------------------------------
 // MessageFilter
 MessageFilter::MessageFilter(const QString& name, 
@@ -44,8 +46,41 @@ MessageFilter::~MessageFilter()
 MessageFilters::MessageFilters(QObject* parent, const char* name)
   : QObject(parent, name)
 {
+  QString section("MessageFilters");
+  QString nameSuffix("Name");
+  QString patternSuffix("Pattern");
+  QString typesSuffix("Types");
+  QString number;
+  QString preferenceName;
+  QString filterName;
+  QRegExp regexp;
+  uint64_t types;
   for (int i = 0; i < maxMessageFilters; i++)
-    m_filters[i] = 0;
+  {
+    number.setNum(i);
+
+    // retrieve the filter name
+    preferenceName = number + nameSuffix;
+    filterName = pSEQPrefs->getPrefString(preferenceName, section);
+
+    // if filtername is empty, then no filter in this slot
+    if (filterName.isEmpty())
+    {
+      m_filters[i] = 0;
+      continue;
+    }
+    
+    // retrieve the filter pattern
+    preferenceName = number + patternSuffix;
+    regexp.setPattern(pSEQPrefs->getPrefString(preferenceName, section, "."));
+    
+    // retrieve the filter types
+    preferenceName = number + typesSuffix;
+    types = pSEQPrefs->getPrefUInt64(preferenceName, section, 0);
+    
+    // ok, create the filter with the retrieved information
+    m_filters[i] = new MessageFilter(filterName, types, regexp);
+  }
 }
 
 MessageFilters::~MessageFilters()
@@ -65,6 +100,14 @@ uint8_t MessageFilters::addFilter(const MessageFilter& filter)
       // allocate the filter
       m_filters[i] = new MessageFilter(filter);
 
+      QString section("MessageFilters");
+      QString number = QString::number(i);
+      
+      pSEQPrefs->setPrefString(number + "Name", section, filter.name());
+      pSEQPrefs->setPrefString(number + "Pattern", section, 
+			       filter.regexp().pattern());
+      pSEQPrefs->setPrefUInt64(number + "Types", section, filter.types());
+      
       // signal the addition of the new filter
       emit added(1 << i, i, *m_filters[i]);
 
@@ -102,6 +145,13 @@ bool MessageFilters::remFilter(uint8_t filter)
   // clear the filter slot
   m_filters[filter] = 0;
 
+  QString section("MessageFilters");
+  QString number = QString::number(filter);
+
+  pSEQPrefs->setPrefString(number + "Name", section, "");
+  pSEQPrefs->setPrefString(number + "Pattern", section, "");
+  pSEQPrefs->setPrefUInt64(number + "Types", section, 0);
+
   // signal the filters removal
   emit removed(1 << filter, filter);
   
@@ -122,8 +172,8 @@ bool MessageFilters::remFilter(const QString& name)
   return false;
 }
 
-uint32_t MessageFilters::filter(uint64_t messageTypeMask, 
-				const QString& message)
+uint32_t MessageFilters::filterMessage(uint64_t messageTypeMask, 
+				       const QString& message)
 {
   // initialize to no matches (0)
   uint32_t mask = 0;

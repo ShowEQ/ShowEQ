@@ -19,6 +19,8 @@
 //----------------------------------------------------------------------
 // forward declarations
 class MessageEntry;
+class MessageFilter;
+class MessageFilters;
 class Messages;
 
 class QPopupMenu;
@@ -139,7 +141,7 @@ class MessageWindow : public SEQWindow
 {
   Q_OBJECT
  public:
-  MessageWindow(Messages* messages, 
+  MessageWindow(Messages* messages, MessageFilters* filters,
 		const QString& prefName = "MessageWindow",
 		const QString& caption = "Message Window",
 		QWidget* parent = 0, const char* name = 0);
@@ -156,6 +158,9 @@ class MessageWindow : public SEQWindow
   void toggleTypeFilter(int);
   void disableAllTypeFilters();
   void enableAllTypeFilters();
+  void toggleUserFilter(int);
+  void disableAllUserFilters();
+  void enableAllUserFilters();
   void toggleLockedText();
   void toggleDisplayType(int);
   void toggleDisplayTime(int);
@@ -168,6 +173,8 @@ class MessageWindow : public SEQWindow
   void setFont();
   void setCaption();
   virtual void restoreFont();
+  void removedFilter(uint32_t mask, uint8_t filter);
+  void addedFilter(uint32_t mask, uint8_t filter, const MessageFilter& filter);
 
   //void mousePressEvent(QMouseEvent* e);
 
@@ -176,9 +183,11 @@ class MessageWindow : public SEQWindow
   void addColorMessage(const MessageEntry& message);
   
   Messages* m_messages;
+  MessageFilters* m_messageFilters;
   MessageBrowser* m_messageWindow;
   QPopupMenu* m_menu;
   QPopupMenu* m_typeFilterMenu;
+  QPopupMenu* m_userFilterMenu;
   int m_id_lockText;
   MessageFindDialog* m_findDialog;
   uint64_t m_enabledTypes;

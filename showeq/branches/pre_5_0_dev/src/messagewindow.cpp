@@ -6,6 +6,7 @@
  */
 
 #include "messagewindow.h"
+#include "messagefilter.h"
 #include "messages.h"
 #include "main.h"
 
@@ -379,18 +380,19 @@ void MessageTypeStyleDialog::selectFont()
 
 //----------------------------------------------------------------------
 // MessageWindow
-MessageWindow::MessageWindow(Messages* messages, 
+MessageWindow::MessageWindow(Messages* messages, MessageFilters* filters,
 			     const QString& prefName,
 			     const QString& caption,
 			     QWidget* parent, const char* name)
   : SEQWindow(prefName, caption, parent, name),
     m_messages(messages),
+    m_messageFilters(filters),
     m_messageWindow(0),
     m_menu(0),
     m_typeFilterMenu(0),
     m_findDialog(0),
     m_enabledTypes(0xFFFFFFFFFFFFFFFF),
-    m_enabledUserFilters(0xFFFFFFFF),
+    m_enabledUserFilters(0),
     m_defaultColor(black),
     m_defaultBGColor(white),
     m_dateTimeFormat("hh:mm"),
@@ -474,6 +476,13 @@ MessageWindow::MessageWindow(Messages* messages,
   connect(m_messages, SIGNAL(cleared(void)),
 	  this, SLOT(refreshMessages(void)));
 
+  // connect to the message filters signals
+  connect(m_messageFilters, SIGNAL(removed(uint32_t, uint8_t)),
+	  this, SLOT(removedFilter(uint32_t, uint8_t)));
+  connect(m_messageFilters, SIGNAL(added(uint32_t, uint8_t, 
+					 const MessageFilter&)),
+	  this, SLOT(addedFilter(uint32_t, uint8_t, const MessageFilter&)));
+
   // connect up our own signals
   connect(m_messageWindow, SIGNAL(rightClickedMouse(QMouseEvent*)),
 	  this, SLOT(mousePressEvent(QMouseEvent*)));
@@ -518,8 +527,28 @@ MessageWindow::MessageWindow(Messages* messages,
   connect(typeStyleMenu, SIGNAL(activated(int)),
 	  this, SLOT(setTypeStyle(int)));
 
-  QPopupMenu* userFilterMenu = new QPopupMenu;
-  m_menu->insertItem("User Message Filters", userFilterMenu);
+  m_userFilterMenu = new QPopupMenu;
+  m_menu->insertItem("User Message Filters", m_userFilterMenu);
+
+  m_userFilterMenu->insertItem("&Enable All", 
+			       this, SLOT(enableAllUserFilters()), 0, 66);
+  m_userFilterMenu->insertItem("&Disable All", 
+			       this, SLOT(disableAllUserFilters()), 0, 67);
+  m_userFilterMenu->insertSeparator(-1);
+
+  const MessageFilter* filter;
+  for(int i = 0; i < maxMessageFilters; i++)
+  {
+    filter = m_messageFilters->filter(i);
+    if (filter)
+    {
+      m_userFilterMenu->insertItem(filter->name(), i);
+      m_userFilterMenu->setItemChecked(i, (1 << i) & m_enabledUserFilters);
+    }
+  }
+
+  connect(m_userFilterMenu, SIGNAL(activated(int)),
+	  this, SLOT(toggleUserFilter(int)));
 
   m_menu->insertSeparator(-1);
   m_menu->insertItem("&Find...", this, SLOT(findDialog()), 
@@ -614,7 +643,8 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
   // if the message type isn't enabled, nothing to do
   if (((m_enabledTypes & ( uint64_t(1) << type)) == 0) &&
       ((m_enabledUserFilters & message.filterFlags()) == 0))
-  
+    return;
+
   // if the message has a specific color, then use it
   if (message.color() != ME_InvalidColor)
     m_messageWindow->setColor(QColor(message.color()));
@@ -735,23 +765,30 @@ void MessageWindow::findDialog(void)
 
 void MessageWindow::toggleTypeFilter(int id)
 {
+  // toggle whether the message type is shown or not
   if (((uint64_t(1) << id) & m_enabledTypes) != 0)
     m_enabledTypes &= ~(uint64_t(1) << id);
   else
     m_enabledTypes |= (uint64_t(1) << id);
- 
-  m_typeFilterMenu->setItemChecked(id, ((m_enabledTypes & (uint64_t(1) << id)) != 0));
 
+  // save the new setting
   pSEQPrefs->setPrefUInt64("EnabledTypes", preferenceName(), m_enabledTypes);
+
+  // (un)check the appropriate menu item
+  m_typeFilterMenu->setItemChecked(id, ((m_enabledTypes & (uint64_t(1) << id)) != 0));
 }
 
 void MessageWindow::disableAllTypeFilters()
 {
+  // set and save all message types disabled
   m_enabledTypes = 0;
-  
+  pSEQPrefs->setPrefUInt64("EnabledTypes", preferenceName(), m_enabledTypes);
+
+  // make sure the All menu items are unchecked
   m_typeFilterMenu->setItemChecked(64, false);
   m_typeFilterMenu->setItemChecked(65, false);
 
+  // uncheck all the menu items
   QString typeName;
   for (int i = MT_Guild; i <= MT_Max; i++)
   {
@@ -763,17 +800,78 @@ void MessageWindow::disableAllTypeFilters()
 
 void MessageWindow::enableAllTypeFilters()
 {
+  // set and save all message types enabled
   m_enabledTypes = 0xFFFFFFFFFFFFFFFF;
+  pSEQPrefs->setPrefUInt64("EnabledTypes", preferenceName(), m_enabledTypes);
 
+  // make sure the All menu items are unchecked
   m_typeFilterMenu->setItemChecked(64, false);
   m_typeFilterMenu->setItemChecked(65, false);
 
+  // check all the menu items
   QString typeName;
   for (int i = MT_Guild; i <= MT_Max; i++)
   {
     typeName = m_messages->messageTypeString((MessageType)i);
     if (!typeName.isEmpty())
       m_typeFilterMenu->setItemChecked(i, true);
+  }
+}
+
+void MessageWindow::toggleUserFilter(int id)
+{
+  // toggle whether the filter is enabled/disabled
+  if (((1 << id) & m_enabledUserFilters) != 0)
+    m_enabledUserFilters &= ~(1 << id);
+  else
+    m_enabledUserFilters |= (1 << id);
+
+  // save the new setting
+  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
+			 m_enabledUserFilters);
+ 
+  // (un)check the appropriate menu item
+  m_userFilterMenu->setItemChecked(id, 
+				   ((m_enabledUserFilters & (1 << id)) != 0));
+}
+
+void MessageWindow::disableAllUserFilters()
+{
+  // set and save all filters disabled setting
+  m_enabledUserFilters = 0;
+  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
+			 m_enabledUserFilters);
+  
+  // make sure the All menu items are unchecked
+  m_userFilterMenu->setItemChecked(66, false);
+  m_userFilterMenu->setItemChecked(67, false);
+
+  // uncheck all the menu items
+  QString typeName;
+  for (int i = 0; i <= maxMessageFilters; i++)
+  {
+    if (m_messageFilters->filter(i))
+      m_userFilterMenu->setItemChecked(i, false);
+  }
+}
+
+void MessageWindow::enableAllUserFilters()
+{
+  // set and save all filters enabled flag
+  m_enabledUserFilters = 0xFFFFFFFF;
+  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
+			 m_enabledUserFilters);
+
+  // make sure the All menu items are unchecked
+  m_userFilterMenu->setItemChecked(66, false);
+  m_userFilterMenu->setItemChecked(67, false);
+
+  // check all the menu items
+  QString typeName;
+  for (int i = 0; i <= maxMessageFilters; i++)
+  {
+    if (m_messageFilters->filter(i))
+      m_userFilterMenu->setItemChecked(i, true);
   }
 }
 
@@ -857,8 +955,11 @@ void MessageWindow::setTypeStyle(int id)
 void MessageWindow::setColor()
 {
   QString clrCaption = caption() + " Default Text Color";
+  
+  // get a new color
   QColor color = QColorDialog::getColor(m_defaultColor, this, clrCaption);
 
+  // if the user clicked ok, use/save the preference
   if (color.isValid())
   {
     m_defaultColor = color;
@@ -871,8 +972,11 @@ void MessageWindow::setColor()
 void MessageWindow::setBGColor()
 {
   QString clrCaption = caption() + " Default Text Background Color";
+
+  // get a new background color
   QColor color = QColorDialog::getColor(m_defaultBGColor, this, clrCaption);
 
+  // if the user clicked ok, use/save the preference
   if (color.isValid())
   {
     m_defaultBGColor = color;
@@ -887,6 +991,7 @@ void MessageWindow::setFont()
 {
   QFont newFont;
   bool ok = false;
+
   // get a new font
   newFont = QFontDialog::getFont(&ok, m_messageWindow->currentFont(),
 				 this, caption() + " Font");
@@ -914,9 +1019,35 @@ void MessageWindow::setCaption()
 
 void MessageWindow::restoreFont()
 {
+  // restore the font
   SEQWindow::restoreFont();
-
+  
+  // set the message windows font to match
   if (m_messageWindow)
     m_messageWindow->setCurrentFont(font());
+}
+
+void MessageWindow::removedFilter(uint32_t mask, uint8_t filter)
+{
+  // remove the user filter menu item
+  m_userFilterMenu->removeItem(filter);
+  
+  // if all filters are enabled, don't unselect it
+  if (m_enabledUserFilters == 0xFFFFFFFF)
+    return;
+
+  // remove the filter from the enabled filters list
+  m_enabledUserFilters &= ~mask;
+
+  // update the preference
+  pSEQPrefs->setPrefUInt("EnabledUserFilters", preferenceName(), 
+			 m_enabledUserFilters);
+}
+
+void MessageWindow::addedFilter(uint32_t mask, uint8_t filterid, 
+				const MessageFilter& filter)
+{
+  // insert a user filter menu item for the new filter
+  m_userFilterMenu->insertItem(filter.name(), filterid);
 }
 

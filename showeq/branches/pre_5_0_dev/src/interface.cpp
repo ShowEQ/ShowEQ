@@ -4853,7 +4853,8 @@ void EQInterface::showMessageWindow(int i)
     if (i != 0)
       caption += QString::number(winNum);
 
-    m_messageWindow[i] = new MessageWindow(m_messages, prefName, caption,
+    m_messageWindow[i] = new MessageWindow(m_messages, m_messageFilters,
+					   prefName, caption,
 					   NULL, name);
 
     Dock edge = (Dock)pSEQPrefs->getPrefInt("Dock", 
