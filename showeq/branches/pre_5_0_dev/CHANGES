@@ -9,6 +9,10 @@ dohpaZ (12/?/03)
   in gcc 3.3.
 + Minor fix in h2info.pl that fixes the comment and operation with certain
   versions of perl.
++ Made packet handling more robust in the face of corrupt and non-EQ packets
+  that are captured.
++ Support display of a zone's safepoint from the zone packet on the map.
++ Added NetStream classes for handling network byte order data streams.
 + Integrated patch #861374 "Fix-three options aren't saved".
 + Integrated patch #864328 "Nedaria's Landing Map".
 + Integrated patch #864329 "Map: JaggedPine touchups".
