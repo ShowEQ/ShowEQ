@@ -37,7 +37,6 @@ struct ShowEQParams
   bool		 deitypvp;
   bool           walkpathrecord;
   uint32_t       walkpathlength;
-  bool           spawnfilter_audio;
   bool           systime_spawntime;
   bool           showRealName;
   
