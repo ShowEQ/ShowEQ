@@ -23,8 +23,8 @@ dohpaZ (12/?/03)
     will be removed from the list.
 + Fixed parsing of the spells_us.txt for the targettype field. This fixed
   numerous problems with the handling of self-only spells.
-+ Added code to configure.in to try and force the use of autoconf 2.5 or higher
-   and updated the documentation to reflect the new version requirement.
++ Added a workaround to allow the use of autoconf 2.13 which turns out not
+  to properly support automake's BUILT_SOURCES feature.
 + Added stdlib.h inclusion to xmlpreferences.cpp to fix the build on some
   Linux distributions.
 + Fixed addition/update of the user message filter list when no or only
