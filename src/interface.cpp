@@ -3862,7 +3862,7 @@ EQInterface::set_opt_WalkPathLength(int len)
   if ((len > 0) && (len <= 8192))
     showeq_params->walkpathlength = len;
 
-    pSEQPrefs->setPrefInt("WalkPathLength", "Misc", showeq_params->walkpathrecord);
+    pSEQPrefs->setPrefInt("WalkPathLength", "Misc", showeq_params->walkpathlength);
 }
 
 void
@@ -3870,7 +3870,7 @@ EQInterface::toggle_opt_RetardedCoords (int id)
 {
     showeq_params->retarded_coords = !showeq_params->retarded_coords;
     menuBar()->setItemChecked(id, showeq_params->retarded_coords);
-    pSEQPrefs->setPrefBool("RetardedCoords", "Interface", showeq_params->walkpathrecord);
+    pSEQPrefs->setPrefBool("RetardedCoords", "Interface", showeq_params->retarded_coords);
 }
 
 void
@@ -3878,7 +3878,7 @@ EQInterface::toggle_opt_SystimeSpawntime (int id)
 {
     showeq_params->systime_spawntime = !showeq_params->systime_spawntime;
     menuBar()->setItemChecked(id, showeq_params->systime_spawntime);
-    pSEQPrefs->setPrefBool("SystimeSpawntime", "Interface", showeq_params->walkpathrecord);
+    pSEQPrefs->setPrefBool("SystimeSpawntime", "Interface", showeq_params->systime_spawntime);
 }
 
 void 

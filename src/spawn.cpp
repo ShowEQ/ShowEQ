@@ -81,8 +81,8 @@ QString print_item (uint16_t item)
   // assume no material name found
   const char *itemStr = NULL;
 
-  uint8_t itemLo = item & 0x00ff;
-  uint8_t itemHi = (item & 0xff00) >> 8;
+  uint32_t itemLo = item & 0x00ff;
+  uint32_t itemHi = (item & 0xff00) >> 8;
 
   if (itemHi == 0x00)
   {
@@ -1022,8 +1022,6 @@ void Drop::update(const makeDropStruct* d, const QString& name)
       buff.append(print_item(itemId));
     else 
       buff.append(d->idFile);
-
-    //    buff.append(QString(" (") + QString::number(d->itemNr) + ")");
   }
   else
     buff = QString("Drop: '") + name + "'";
