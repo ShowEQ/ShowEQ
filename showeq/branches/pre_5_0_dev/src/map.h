@@ -681,6 +681,8 @@ class MapFrame : public SEQWindow
 	    QWidget* parent = 0, const char* name = "mapframe");
    virtual ~MapFrame();
 
+   virtual QPopupMenu* menu();
+
    Map* map() { return m_map; }
    const QString& mapPreferenceName() { return m_mapPreferenceName; }
 

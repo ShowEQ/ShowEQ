@@ -233,7 +233,7 @@ void SpawnPointList::rightButtonClicked(QListViewItem* item,
 					const QPoint& point, int)
 {
   // popup a context-menu
-  SpawnPointListMenu* spawnPointMenu = menu();
+  SpawnPointListMenu* spawnPointMenu = (SpawnPointListMenu*)menu();
   spawnPointMenu->setCurrentItem((const SpawnPointListItem*)item);
   spawnPointMenu->popup(point);
 }
@@ -545,6 +545,18 @@ SpawnPointWindow::SpawnPointWindow(SpawnMonitor* spawnMonitor,
 
 SpawnPointWindow::~SpawnPointWindow()
 {
+}
+
+QPopupMenu* SpawnPointWindow::menu()
+{
+  // retrieve the spawn point list menu
+  SpawnPointListMenu* splMenu = m_spawnPointList->menu();
+  
+  // since being brought up without an item, set a 0 current item
+  splMenu->setCurrentItem(0);
+
+  // return the menu
+  return (QPopupMenu*)splMenu;
 }
 
 void SpawnPointWindow::savePrefs(void)

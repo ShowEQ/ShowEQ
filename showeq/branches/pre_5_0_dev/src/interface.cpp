@@ -105,7 +105,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
     m_eqStrings(NULL),
     m_messages(NULL),
     m_messageShell(NULL),
-    m_messageWindow(NULL),
     m_terminal(NULL),
     m_filteredSpawnLog(0),
     m_spawnLogger(NULL),
@@ -125,6 +124,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
   for (int l = 0; l < maxNumMaps; l++)
     m_map[l] = NULL;
+
+  for (int l = 0; l < maxNumMessageWindows; l++)
+    m_messageWindow[l] = NULL;
 
    QString tempStr;
    QString section = "Interface";
@@ -356,22 +358,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 /////////////////
 // Main widgets
    // Make a VBox to use as central widget
-   QVBox* pCentralBox = new QVBox(this);
-   setCentralWidget(pCentralBox);
- 
-   // Make the horizontal splitter deviding the map from the other objects
-   // and add it to the main window
-   m_splitH =new QSplitter(QSplitter::Horizontal,pCentralBox,"SplitH");
-   m_splitH->setOpaqueResize(TRUE);
-
-   // make a splitter between the spawnlist and other objects
-   m_splitV = new QSplitter(QSplitter::Vertical,m_splitH,"SplitV");
-   m_splitV->setOpaqueResize(TRUE);
-
-   // Make a horizontal splitter for the skilllist/statlist/compass
-   m_splitT = new QSplitter(QSplitter::Horizontal,m_splitV,"SplitT");
-   m_splitT->setOpaqueResize(TRUE);
-
    // Create/display the Map(s)
    for (int i = 0; i < maxNumMaps; i++)
    {
@@ -392,7 +378,29 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      if (pSEQPrefs->getPrefBool(tmpPrefName, section, (i == 0)))
        showMap(i);
    }
-   
+
+   // Create/display the MessageWindow(s)
+   for (int i = 0; i < maxNumMessageWindows; i++)
+   {
+     QString tmpPrefSuffix = "";
+     if (i > 0)
+       tmpPrefSuffix = QString::number(i + 1);
+     
+     // construct the preference name
+     QString tmpPrefName = QString("DockedMessageWindow") + tmpPrefSuffix;
+
+     // retrieve if the message window should be docked
+     m_isMessageWindowDocked[i] = 
+       pSEQPrefs->getPrefBool(tmpPrefName, section, false);
+
+     // construct the preference name
+     tmpPrefName = QString("ShowMessageWindow") + tmpPrefSuffix;
+
+     // and as appropriate, craete the message window
+     if (pSEQPrefs->getPrefBool(tmpPrefName, section, (i == 0)))
+       showMessageWindow(i);
+   }
+
    // should the compass be docked if it's created
    m_isCompassDocked = pSEQPrefs->getPrefBool("DockedCompass", section, true);
 
@@ -470,7 +478,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    pFileMenu->insertItem("Add Spawn Category", this, SLOT(addCategory()) , ALT+Key_C);
    pFileMenu->insertItem("Rebuild SpawnList", this, SLOT(rebuildSpawnList()) , ALT+Key_R);
    pFileMenu->insertItem("Reload Categories", this, SLOT(reloadCategories()) , CTRL+Key_R);
-   pFileMenu->insertItem("Create MessageBox", this, SLOT(createMessageBox()), Key_F11);
    pFileMenu->insertItem("Select Next", this, SLOT(selectNext()), CTRL+Key_Right);
    pFileMenu->insertItem("Select Prev", this, SLOT(selectPrev()), CTRL+Key_Left);
    pFileMenu->insertItem("Save Selected Spawns Path", 
@@ -488,7 +495,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    QPopupMenu* pViewMenu = new QPopupMenu;
    menuBar()->insertItem("&View", pViewMenu);
    pViewMenu->setCheckable(true);
-   m_id_view_ChannelMsgs = pViewMenu->insertItem("Channel Messages", this, SLOT(toggle_view_ChannelMsgs()));
    m_id_view_ExpWindow = pViewMenu->insertItem("Experience Window", this, SLOT(toggle_view_ExpWindow()));
    m_id_view_CombatWindow = pViewMenu->insertItem("Combat Window", this, SLOT(toggle_view_CombatWindow()));
    pViewMenu->insertSeparator(-1);
@@ -501,15 +507,33 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    m_id_view_Compass = pViewMenu->insertItem("Compass", this, SLOT(toggle_view_Compass()));
    menuBar()->setItemChecked(m_id_view_PlayerStats, (m_statList != NULL));
 
+   QPopupMenu* subMenu = new QPopupMenu;
    for (int i = 0; i < maxNumMaps; i++)
    {     
         QString mapName = "Map ";
         if (i > 0)
             mapName += QString::number(i + 1);
-        m_id_view_Map[i] = pViewMenu->insertItem(mapName, this, SLOT(toggle_view_Map(int)));
-        pViewMenu->setItemParameter(m_id_view_Map[i], i);
-        menuBar()->setItemChecked(m_id_view_Map[i], (m_map[i] != NULL));
+        m_id_view_Map[i] = subMenu->insertItem(mapName, this, SLOT(toggle_view_Map(int)));
+        subMenu->setItemParameter(m_id_view_Map[i], i);
+        subMenu->setItemChecked(m_id_view_Map[i], (m_map[i] != NULL));
    }
+   pViewMenu->insertItem("Maps", subMenu);
+
+   subMenu = new QPopupMenu;
+   QString messageWindowName;
+   for (int i = 0; i < maxNumMessageWindows; i++)
+   {     
+        messageWindowName = "Channel Messages ";
+        if (i > 0)
+	  messageWindowName += QString::number(i + 1);
+        m_id_view_MessageWindow[i] = subMenu->insertItem(messageWindowName, this, SLOT(toggle_view_ChannelMsgs(int)));
+        subMenu->setItemParameter(m_id_view_MessageWindow[i], i);
+        subMenu->setItemChecked(m_id_view_MessageWindow[i],
+				(m_messageWindow[i] != NULL));
+   }
+   pViewMenu->insertItem("Channel Mesages", subMenu);
+
+
    m_id_view_NetDiag = pViewMenu->insertItem("Network Diagnostics", this, SLOT(toggle_view_NetDiag()));
 
    pViewMenu->insertSeparator(-1);
@@ -737,7 +761,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 			    this, SLOT(toggle_opt_WalkPathRecord(int)));
    menuBar()->setItemChecked (x, showeq_params->walkpathrecord);
 
-   QPopupMenu* subMenu = new QPopupMenu;
+   subMenu = new QPopupMenu;
    QSpinBox* walkPathLengthSpinBox = new QSpinBox(0, 8192, 1, subMenu);
    walkPathLengthSpinBox->setValue(showeq_params->walkpathlength);
    connect(walkPathLengthSpinBox, SIGNAL(valueChanged(int)),
@@ -1767,58 +1791,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 	     m_combatWindow, SLOT(savePrefs(void)));
    }
 
-   // Create message boxes defined in config preferences
-   m_messageWindowList.setAutoDelete(true);
-   QString title;
-   int i = 0;
-   MessageWindow* messageWindow;
-   QString msgSection;
-   QString msgCaption;
-   bool haveMessageWindows = false;
-   // iterate over all possible message windows in the preferences file
-   for(i = 1; i < 15; i++)
-   {
-     // attempt to pull a button title from the preferences
-     msgSection.sprintf("MessageWindow%d", i);
-     if (pSEQPrefs->getPrefBool("Create", msgSection, false))
-     {
-       msgCaption.sprintf("Message Window %d", i);
-       haveMessageWindows = true;
-
-       // create the message window
-       MessageWindow* messageWindow = new MessageWindow(m_messages, 
-							msgSection, 
-							msgCaption,
-							NULL, msgSection);
-       
-       // dock the message window on the bottom (works around a QMainWindow bug)
-       addDockWindow(messageWindow, Bottom, false);
-       
-       // dock the message window
-       messageWindow->undock();
-
-       // append it to the list of message windows
-       m_messageWindowList.append(messageWindow);
-
-       connect (this, SIGNAL(saveAllPrefs()),
-		messageWindow, SLOT(savePrefs()));
-       
-       // restore the windows size
-       messageWindow->restoreSize();
-
-       if (pSEQPrefs->getPrefBool("UseWindowPos", section, true))
-	 messageWindow->restorePosition();
-     }
-   }  
-
-   m_viewChannelMsgs = pSEQPrefs->getPrefBool("ShowChannel", section, 
-					      haveMessageWindows);
-
-   for (messageWindow = m_messageWindowList.first();
-	messageWindow != 0;
-	messageWindow = m_messageWindowList.next())
-     messageWindow->setShown(m_viewChannelMsgs);
-
    //
    // Geometry Configuration
    //
@@ -1828,48 +1800,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
 
    // interface components
-
-   // Restore splitter sizes
-   QValueList<int> list;
-   i = 0;
-   for(;;) 
-   {
-      i++;
-      tempStr.sprintf("SplitVSize%d", i);
-      if (pSEQPrefs->isPreference(tempStr, section)) {
-         x = pSEQPrefs->getPrefInt(tempStr, section);
-         list.append(x);
-      } else break;
-   }
-   m_splitV->setSizes(list);
-
-   list.clear();
-   i = 0;
-   for(;;) 
-   {
-      i++;
-      tempStr.sprintf("SplitHSize%d", i);
-      if (pSEQPrefs->isPreference(tempStr, section)) {
-         x = pSEQPrefs->getPrefInt(tempStr, section);
-         list.append(x);
-      } else break;
-   }
-   m_splitH->setSizes(list);
-
-   list.clear();
-   i = 0;
-   for(;;) 
-   {
-      i++;
-      tempStr.sprintf("SplitTSize%d", i);
-      if (pSEQPrefs->isPreference(tempStr, section)) 
-      {
-         x = pSEQPrefs->getPrefInt(tempStr, section);
-         list.append(x);
-      } else break;
-   }
-   m_splitT->setSizes(list);
-
 
    // set mainwindow Geometry
    section = "Interface";
@@ -1903,8 +1833,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
 EQInterface::~EQInterface()
 {
-  m_messageWindowList.clear();
-
   if (m_netDiag != NULL)
     delete m_netDiag;
 
@@ -1929,6 +1857,10 @@ EQInterface::~EQInterface()
   for (int i = 0; i < maxNumMaps; i++)
     if (m_map[i] != NULL)
       delete m_map[i];
+
+  for (int i = 0; i < maxNumMessageWindows; i++)
+    if (m_messageWindow[i] != NULL)
+      delete m_messageWindow[i];
 
   if (m_combatWindow != NULL)
     delete m_combatWindow;
@@ -3114,20 +3046,37 @@ void EQInterface::toggle_log_ItemPacketData (void)
 
 /* Check and uncheck View menu options */
 void
-EQInterface::toggle_view_ChannelMsgs (void)
+EQInterface::toggle_view_ChannelMsgs(int id)
 {
-  m_viewChannelMsgs = !m_viewChannelMsgs;
-  menuBar()->setItemChecked (m_id_view_ChannelMsgs, m_viewChannelMsgs);
+  int winNum = menuBar()->itemParameter(id);
 
-  MessageWindow* messageWindow;
+  bool wasVisible = ((m_messageWindow[winNum] != NULL) && 
+		     (m_messageWindow[winNum]->isVisible()));
 
-  for (messageWindow = m_messageWindowList.first();
-       messageWindow != 0;
-       messageWindow = m_messageWindowList.next())
-    messageWindow->setShown(m_viewChannelMsgs);
+  if (!wasVisible)
+    showMessageWindow(winNum);
+  else
+  {
+    // save any preference changes
+    m_messageWindow[winNum]->savePrefs();
 
-  // set the preference
-  pSEQPrefs->setPrefBool("ShowChannel", "Interface", m_viewChannelMsgs);
+    // hide it 
+    m_messageWindow[winNum]->hide();
+
+    // then delete it
+    delete m_messageWindow[winNum];
+
+    // make sure to clear it's variable
+    m_messageWindow[winNum] = NULL;
+  }
+
+  QString tmpPrefSuffix = "";
+  if (winNum > 0)
+    tmpPrefSuffix = QString::number(winNum + 1);
+  
+  QString tmpPrefName = QString("ShowMessageWindow") + tmpPrefSuffix;
+
+  pSEQPrefs->setPrefBool(tmpPrefName, "Interface", !wasVisible); 
 }
 
 void
@@ -3669,43 +3618,6 @@ EQInterface::select_opt_conColorBase(int id)
     rebuildSpawnList();
   }
 }
-
-void
-EQInterface::createMessageBox(void)
-{
-  QString msgSection;
-  QString msgCaption;
-
-  // determine the window number and create the section and caption for this
-  // message window instance
-  size_t windowNum = m_messageWindowList.count() + 1;
-  msgSection.sprintf("MessageWindow%d", windowNum);
-  msgCaption.sprintf("Message Window %d", windowNum);
-
-  // create the message window
-  MessageWindow* messageWindow = new MessageWindow(m_messages, msgSection, 
-						   msgCaption,
-						   NULL, msgSection);
-
-  // dock the message window on the bottom (works around a QMainWindow bug)
-  addDockWindow(messageWindow, Bottom, false);
-
-  // dock the message window
-  messageWindow->undock();
-
-  // append it to the list of message windows
-  m_messageWindowList.append(messageWindow);
-
-  connect (this, SIGNAL(saveAllPrefs()),
-	   messageWindow, SLOT(savePrefs()));
-
-  // show the window
-  messageWindow->show();
-
-  // set the preference to create this message window next time
-  pSEQPrefs->setPrefBool("Create", msgSection, true);
-}
-
 
 void
 EQInterface::msgReceived(const QString &instring)
@@ -4605,8 +4517,11 @@ void EQInterface::init_view_menu()
 			      (m_map[i] != NULL) &&
 			      m_map[i]->isVisible());
 
-  // check variable for channel message windows (they're wierd)
-  menuBar()->setItemChecked (m_id_view_ChannelMsgs, m_viewChannelMsgs);
+  // loop over the message windows
+  for (int i = 0; i < maxNumMessageWindows; i++)
+    menuBar()->setItemChecked(m_id_view_MessageWindow[i], 
+			      (m_messageWindow[i] != NULL) &&
+			      m_messageWindow[i]->isVisible());
 
   // set the checkmarks for windows that are always created, but not always
   // visible
@@ -4882,6 +4797,46 @@ void EQInterface::showMap(int i)
       
   // make sure it's visible
   m_map[i]->show();
+}
+
+void EQInterface::showMessageWindow(int i)
+{
+  if ((i > maxNumMessageWindows) || (i < 0))
+    return;
+
+  // if it doesn't exist, create it
+  if (m_messageWindow[i] == NULL)
+  {
+    int winNum = i + 1;
+    QString prefName = "MessageWindow" + QString::number(winNum);
+    QString name = QString("messageWindow") + QString::number(winNum);
+    QString caption = "Channel Messages ";
+
+    if (i != 0)
+      caption += QString::number(winNum);
+
+    m_messageWindow[i] = new MessageWindow(m_messages, prefName, caption,
+					   NULL, name);
+
+    addDockWindow(m_messageWindow[i], Bottom, false);
+    if (!m_isMessageWindowDocked[i])
+      m_messageWindow[i]->undock();
+
+    connect(this, SIGNAL(saveAllPrefs(void)),
+	    m_messageWindow[i], SLOT(savePrefs(void)));
+    connect(this, SIGNAL(restoreFonts(void)),
+	    m_messageWindow[i], SLOT(restoreFont(void)));
+    
+    m_messageWindow[i]->restoreSize();
+
+    // restore it's position if necessary and practical
+    if (!m_isMessageWindowDocked[i] && 
+	pSEQPrefs->getPrefBool("UseWindowPos", "Interface", true))
+      m_messageWindow[i]->restorePosition();
+  }
+      
+  // make sure it's visible
+  m_messageWindow[i]->show();
 }
 
 void EQInterface::showSpawnList(void)

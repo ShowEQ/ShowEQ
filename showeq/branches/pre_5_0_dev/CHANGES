@@ -45,6 +45,8 @@ dohpaZ (11/?/03)
 + New message storage, filtering, and UI.
 + Move terminal UI to its own class
 + Got rid of the old MsgDialog classes
++ Made the right-click menus of SEQWindow derived windows come up in a
+  more consistent fashion.
 
 dohpaZ (10/24/03)
 ---------------------

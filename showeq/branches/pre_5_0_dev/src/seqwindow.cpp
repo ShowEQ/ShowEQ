@@ -4,7 +4,7 @@
  * ShowEQ Distributed under GPL
  * http://seq.sourceforge.net/
  *
- * Copyright 2001 Zaphod (dohpaz@users.sourceforge.net). All Rights Reserved.
+ * Copyright 2001-2003 Zaphod (dohpaz@users.sourceforge.net). All Rights Reserved.
  *
  * Contributed to ShowEQ by Zaphod (dohpaz@users.sourceforge.net) 
  * for use under the terms of the GNU General Public License, 
@@ -14,6 +14,8 @@
 
 #include "seqwindow.h"
 #include "main.h"
+
+#include <qpopupmenu.h>
 
 SEQWindow::SEQWindow(const QString prefName, const QString caption,
 		     QWidget* parent, const char* name, WFlags f)
@@ -38,6 +40,10 @@ SEQWindow::~SEQWindow()
 {
 }
 
+QPopupMenu* SEQWindow::menu()
+{
+  return 0;
+}
 
 void SEQWindow::setCaption(const QString& text)
 {
@@ -130,3 +136,18 @@ void SEQWindow::savePrefs(void)
     pSEQPrefs->setPrefBool("DockVisible", preferenceName(), !isHidden());
   }
 }
+
+void SEQWindow::mousePressEvent(QMouseEvent* e)
+{
+  if (e->button() == RightButton)
+  {
+    QPopupMenu* popupMenu = menu();
+    if (popupMenu)
+      popupMenu->popup(mapToGlobal(e->pos()));
+    else
+      QDockWindow::mousePressEvent(e);
+  }
+  else
+    QDockWindow::mousePressEvent(e);
+}
+

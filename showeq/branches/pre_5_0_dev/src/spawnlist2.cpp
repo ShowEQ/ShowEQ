@@ -195,11 +195,16 @@ QString SpawnListWindow2::filterString(const Item* item)
    return text;
 }
 
-SpawnListMenu* SpawnListWindow2::menu()
+QPopupMenu* SpawnListWindow2::menu()
 {
   if (m_menu != NULL)
+  {
+    // make sure the menu is setup
+    m_menu->setCurrentItem(0);
+    m_menu->setCurrentCategory(m_currentCategory);
     return m_menu;
-  
+  }
+
   m_menu = new SpawnListMenu(m_spawnList, this, m_spawnShell->filterMgr(),
 			     m_categoryMgr, this, "spawnlist menu");
   m_menu->insertSeparator(-1);
@@ -213,6 +218,8 @@ SpawnListMenu* SpawnListWindow2::menu()
   x = m_menu->insertItem("Keep Selected Visible", 
 			 this, SLOT(toggle_keepSelectedVisible(int)));
   m_menu->setItemChecked(x, m_keepSelectedVisible);
+
+  m_menu->setCurrentCategory(m_currentCategory);
 
   return m_menu;
 }
@@ -733,10 +740,8 @@ void SpawnListWindow2::mousePressEvent(int button, QListViewItem* litem,
   if (button  == LeftButton && litem != NULL)
   {
     m_spawnList->setSelected(litem, true);
-  }
-
-  // Right Mouse Button Events
-  if (button == RightButton)
+  } // Right Mouse Button Events
+  else if (button == RightButton)
   {
     const Item* item = NULL;
     if (litem != NULL)
@@ -744,9 +749,8 @@ void SpawnListWindow2::mousePressEvent(int button, QListViewItem* litem,
       SpawnListItem* slitem = (SpawnListItem*)litem;
       item = slitem->item();
     }
-    SpawnListMenu* spawnMenu = menu();
+    SpawnListMenu* spawnMenu = (SpawnListMenu*)menu();
     spawnMenu->setCurrentItem(item);
-    spawnMenu->setCurrentCategory(m_currentCategory);
     spawnMenu->popup(point);
   }
 }
