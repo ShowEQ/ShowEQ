@@ -1467,6 +1467,9 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
      m_packet->connect2("OP_CastSpell", SP_Zone, DIR_Server|DIR_Client,
 			"startCastStruct", SZC_Match,
 			m_messageShell, SLOT(startCast(const uint8_t*)));
+
+     connect(m_dateTimeMgr, SIGNAL(syncDateTime(const QDateTime&)),
+	     m_messageShell, SLOT(syncDateTime(const QDateTime&)));
 #if 0 // ZBTEMP
      connect(m_packet, SIGNAL(groupInfo(const uint8_t*, size_t, uint8_t)),
 	     m_messageShell, SLOT(groupInfo(const uint8_t*)));
