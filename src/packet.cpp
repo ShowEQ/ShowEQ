@@ -82,6 +82,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
 		   QString mac_address,
 		   bool realtime,
 		   bool session_tracking,
+		   bool crcWarnings,
 		   bool recordPackets,
 		   bool playbackPackets,
 		   int8_t playbackSpeed, 
@@ -97,6 +98,7 @@ EQPacket::EQPacket(const QString& worldopcodesxml,
     m_mac(mac_address),
     m_realtime(realtime),
     m_session_tracking(session_tracking),
+    m_crcWarnings(crcWarnings),
     m_recordPackets(recordPackets),
     m_playbackPackets(playbackPackets),
     m_playbackSpeed(playbackSpeed)
@@ -586,12 +588,13 @@ void EQPacket::dispatchPacket(int size, unsigned char *buffer)
   
   if (!packet.isValid())
   {
-    seqWarn("INVALID PACKET: Bad CRC32 [%s:%d -> %s:%d] seq %04x len %d crc32 (%08x != %08x)",
-	   (const char*)packet.getIPv4SourceA(), packet.getSourcePort(),
-	   (const char*)packet.getIPv4DestA(), packet.getDestPort(),
-	   packet.seq(), 
-	   packet.getRawPacketLength(),
-	   packet.crc32(), packet.calcCRC32());
+    if (m_crcWarnings)
+      seqWarn("INVALID PACKET: Bad CRC32 [%s:%d -> %s:%d] seq %04x len %d crc32 (%08x != %08x)",
+	      (const char*)packet.getIPv4SourceA(), packet.getSourcePort(),
+	      (const char*)packet.getIPv4DestA(), packet.getDestPort(),
+	      packet.seq(), 
+	      packet.getRawPacketLength(),
+	      packet.crc32(), packet.calcCRC32());
     return;
   }
 
@@ -1016,6 +1019,11 @@ void EQPacket::setArqSeqGiveUp(uint16_t giveUp)
 void EQPacket::setRealtime(bool val)
 {
   m_realtime = val;
+}
+
+void EQPacket::setCRCWarnings(bool val)
+{
+  m_crcWarnings = val;
 }
 
 bool EQPacket::connect2(const QString& opcodeName, EQStreamPairs sp,

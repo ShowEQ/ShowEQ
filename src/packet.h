@@ -59,6 +59,7 @@ class EQPacket : public QObject
 	    QString m_mac_address,
 	    bool m_realtime,
 	    bool m_session_tracking,
+	    bool crcWarnings,
 	    bool m_recordPackets,
 	    bool m_playbackPackets,
 	    int8_t m_playbackSpeed, 
@@ -84,6 +85,7 @@ class EQPacket : public QObject
    uint16_t arqSeqGiveUp(void);
    bool session_tracking(void);
    bool realtime(void);
+   bool crcWarnings(void);
    bool connect2(const QString& opcodeName, EQStreamPairs sp,
 		 uint8_t dir, const char* payload,  EQSizeCheckType szt, 
 		 const QObject* receiver, const char* member);
@@ -101,6 +103,7 @@ class EQPacket : public QObject
    void session_tracking(bool enable);
    void setArqSeqGiveUp(uint16_t giveUp);
    void setRealtime(bool val);
+   void setCRCWarnings(bool val);
 
  protected slots:
    void closeStream();
@@ -154,6 +157,7 @@ class EQPacket : public QObject
    QString m_mac;
    bool m_realtime;
    bool m_session_tracking;
+   bool m_crcWarnings;
    bool m_recordPackets;
    bool m_playbackPackets;
    int8_t m_playbackSpeed; // Should be signed since -1 is pause
@@ -207,6 +211,11 @@ inline bool EQPacket::playbackPackets(void)
 inline bool EQPacket::realtime(void)
 {
   return m_realtime;
+}
+
+inline bool EQPacket::crcWarnings(void)
+{ 
+  return m_crcWarnings;
 }
 
 inline const QString& EQPacket::ip()

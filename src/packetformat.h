@@ -249,13 +249,19 @@ class EQPacketFormat
   uint8_t asqLow() const { return m_postSkipData[11]; }
   uint32_t crc32() const
   { 
-    return eqntohuint32(&((uint8_t*)m_packet)[m_length - 4]);
+    if (m_length >= 4)
+      return eqntohuint32(&((uint8_t*)m_packet)[m_length - 4]);
+    else 
+      return 0;
   }
   uint32_t calcCRC32() const
   {
     // calculate the CRC on the packet data, up to but not including the
     // CRC32 stored at the end.
-    return ::calcCRC32((uint8_t*)m_packet, m_length - 4);
+    if (m_length >= 4)
+      return ::calcCRC32((uint8_t*)m_packet, m_length - 4);
+    else 
+      return 0;
   }
 
   bool isValid() const { return m_isValid; }
