@@ -154,6 +154,8 @@ class MessageWindow : public SEQWindow
 
  protected slots:
   void toggleTypeFilter(int);
+  void disableAllTypeFilters();
+  void enableAllTypeFilters();
   void toggleLockedText();
   void toggleDisplayType(int);
   void toggleDisplayTime(int);
