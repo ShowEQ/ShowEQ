@@ -59,6 +59,7 @@ Messages::Messages(DateTimeMgr* dateTimeMgr, QObject* parent,
   m_messageTypeStrings[MT_General] = "General";
   m_messageTypeStrings[MT_Motd] = "MOTD";
   m_messageTypeStrings[MT_System] = "System";
+  m_messageTypeStrings[MT_Money] = "Money";
   m_messageTypeStrings[MT_Random] = "Random";
   m_messageTypeStrings[MT_Emote] = "Emote";
   m_messageTypeStrings[MT_Time] = "Time";

@@ -69,6 +69,7 @@ class OPCodeMonitorPacketLog;
 class DataLocationMgr;
 class EQStr;
 class Messages;
+class MessageShell;
 class MessageWindow;
 
 //--------------------------------------------------
@@ -111,40 +112,11 @@ class EQInterface:public QMainWindow
    void attack2Hand1(const uint8_t*);
    void action2Message(const uint8_t *);
    void combatKillSpawn(const uint8_t*);
-   void moneyOnCorpse(const uint8_t* money);
-   void channelMessage(const uint8_t* cmsg, size_t, uint8_t);
-   void formattedMessage(const uint8_t* cmsg, size_t, uint8_t);
-   void simpleMessage(const uint8_t* cmsg, size_t, uint8_t);
-   void specialMessage(const uint8_t* smsg, size_t, uint8_t);
-   void guildMOTD(const uint8_t* gmotd, size_t, uint8_t);
-   void randomRequest(const uint8_t* randr);
-   void random(const uint8_t* randr);
-   void emoteText(const uint8_t* emotetext);
    void updatedDateTime(const QDateTime&);
    void syncDateTime(const QDateTime&);
-   void inspectData(const uint8_t* inspt);
    void spMessage(const uint8_t* spmsg);
-   void handleSpell(const uint8_t* mem, size_t, uint8_t);
-   void beginCast(const uint8_t* bcast);
-   void spellFaded(const uint8_t* sf);
-   void interruptSpellCast(const uint8_t*icast);
-   void startCast(const uint8_t* cast);
    void systemMessage(const uint8_t* smsg);
-   void moneyUpdate(const uint8_t* money);
-   void moneyThing(const uint8_t* money);
-   void groupInfo(const uint8_t* gmem);
-   void groupInvite(const uint8_t* gmem);
-   void groupDecline(const uint8_t* gmem);
-   void groupAccept(const uint8_t* gmem);
-   void groupDelete(const uint8_t* gmem);
-   void logOut(const uint8_t*, size_t, uint8_t);
-   void newGroundItem(const uint8_t*, size_t, uint8_t);
    void clientTarget(const uint8_t* cts);
-   void worldMOTD(const uint8_t* motd);
-   void zoneEntryClient(const ClientZoneEntryStruct* zsentry);
-   void zoneEntryServer(const ServerZoneEntryStruct* zsentry);
-   void zoneNew(const uint8_t* zoneNew, size_t, uint8_t);
-   void zoneChanged(const zoneChangeStruct*, size_t, uint8_t);
 
    void zoneBegin(const QString& shortZoneName);
    void zoneEnd(const QString& shortZoneName, const QString& longZoneName);
@@ -338,6 +310,7 @@ class EQInterface:public QMainWindow
    DateTimeMgr* m_dateTimeMgr;
    EQStr* m_eqStrings;
    Messages* m_messages;
+   MessageShell* m_messageShell;
    MessageWindow* m_messageWindow;
    SpawnLog *m_spawnLogger;
 
