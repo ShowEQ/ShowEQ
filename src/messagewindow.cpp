@@ -19,6 +19,7 @@
 #include <qcheckbox.h>
 #include <qlabel.h>
 #include <qlineedit.h>
+#include <qgroupbox.h>
 
 //---------------------------------------------------------------------- 
 // MessageBrowser
@@ -155,6 +156,228 @@ void MessageFindDialog::textChanged(const QString& newText)
 }
 
 //----------------------------------------------------------------------
+// MessageTypeStyle
+MessageTypeStyle::MessageTypeStyle()
+  : m_useDefaultFont(true)
+{
+}
+
+MessageTypeStyle::MessageTypeStyle(const MessageTypeStyle& style)
+  : m_color(style.color()),
+    m_bgColor(style.bgColor()),
+    m_font(style.font()),
+    m_useDefaultFont(style.useDefaultFont())
+{
+}
+
+MessageTypeStyle::~MessageTypeStyle()
+{
+}
+
+MessageTypeStyle& MessageTypeStyle::operator=(const MessageTypeStyle& style)
+{
+  m_color = style.color();
+  m_bgColor = style.bgColor();
+  m_font = style.font();
+  m_useDefaultFont = style.useDefaultFont();
+
+  return *this;
+}
+
+void MessageTypeStyle::load(const QString& preferenceName, 
+			    const QString& typeName)
+{
+  // load the preferences
+  m_color = pSEQPrefs->getPrefColor(typeName + "Color", preferenceName,
+				    m_color);
+  m_bgColor = pSEQPrefs->getPrefColor(typeName + "BGColor", preferenceName,
+				      m_bgColor);
+  m_useDefaultFont = pSEQPrefs->getPrefBool(typeName + "UseDefaultFont",
+					    preferenceName,
+					    true);
+  m_font = pSEQPrefs->getPrefFont(typeName + "Font", preferenceName,
+				  QFont());
+}
+
+void MessageTypeStyle::save(const QString& preferenceName, 
+			    const QString& typeName) const
+{
+  // save the preferences
+  pSEQPrefs->setPrefColor(typeName + "Color", preferenceName, m_color);
+  pSEQPrefs->setPrefColor(typeName + "BGColor", preferenceName, m_bgColor);
+  pSEQPrefs->setPrefBool(typeName + "UseDefaultFont", preferenceName,
+			 m_useDefaultFont);
+  pSEQPrefs->setPrefFont(typeName + "Font", preferenceName, m_font);
+}
+
+//----------------------------------------------------------------------
+// MessageTypeStyleDialog
+MessageTypeStyleDialog::MessageTypeStyleDialog(MessageTypeStyle& style, 
+					       const QColor& color, 
+					       const QColor& bgColor,
+					       const QString& caption, 
+					       QWidget* parent, 
+					       const char* name)
+  :QDialog(parent, name, true, 0),
+   m_style(style),
+   m_defaultColor(color),
+   m_defaultBGColor(bgColor)
+{
+  setCaption(caption);
+  
+  // setup the GUI
+  QGridLayout* grid = new QGridLayout(this, 6, 2);
+
+  // sets margin around the grid
+  grid->setMargin(10);
+
+  m_color = new QPushButton("...", this, "color");
+  if (m_style.color().isValid())
+    m_color->setPaletteBackgroundColor(m_style.color());
+  else
+    m_color->setPaletteBackgroundColor(m_defaultColor);
+  connect(m_color, SIGNAL(clicked()),
+	  this, SLOT(selectColor()));
+
+  grid->addWidget(m_color, 0, 1);
+  QLabel* label = new QLabel("&Color", this);
+  label->setBuddy(m_color);
+  grid->addWidget(label, 0, 0);
+
+  m_bgColor = new QPushButton("...", this, "backgroundcolor");
+  if (m_style.bgColor().isValid())
+    m_bgColor->setPaletteBackgroundColor(m_style.bgColor());
+  else
+    m_bgColor->setPaletteBackgroundColor(m_defaultBGColor);
+  connect(m_bgColor, SIGNAL(clicked()),
+	  this, SLOT(selectBGColor()));
+
+  grid->addWidget(m_bgColor, 1,1);
+  label = new QLabel("&Background Color", this);
+  label->setBuddy(m_bgColor);
+  grid->addWidget(label, 1, 0);
+
+  m_useDefaultFont = new QCheckBox("Use &Default Font", 
+				   this, "usedefaultfont");
+  m_useDefaultFont->setChecked(m_style.useDefaultFont());
+  connect(m_useDefaultFont, SIGNAL(toggled(bool)),
+	  this, SLOT(useDefaultFontToggled(bool)));
+  grid->addWidget(m_useDefaultFont, 2, 0);
+  
+  m_font = new QPushButton("&Font", this, "font");
+  m_font->setEnabled(!m_style.useDefaultFont());
+  grid->addWidget(m_font, 2, 1);
+  connect(m_font, SIGNAL(clicked()),
+	  this, SLOT(selectFont()));
+
+  grid->addRowSpacing(3, 10);
+
+  QGroupBox* exampleBox = new QGroupBox(1, Horizontal, "Example", 
+					this, "examplebox");
+  grid->addMultiCellWidget(exampleBox, 4, 4, 0, 2);
+
+  m_example = new QLabel(caption, exampleBox, "example");
+  m_example->setFrameShape(QFrame::Box);
+  m_example->setFrameShadow(QFrame::Sunken);
+  if (m_style.color().isValid())
+    m_example->setPaletteForegroundColor(m_style.color());
+  else
+    m_example->setPaletteForegroundColor(m_defaultColor);
+  if (m_style.bgColor().isValid())
+    m_example->setPaletteBackgroundColor(m_style.bgColor());
+  else 
+    m_example->setPaletteBackgroundColor(m_defaultBGColor);
+  if (m_style.useDefaultFont())
+    m_example->setFont(parent->font());
+  else
+    m_example->setFont(m_style.font());
+
+  grid->addRowSpacing(5, 0);
+
+  QHBoxLayout* layout = new QHBoxLayout(grid);
+  grid->addMultiCell(layout, 6, 6, 0, 2);
+  layout->addStretch();
+  QPushButton* ok = new QPushButton("OK", this);
+  connect(ok, SIGNAL(clicked()),
+	  this, SLOT(accept()));
+  layout->addWidget(ok);
+
+  layout->addStretch();
+  QPushButton* cancel = new QPushButton("Cancel", this);
+  connect(cancel, SIGNAL(clicked()),
+	  this, SLOT(reject()));
+  cancel->setDefault(true);
+  layout->addWidget(cancel);
+  layout->addStretch();
+}
+
+MessageTypeStyleDialog::~MessageTypeStyleDialog()
+{
+}
+
+void MessageTypeStyleDialog::useDefaultFontToggled(bool on)
+{
+  m_style.setUseDefaultFont(on);
+
+  m_font->setEnabled(!on);
+
+  if (on)
+    m_example->setFont(parentWidget()->font());
+  else
+    m_example->setFont(m_style.font());
+}
+
+void MessageTypeStyleDialog::selectColor()
+{
+  QColor color = QColorDialog::getColor(m_style.color(), this, 
+					caption() + " Color");
+    
+  if (color.isValid())
+  {
+    m_style.setColor(color);
+    
+    m_color->setPaletteBackgroundColor(m_style.color());
+    
+    m_example->setPaletteForegroundColor(m_style.color());
+  }
+}
+
+void MessageTypeStyleDialog::selectBGColor()
+{
+  QColor color = QColorDialog::getColor(m_style.bgColor(), this, 
+					caption() + " Background Color");
+    
+  if (color.isValid())
+  {
+    m_style.setBGColor(color);
+    
+    m_bgColor->setPaletteBackgroundColor(m_style.bgColor());
+
+    m_example->setPaletteBackgroundColor(m_style.bgColor());
+  }
+}
+
+void MessageTypeStyleDialog::selectFont()
+{
+  QFont newFont;
+  bool ok = false;
+  // get a new font
+  newFont = QFontDialog::getFont(&ok, m_style.font(),
+				 this, caption() + " Font");
+  
+  
+  // if the user entered a font and clicked ok, set the windows font
+  if (ok)
+  {
+    // set the styles font
+    m_style.setFont(newFont);
+    
+    // set the example
+    m_example->setFont(m_style.font());
+  }
+}
+
+//----------------------------------------------------------------------
 // MessageWindow
 MessageWindow::MessageWindow(Messages* messages, 
 			     const QString& prefName,
@@ -171,14 +394,13 @@ MessageWindow::MessageWindow(Messages* messages,
     m_defaultBGColor(white),
     m_dateTimeFormat("hh:mm"),
     m_eqDateTimeFormat("ddd M/d/yyyy h:mm"),
-    m_typeColors(0),
-    m_typeBGColors(0),
+    m_typeStyles(0),
     m_itemPattern("\022(\\d{5,7})\\w*-\\d+-\\d+-\\d+-\\d+-.{13}([^\022]+)\022"),
     m_lockedText(false),
     m_displayType(true),
     m_displayDateTime(false),
     m_displayEQDateTime(false),
-    m_useColor(true),
+    m_useTypeStyles(true),
     m_wrapText(true)
 {
   m_enabledTypes = pSEQPrefs->getPrefInt("EnabledTypes", preferenceName(), 
@@ -202,13 +424,13 @@ MessageWindow::MessageWindow(Messages* messages,
   m_displayEQDateTime = pSEQPrefs->getPrefBool("DisplayEQDateTime",
 					       preferenceName(),
 					       m_displayEQDateTime);
-  m_useColor = pSEQPrefs->getPrefBool("UseColor", preferenceName(),
-				      m_useColor);
+  m_useTypeStyles = pSEQPrefs->getPrefBool("UseTypeStyles", preferenceName(),
+				      m_useTypeStyles);
   m_wrapText = pSEQPrefs->getPrefBool("WrapText", preferenceName(),
 				      m_wrapText);
 
-  m_typeColors = new QColor[MT_Max+1];
-  m_typeBGColors = new QColor[MT_Max+1];
+  // allocate the array of type styles
+  m_typeStyles = new MessageTypeStyle[MT_Max+1];
 
   // create the window for text display
   m_messageWindow = new MessageBrowser(this, "messageText");
@@ -259,13 +481,11 @@ MessageWindow::MessageWindow(Messages* messages,
 	  this, SLOT(toggleLockedText()));
 
   m_menu = new QPopupMenu;
-  QPopupMenu* typeColorMenu = new QPopupMenu;
-  QPopupMenu* typeBGColorMenu = new QPopupMenu;
+  QPopupMenu* typeStyleMenu = new QPopupMenu;
 
   m_typeFilterMenu = new QPopupMenu;
   m_menu->insertItem("Show Message Type", m_typeFilterMenu);
 
-  QColor typeColor;
   QString typeName;
   // iterate over the message types, filling in various menus and getting 
   // font color preferences
@@ -276,28 +496,16 @@ MessageWindow::MessageWindow(Messages* messages,
     {
       m_typeFilterMenu->insertItem(typeName, i);
       m_typeFilterMenu->setItemChecked(i, (((1 << i) & m_enabledTypes) != 0));
-      typeColorMenu->insertItem(typeName + "...", i);
-      typeBGColorMenu->insertItem(typeName + "...", i);
+      typeStyleMenu->insertItem(typeName + "...", i);
 
-      typeColor = pSEQPrefs->getPrefColor(typeName + "Color", preferenceName(),
-					  m_typeColors[i]);
-      if (typeColor.isValid())
-	m_typeColors[i] = typeColor;
-
-      typeColor = pSEQPrefs->getPrefColor(typeName + "BGColor", 
-					  preferenceName(),
-					  m_typeBGColors[i]);
-      if (typeColor.isValid())
-	m_typeBGColors[i] = typeColor;
+      m_typeStyles[i].load(preferenceName(), typeName);
     }
   }
   
   connect(m_typeFilterMenu, SIGNAL(activated(int)),
 	  this, SLOT(toggleTypeFilter(int)));
-  connect(typeColorMenu, SIGNAL(activated(int)),
-	  this, SLOT(setTypeColor(int)));
-  connect(typeBGColorMenu, SIGNAL(activated(int)),
-	  this, SLOT(setTypeBGColor(int)));
+  connect(typeStyleMenu, SIGNAL(activated(int)),
+	  this, SLOT(setTypeStyle(int)));
 
   QPopupMenu* userFilterMenu = new QPopupMenu;
   m_menu->insertItem("User Message Filters", userFilterMenu);
@@ -316,28 +524,29 @@ MessageWindow::MessageWindow(Messages* messages,
   m_menu->insertSeparator(-1);
   x = m_menu->insertItem("Display &Type", this, SLOT(toggleDisplayType(int)));
   m_menu->setItemChecked(x, m_displayType);
-  x = m_menu->insertItem("Display Time/&Date", this, SLOT(toggleDisplayTime(int)));
+  x = m_menu->insertItem("Display Time/&Date", this,
+			 SLOT(toggleDisplayTime(int)));
   m_menu->setItemChecked(x, m_displayDateTime);
-  x = m_menu->insertItem("Display &EQ Date/Time", this, SLOT(toggleEQDisplayTime(int)));
+  x = m_menu->insertItem("Display &EQ Date/Time", this,
+			 SLOT(toggleEQDisplayTime(int)));
   m_menu->setItemChecked(x, m_displayEQDateTime);
-  x = m_menu->insertItem("&Use Color", this, SLOT(toggleUseColor(int)));
-  m_menu->setItemChecked(x, m_useColor);
+  x = m_menu->insertItem("&Use Type Styles", this,
+			 SLOT(toggleUseTypeStyles(int)));
+  m_menu->setItemChecked(x, m_useTypeStyles);
   x = m_menu->insertItem("&Wrap Text", this, SLOT(toggleWrapText(int)));
   m_menu->setItemChecked(x, m_wrapText);
   m_menu->insertItem("Fo&nt...", this, SLOT(setFont()));
   m_menu->insertItem("&Caption...", this, SLOT(setCaption()));
   m_menu->insertItem("Text Colo&r...", this, SLOT(setColor()));
   m_menu->insertItem("Text Back&ground Color...", this, SLOT(setBGColor()));
-  m_menu->insertItem("Type C&olor", typeColorMenu);
-  m_menu->insertItem("Type &Background Color", typeBGColorMenu);
+  m_menu->insertItem("Type &Styles", typeStyleMenu);
 
   refreshMessages();
 }
 
 MessageWindow::~MessageWindow()
 {
-  delete m_typeColors;
-  delete m_typeBGColors;
+  delete m_typeStyles;
 }
 
 QPopupMenu* MessageWindow::menu()
@@ -397,11 +606,16 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
   // if the message has a specific color, then use it
   if (message.color() != ME_InvalidColor)
     m_messageWindow->setColor(QColor(message.color()));
-  else if (m_typeColors[type].isValid()) // or use the types color
-    m_messageWindow->setColor(m_typeColors[type]);
+  else if (m_typeStyles[type].color().isValid()) // or use the types color
+    m_messageWindow->setColor(m_typeStyles[type].color());
   else // otherwise use the default color
     m_messageWindow->setColor(m_defaultColor);
- 
+
+  if (m_typeStyles[type].useDefaultFont())
+    m_messageWindow->setCurrentFont(font());
+  else
+    m_messageWindow->setCurrentFont(m_typeStyles[type].font());
+
   QString text;
 
   // if displaying the type, add it
@@ -425,15 +639,16 @@ void MessageWindow::addColorMessage(const MessageEntry& message)
   m_messageWindow->append(text);
 
   int para = m_messageWindow->paragraphs() - 1;
-  if (m_typeBGColors[type].isValid())
-    m_messageWindow->setParagraphBackgroundColor(para, m_typeBGColors[type]);
+  if (m_typeStyles[type].bgColor().isValid())
+    m_messageWindow->setParagraphBackgroundColor(para, 
+						 m_typeStyles[type].bgColor());
   else
     m_messageWindow->setParagraphBackgroundColor(para, m_defaultBGColor);
 }
 
 void MessageWindow::newMessage(const MessageEntry& message)
 {
-  if (m_useColor)
+  if (m_useTypeStyles)
     addColorMessage(message);
   else
     addMessage(message);
@@ -466,7 +681,7 @@ void MessageWindow::refreshMessages(void)
   // iterate over the message list and add the messages
   MessageList::const_iterator it;
   int i;
-  if (m_useColor)
+  if (m_useTypeStyles)
     for (i = 0, it = messages.begin(); it != messages.end(); ++it, ++i)
       addColorMessage(*it); // append the message with color
   else 
@@ -549,11 +764,11 @@ void MessageWindow::toggleEQDisplayTime(int id)
 			 m_displayEQDateTime);
 }
 
-void MessageWindow::toggleUseColor(int id)
+void MessageWindow::toggleUseTypeStyles(int id)
 {
-  m_useColor = !m_useColor;
-  m_menu->setItemChecked(id, m_useColor);
-  pSEQPrefs->setPrefBool("UseColor", preferenceName(), m_useColor);
+  m_useTypeStyles = !m_useTypeStyles;
+  m_menu->setItemChecked(id, m_useTypeStyles);
+  pSEQPrefs->setPrefBool("UseTypeStyles", preferenceName(), m_useTypeStyles);
 }
 
 void MessageWindow::toggleWrapText(int id)
@@ -568,33 +783,27 @@ void MessageWindow::toggleWrapText(int id)
 			       QTextEdit::WidgetWidth : QTextEdit::NoWrap);
 }
 
-void MessageWindow::setTypeColor(int id)
+void MessageWindow::setTypeStyle(int id)
 {
+  // Create the dialog object
   QString typeName = m_messages->messageTypeString((MessageType)id);
-  QString clrCaption = caption() + " " + typeName + " Color";
-  QColor color = QColorDialog::getColor(m_typeColors[id], this, clrCaption);
+  QString styleCaption = caption() + " - " + typeName + " Style";
+  MessageTypeStyleDialog dialog(m_typeStyles[id],
+				m_defaultColor, m_defaultBGColor,
+				styleCaption, 
+				this, styleCaption);
 
-  if (color.isValid())
+  // popup the modal dialog
+  int result = dialog.exec();
+
+  // if the user accepted the changes, then apply them to the style
+  if (result == QDialog::Accepted)
   {
-    m_typeColors[id] = color;
+    // apply the style
+    m_typeStyles[id] = dialog.style();
 
-    pSEQPrefs->setPrefColor(typeName + "Color", preferenceName(), 
-			    m_typeColors[id]);
-  }
-}
-
-void MessageWindow::setTypeBGColor(int id)
-{
-  QString typeName = m_messages->messageTypeString((MessageType)id);
-  QString clrCaption = caption() + " " + typeName + " Background Color";
-  QColor color = QColorDialog::getColor(m_typeColors[id], this, clrCaption);
-
-  if (color.isValid())
-  {
-    m_typeColors[id] = color;
-
-    pSEQPrefs->setPrefColor(typeName + "BGColor", preferenceName(), 
-			    m_typeColors[id]);
+    // save the updates
+    m_typeStyles[id].save(preferenceName(), typeName);
   }
 }
 

@@ -2786,6 +2786,8 @@ void Map::resizeEvent (QResizeEvent *qs)
    m_offscreen.resize(m_param.screenLength());
 
    reAdjust();
+
+   QWidget::resizeEvent(qs);
 }
 
 void Map::refreshMap (void)
