@@ -316,7 +316,7 @@ void Spells::loadSpells(const QString& spellsFileName)
     }
   }
   else
-    seqWarn("Spells::Spells(): Failed to open: '%s'",
+    seqWarn("Spells: Failed to open: '%s'",
 	    spellsFileName.latin1());
 }
 
