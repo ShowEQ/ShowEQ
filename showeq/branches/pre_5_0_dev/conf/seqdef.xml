@@ -2748,10 +2748,15 @@ If any argument is left blank, it is filled in with its default...
   </property>
  </section>
 <!-- ============================================================= -->
+<!-- Message Window 1 Options -->
  <section name="MessageWindow1">
   <property name="Caption" >
    <string value="ShowEQ - Channel Messages" />
    <comment>Window caption</comment>
+  </property>
+  <property name="Create" >
+   <bool value="true" />
+   <comment>Causes this window to be created</comment>
   </property>
   <property name="DefaultColor">
    <color name="black" />
@@ -2802,247 +2807,304 @@ If any argument is left blank, it is filled in with its default...
    <color name="blue" />
   </property>
  </section>
-<!-- Message Box 1 Options -->
- <section name="MessageBox1" >
+<!-- ============================================================= -->
+<!-- Message Window 2 Options -->
+ <section name="MessageWindow2">
   <property name="Caption" >
-   <string value="ShowEQ - Channel Messages" />
+   <string value="ShowEQ - Channel Messages 2" />
    <comment>Window caption</comment>
   </property>
-  <property name="HideControls" >
+  <property name="Create" >
    <bool value="false" />
-   <comment>Displays the toggle buttons</comment>
+   <comment>Causes this window to be created</comment>
   </property>
-  <property name="ShowMsgType" >
-   <bool value="true" />
-   <comment>Displays the message type</comment>
-  </property>
-  <property name="Additive" >
-   <bool value="true" />
-   <comment>Selects additive or subtractive filtering</comment>
-  </property>
-  <property name="Button1Name" >
-   <string value="Shout" />
-   <comment>Name to put on button 1</comment>
-  </property>
-  <property name="Button1Filter" >
-   <string value="^Shout" />
-   <comment>Filter to use for button 1</comment>
-  </property>
-  <property name="Button1Color" >
+  <property name="DefaultColor">
    <color name="black" />
-   <comment>Color for button 1</comment>
   </property>
-  <property name="Button1Active" >
-   <bool value="true" />
-   <comment>Button 1 checked/unchecked state</comment>
+  <property name="DefaultBGColor">
+   <color name="white" />
   </property>
-  <property name="Button2Name" >
-   <string value="Group" />
-   <comment>Button Name</comment>
+  <property name="GuildColor">
+   <color name="green" />
   </property>
-  <property name="Button2Filter" >
-   <string value="^Group" />
-   <comment>Filter for button</comment>
+  <property name="GroupColor">
+   <color name="cyan" />
   </property>
-  <property name="Button2Color" >
-   <color name="black" />
-   <comment>Color</comment>
+  <property name="ShoutColor">
+   <color name="red" />
   </property>
-  <property name="Button2Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
+  <property name="AuctionBGColor">
+   <color name="green" />
   </property>
-  <property name="Button3Name" >
-   <string value="Tell" />
-   <comment>Button Name</comment>
+  <property name="OOCColor">
+   <color name="darkGreen" />
   </property>
-  <property name="Button3Filter" >
-   <string value="^Tell" />
-   <comment>Filter for button</comment>
+  <property name="TellColor">
+   <color name="magenta" />
   </property>
-  <property name="Button3Color" >
-   <color name="black" />
-   <comment>Color</comment>
+  <property name="SayColor">
+   <color name="green" />
   </property>
-  <property name="Button3Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
+  <property name="GMTellColor">
+   <color name="red" />
   </property>
-  <property name="Button4Name" >
-   <string value="Auc" />
-   <comment>Button Name</comment>
+  <property name="RaidColor">
+   <color name="darkCyan" />
   </property>
-  <property name="Button4Filter" >
-   <string value="^Auc" />
-   <comment>Filter for button</comment>
+  <property name="AlertBGColor">
+   <color name="magenta" />
   </property>
-  <property name="Button4Color" >
-   <color name="black" />
-   <comment>Color</comment>
+  <property name="DangerBGColor">
+   <color name="red" />
   </property>
-  <property name="Button4Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
+  <property name="CautionBGColor">
+   <color name="yellow" />
   </property>
-  <property name="Button5Name" >
-   <string value="Say" />
-   <comment>Button Name</comment>
+  <property name="HuntBGColor">
+   <color name="cyan" />
   </property>
-  <property name="Button5Filter" >
-   <string value="^Say" />
-   <comment>Filter for button</comment>
+  <property name="LocateBGColor">
+   <color name="blue" />
   </property>
-  <property name="Button5Color" >
-   <color name="black" />
-   <comment>Color</comment>
+ </section>
+<!-- ============================================================= -->
+<!-- Message Window 3 Options -->
+ <section name="MessageWindow3">
+  <property name="Caption" >
+   <string value="ShowEQ - Channel Messages 3" />
+   <comment>Window caption</comment>
   </property>
-  <property name="Button5Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
-  </property>
-  <property name="Button6Name" >
-   <string value="Emote" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button6Filter" >
-   <string value="^Emote" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button6Color" >
-   <color name="black" />
-   <comment>Color</comment>
-  </property>
-  <property name="Button6Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
-  </property>
-  <property name="Button7Name" >
-   <string value="OOC" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button7Filter" >
-   <string value="^OOC" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button7Color" >
-   <color name="black" />
-   <comment>Color</comment>
-  </property>
-  <property name="Button7Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
-  </property>
-  <property name="Button8Name" >
-   <string value="Guild" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button8Filter" >
-   <string value="^Guild" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button8Color" >
-   <color name="black" />
-   <comment>Color</comment>
-  </property>
-  <property name="Button8Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
-  </property>
-  <property name="Button9Name" >
-   <string value="Form" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button9Filter" >
-   <string value="^Formatted:" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button9Color" >
-   <color name="black" />
-   <comment>Color</comment>
-  </property>
-  <property name="Button9Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
-  </property>
-  <property name="Button10Name" >
-   <string value="Spells" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button10Filter" >
-   <string value="^SPELL:" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button10Color" >
-   <color name="black" />
-   <comment>Color</comment>
-  </property>
-  <property name="Button10Active" >
-   <bool value="true" />
-   <comment>Button state</comment>
-  </property>
-  <property name="Button11Name" >
-   <string value="Items" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button11Filter" >
-   <string value="^Item" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button11Color" >
-   <color name="black" />
-   <comment>Color</comment>
-  </property>
-  <property name="Button11Active" >
+  <property name="Create" >
    <bool value="false" />
-   <comment>Button state</comment>
+   <comment>Causes this window to be created</comment>
   </property>
-  <property name="Button12Name" >
-   <string value="Zone" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button12Filter" >
-   <string value="^Zone" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button12Color" >
+  <property name="DefaultColor">
    <color name="black" />
-   <comment>Color</comment>
   </property>
-  <property name="Button12Active" >
+  <property name="DefaultBGColor">
+   <color name="white" />
+  </property>
+  <property name="GuildColor">
+   <color name="green" />
+  </property>
+  <property name="GroupColor">
+   <color name="cyan" />
+  </property>
+  <property name="ShoutColor">
+   <color name="red" />
+  </property>
+  <property name="AuctionBGColor">
+   <color name="green" />
+  </property>
+  <property name="OOCColor">
+   <color name="darkGreen" />
+  </property>
+  <property name="TellColor">
+   <color name="magenta" />
+  </property>
+  <property name="SayColor">
+   <color name="green" />
+  </property>
+  <property name="GMTellColor">
+   <color name="red" />
+  </property>
+  <property name="RaidColor">
+   <color name="darkCyan" />
+  </property>
+  <property name="AlertBGColor">
+   <color name="magenta" />
+  </property>
+  <property name="DangerBGColor">
+   <color name="red" />
+  </property>
+  <property name="CautionBGColor">
+   <color name="yellow" />
+  </property>
+  <property name="HuntBGColor">
+   <color name="cyan" />
+  </property>
+  <property name="LocateBGColor">
+   <color name="blue" />
+  </property>
+ </section>
+<!-- ============================================================= -->
+<!-- Message Window 4 Options -->
+ <section name="MessageWindow4">
+  <property name="Caption" >
+   <string value="ShowEQ - Channel Messages 4" />
+   <comment>Window caption</comment>
+  </property>
+  <property name="Create" >
    <bool value="false" />
-   <comment>Button state</comment>
+   <comment>Causes this window to be created</comment>
   </property>
-  <property name="Button13Name" >
-   <string value="" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button13Color" >
+  <property name="DefaultColor">
    <color name="black" />
-   <comment>Color</comment>
   </property>
-  <property name="Button13Filter" >
-   <string value="" />
-   <comment>Filter for button</comment>
+  <property name="DefaultBGColor">
+   <color name="white" />
   </property>
-  <property name="Button13Active" >
+  <property name="GuildColor">
+   <color name="green" />
+  </property>
+  <property name="GroupColor">
+   <color name="cyan" />
+  </property>
+  <property name="ShoutColor">
+   <color name="red" />
+  </property>
+  <property name="AuctionBGColor">
+   <color name="green" />
+  </property>
+  <property name="OOCColor">
+   <color name="darkGreen" />
+  </property>
+  <property name="TellColor">
+   <color name="magenta" />
+  </property>
+  <property name="SayColor">
+   <color name="green" />
+  </property>
+  <property name="GMTellColor">
+   <color name="red" />
+  </property>
+  <property name="RaidColor">
+   <color name="darkCyan" />
+  </property>
+  <property name="AlertBGColor">
+   <color name="magenta" />
+  </property>
+  <property name="DangerBGColor">
+   <color name="red" />
+  </property>
+  <property name="CautionBGColor">
+   <color name="yellow" />
+  </property>
+  <property name="HuntBGColor">
+   <color name="cyan" />
+  </property>
+  <property name="LocateBGColor">
+   <color name="blue" />
+  </property>
+ </section>
+<!-- ============================================================= -->
+<!-- Message Window 5 Options -->
+ <section name="MessageWindow5">
+  <property name="Caption" >
+   <string value="ShowEQ - Channel Messages 5" />
+   <comment>Window caption</comment>
+  </property>
+  <property name="Create" >
    <bool value="false" />
-   <comment>Button state</comment>
+   <comment>Causes this window to be created</comment>
   </property>
-  <property name="Button14Name" >
-   <string value="" />
-   <comment>Button Name</comment>
-  </property>
-  <property name="Button14Filter" >
-   <string value="" />
-   <comment>Filter for button</comment>
-  </property>
-  <property name="Button14Color" >
+  <property name="DefaultColor">
    <color name="black" />
-   <comment>Color</comment>
   </property>
-  <property name="Button14Active" >
+  <property name="DefaultBGColor">
+   <color name="white" />
+  </property>
+  <property name="GuildColor">
+   <color name="green" />
+  </property>
+  <property name="GroupColor">
+   <color name="cyan" />
+  </property>
+  <property name="ShoutColor">
+   <color name="red" />
+  </property>
+  <property name="AuctionBGColor">
+   <color name="green" />
+  </property>
+  <property name="OOCColor">
+   <color name="darkGreen" />
+  </property>
+  <property name="TellColor">
+   <color name="magenta" />
+  </property>
+  <property name="SayColor">
+   <color name="green" />
+  </property>
+  <property name="GMTellColor">
+   <color name="red" />
+  </property>
+  <property name="RaidColor">
+   <color name="darkCyan" />
+  </property>
+  <property name="AlertBGColor">
+   <color name="magenta" />
+  </property>
+  <property name="DangerBGColor">
+   <color name="red" />
+  </property>
+  <property name="CautionBGColor">
+   <color name="yellow" />
+  </property>
+  <property name="HuntBGColor">
+   <color name="cyan" />
+  </property>
+  <property name="LocateBGColor">
+   <color name="blue" />
+  </property>
+ </section>
+<!-- ============================================================= -->
+<!-- Message Window 6 Options -->
+ <section name="MessageWindow6">
+  <property name="Caption" >
+   <string value="ShowEQ - Channel Messages 6" />
+   <comment>Window caption</comment>
+  </property>
+  <property name="Create" >
    <bool value="false" />
-   <comment>Button state</comment>
+   <comment>Causes this window to be created</comment>
+  </property>
+  <property name="DefaultColor">
+   <color name="black" />
+  </property>
+  <property name="DefaultBGColor">
+   <color name="white" />
+  </property>
+  <property name="GuildColor">
+   <color name="green" />
+  </property>
+  <property name="GroupColor">
+   <color name="cyan" />
+  </property>
+  <property name="ShoutColor">
+   <color name="red" />
+  </property>
+  <property name="AuctionBGColor">
+   <color name="green" />
+  </property>
+  <property name="OOCColor">
+   <color name="darkGreen" />
+  </property>
+  <property name="TellColor">
+   <color name="magenta" />
+  </property>
+  <property name="SayColor">
+   <color name="green" />
+  </property>
+  <property name="GMTellColor">
+   <color name="red" />
+  </property>
+  <property name="RaidColor">
+   <color name="darkCyan" />
+  </property>
+  <property name="AlertBGColor">
+   <color name="magenta" />
+  </property>
+  <property name="DangerBGColor">
+   <color name="red" />
+  </property>
+  <property name="CautionBGColor">
+   <color name="yellow" />
+  </property>
+  <property name="HuntBGColor">
+   <color name="cyan" />
+  </property>
+  <property name="LocateBGColor">
+   <color name="blue" />
   </property>
  </section>
 <!-- ============================================================= -->

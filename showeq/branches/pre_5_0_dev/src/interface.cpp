@@ -23,7 +23,6 @@
 #include "map.h"
 #include "experiencelog.h"
 #include "combatlog.h"
-#include "msgdlg.h"
 #include "filtermgr.h"
 #include "spellshell.h"
 #include "spawnlist.h"
@@ -212,16 +211,6 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
    // Create the terminal object
    m_terminal = new Terminal(m_messages, this, "terminal");
-
-#if 1 // ZBTEMP
-   // just create the message window
-   m_messageWindow = new MessageWindow(m_messages, "MessageWindow1", 
-				       "Message Window",
-				       NULL, "messagewindow");
-   addDockWindow(m_messageWindow, Bottom, false);
-   m_messageWindow->undock();
-   m_messageWindow->show();
-#endif 
 
    // Create the Zone Manager
    m_zoneMgr = new ZoneMgr(this, "zonemgr");
@@ -887,6 +876,8 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    pOpCodeMenu->insertItem("Log &Filename...", this,
 			  SLOT(select_opcode_file()));
    m_netMenu->insertSeparator(-1);
+
+   section = "Interface";
 
    // Advanced menu
    subMenu = new QPopupMenu;
@@ -1777,51 +1768,56 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
    }
 
    // Create message boxes defined in config preferences
-   m_msgDialogList.setAutoDelete(true);
+   m_messageWindowList.setAutoDelete(true);
    QString title;
    int i = 0;
-   MsgDialog* msgDlg;
+   MessageWindow* messageWindow;
    QString msgSection;
-   bool haveMsgDialogs = false;
+   QString msgCaption;
+   bool haveMessageWindows = false;
+   // iterate over all possible message windows in the preferences file
    for(i = 1; i < 15; i++)
    {
-      // attempt to pull a button title from the preferences
-     msgSection.sprintf("MessageBox%d", i);
-     if (pSEQPrefs->isSection(msgSection))
+     // attempt to pull a button title from the preferences
+     msgSection.sprintf("MessageWindow%d", i);
+     if (pSEQPrefs->getPrefBool("Create", msgSection, false))
      {
-       haveMsgDialogs = true;
-       msgDlg = new MsgDialog(NULL, msgSection, msgSection, 
-			       m_StringList);
-       addDockWindow(msgDlg, Bottom, false);
-       msgDlg->undock();
-       m_msgDialogList.append(msgDlg);
+       msgCaption.sprintf("Message Window %d", i);
+       haveMessageWindows = true;
 
-       // connect signal for new messages
-       connect (this, SIGNAL (newMessage(int)),
-		msgDlg, SLOT (newMessage(int)));
+       // create the message window
+       MessageWindow* messageWindow = new MessageWindow(m_messages, 
+							msgSection, 
+							msgCaption,
+							NULL, msgSection);
+       
+       // dock the message window on the bottom (works around a QMainWindow bug)
+       addDockWindow(messageWindow, Bottom, false);
+       
+       // dock the message window
+       messageWindow->undock();
+
+       // append it to the list of message windows
+       m_messageWindowList.append(messageWindow);
+
        connect (this, SIGNAL(saveAllPrefs()),
-		msgDlg, SLOT(savePrefs()));
-       connect (msgDlg, SIGNAL(toggle_view_ChannelMsgs()),
-		this, SLOT(toggle_view_ChannelMsgs()));
+		messageWindow, SLOT(savePrefs()));
+       
+       // restore the windows size
+       messageWindow->restoreSize();
 
-       msgDlg->restoreSize();
        if (pSEQPrefs->getPrefBool("UseWindowPos", section, true))
-	 msgDlg->restorePosition();
-     } // end if dialog config section found
-     else 
-       break;
-   } // for all message boxes defined in pref file
+	 messageWindow->restorePosition();
+     }
+   }  
+
    m_viewChannelMsgs = pSEQPrefs->getPrefBool("ShowChannel", section, 
-					      haveMsgDialogs);
-   for(MsgDialog *diag=m_msgDialogList.first(); 
-       diag != 0; 
-       diag=m_msgDialogList.next() ) 
-   {
-     if (m_viewChannelMsgs)
-       diag->show();
-     else
-       diag->hide();
-   }
+					      haveMessageWindows);
+
+   for (messageWindow = m_messageWindowList.first();
+	messageWindow != 0;
+	messageWindow = m_messageWindowList.next())
+     messageWindow->setShown(m_viewChannelMsgs);
 
    //
    // Geometry Configuration
@@ -1907,7 +1903,7 @@ EQInterface::EQInterface(DataLocationMgr* dlm,
 
 EQInterface::~EQInterface()
 {
-  m_msgDialogList.clear();
+  m_messageWindowList.clear();
 
   if (m_netDiag != NULL)
     delete m_netDiag;
@@ -3122,16 +3118,14 @@ EQInterface::toggle_view_ChannelMsgs (void)
 {
   m_viewChannelMsgs = !m_viewChannelMsgs;
   menuBar()->setItemChecked (m_id_view_ChannelMsgs, m_viewChannelMsgs);
-  /* From Daisy, hide Channel Messages if the view flag is false */
-  for(MsgDialog *diag=m_msgDialogList.first(); 
-      diag != 0;
-      diag=m_msgDialogList.next() ) 
-  {
-    if (m_viewChannelMsgs)
-      diag->show();
-    else
-      diag->hide();
-  }
+
+  MessageWindow* messageWindow;
+
+  for (messageWindow = m_messageWindowList.first();
+       messageWindow != 0;
+       messageWindow = m_messageWindowList.next())
+    messageWindow->setShown(m_viewChannelMsgs);
+
   // set the preference
   pSEQPrefs->setPrefBool("ShowChannel", "Interface", m_viewChannelMsgs);
 }
@@ -3680,18 +3674,36 @@ void
 EQInterface::createMessageBox(void)
 {
   QString msgSection;
-  msgSection.sprintf("MessageBox%d", m_msgDialogList.count() + 1);
-  MsgDialog* msgDlg = new MsgDialog(NULL, 
-				     msgSection, msgSection, m_StringList);
-  addDockWindow(msgDlg, Bottom, false);
-  msgDlg->undock();
-  m_msgDialogList.append(msgDlg);
+  QString msgCaption;
 
-  // connect signal for new messages
-  connect (this, SIGNAL (newMessage(int)), msgDlg, SLOT (newMessage(int)));
-  connect (this, SIGNAL(saveAllPrefs()), msgDlg, SLOT(savePrefs()));
+  // determine the window number and create the section and caption for this
+  // message window instance
+  size_t windowNum = m_messageWindowList.count() + 1;
+  msgSection.sprintf("MessageWindow%d", windowNum);
+  msgCaption.sprintf("Message Window %d", windowNum);
 
-  msgDlg->show();
+  // create the message window
+  MessageWindow* messageWindow = new MessageWindow(m_messages, msgSection, 
+						   msgCaption,
+						   NULL, msgSection);
+
+  // dock the message window on the bottom (works around a QMainWindow bug)
+  addDockWindow(messageWindow, Bottom, false);
+
+  // dock the message window
+  messageWindow->undock();
+
+  // append it to the list of message windows
+  m_messageWindowList.append(messageWindow);
+
+  connect (this, SIGNAL(saveAllPrefs()),
+	   messageWindow, SLOT(savePrefs()));
+
+  // show the window
+  messageWindow->show();
+
+  // set the preference to create this message window next time
+  pSEQPrefs->setPrefBool("Create", msgSection, true);
 }
 
 
@@ -4688,14 +4700,8 @@ void EQInterface::set_opt_save_BaseFilename()
 
 void EQInterface::opt_clearChannelMsgs(int id)
 {
-  // clear out the list of channel messages
-  m_StringList.clear();
-
-  // refresh all the channel message dialogs
-  for(MsgDialog *diag=m_msgDialogList.first(); 
-      diag != 0; 
-      diag=m_msgDialogList.next() ) 
-    diag->refresh();
+  // clear the messages
+  m_messages->clear();
 }
 
 int EQInterface::setTheme(int id)

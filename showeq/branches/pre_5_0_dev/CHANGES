@@ -44,6 +44,7 @@ dohpaZ (11/?/03)
 + Improved behaviour when swapping players.
 + New message storage, filtering, and UI.
 + Move terminal UI to its own class
++ Got rid of the old MsgDialog classes
 
 dohpaZ (10/24/03)
 ---------------------

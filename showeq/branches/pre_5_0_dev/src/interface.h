@@ -23,7 +23,7 @@
 #include <qsplitter.h>
 #include <qvaluelist.h>
 #include <qtimer.h>
-#include <qlist.h>
+#include <qptrlist.h>
 #include <qmessagebox.h>
 #include <qtabdialog.h>
 #include <qspinbox.h>
@@ -59,7 +59,6 @@ class MapFrame;
 class ExperienceWindow;
 class CombatWindow;
 class NetDiag;
-class MsgDialog;
 class GuildMgr;
 class Spells;
 class DateTimeMgr;
@@ -369,7 +368,7 @@ class EQInterface:public QMainWindow
    QLabel* m_stsbarEQTime;
    QLabel* m_stsbarSpeed;
 
-   QList<MsgDialog>  m_msgDialogList;   
+   QPtrList<MessageWindow>  m_messageWindowList;   
 
    QIntDict<QString> m_formattedMessageStrings;
 

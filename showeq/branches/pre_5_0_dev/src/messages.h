@@ -129,13 +129,17 @@ class Messages : public QObject
   Messages(DateTimeMgr* dateTimeMgr, QObject* parent = 0, const char* name = 0);
   ~Messages();
   
-  void addMessage(MessageType type, const QString& text, 
-		  uint32_t color = ME_InvalidColor);
   const MessageList messageList() const;
   const QString& messageTypeString(MessageType type);
 
+ public slots:
+  void addMessage(MessageType type, const QString& text, 
+		  uint32_t color = ME_InvalidColor);
+  void clear(void);
+
  signals:
   void newMessage(const MessageEntry& message);
+  void cleared(void);
 
  protected:
   DateTimeMgr* m_dateTimeMgr;
