@@ -1,0 +1,8 @@
+To Do list
+----------
+A full "to do" list is maintained on SourceForge 
+(http://sourceforge.net/projects/seq) under the "Tasks" heading.
+
++ Add GUI support for deleting categories from the category manager
++ Add GUI support for deleting message boxes
++ Add GUI support for deleting buttons from message boxes
