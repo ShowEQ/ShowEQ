@@ -2747,7 +2747,7 @@ void EQInterface::dumpSpawns (void)
   QString logFile = pSEQPrefs->getPrefString("DumpSpawnsFilename", "Interface",
 					     "dumpspawns.txt");
 
-  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs", logFile);
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("dumps", logFile);
 
   // open the output data stream
   QFile file(logFileInfo.absFilePath());
@@ -2767,7 +2767,7 @@ void EQInterface::dumpDrops (void)
   QString logFile = pSEQPrefs->getPrefString("DumpDropsFilename", "Interface",
 					     "dumpdrops.txt");
 
-  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs", logFile);
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("dumps", logFile);
 
   // open the output data stream
   QFile file(logFileInfo.absFilePath());
@@ -2788,7 +2788,7 @@ void EQInterface::dumpMapInfo(void)
 					     "Interface",
 					     "mapinfo.txt");
 
-  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs", logFile);
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("dumps", logFile);
 
   // open the output data stream
   QFile file(logFileInfo.absFilePath());
@@ -2813,7 +2813,7 @@ void EQInterface::dumpGuildInfo(void)
 					     "Interface", 
 					     "guilds.txt");
 
-  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs", logFile);
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("dumps", logFile);
 
   emit guildList2text(logFileInfo.absFilePath());
 }
@@ -2828,7 +2828,7 @@ void EQInterface::dumpSpellBook(void)
 					     "Interface", 
 					     "spellbook.txt");
 
-  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("logs", logFile);
+  QFileInfo logFileInfo = m_dataLocationMgr->findWriteFile("dumps", logFile);
 
   // open the output data stream
   QFile file(logFileInfo.absFilePath());
