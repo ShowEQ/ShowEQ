@@ -1472,7 +1472,7 @@ struct levelUpUpdateStruct
 struct expUpdateStruct
 {
 /*0000*/ uint32_t exp;                    // experience value  x/330
-/*0004*/ uint32_t unknown0004;            // ***Place Holder
+/*0004*/ uint32_t type;                   // 0=set, 2=update
 /*0008*/
 };
 
