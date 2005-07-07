@@ -12,19 +12,67 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/if_ether.h>
+#include <arpa/inet.h>
 
 #include "packetcapture.h"
+#include "diagnosticmessages.h"
+
+//#define PCAP_DEBUG 1
   
 //----------------------------------------------------------------------
 // PacketCaptureThread
 //  start and stop the thread
 //  get packets to the processing engine(dispatchPacket)
-PacketCaptureThread::PacketCaptureThread()
+PacketCaptureThread::PacketCaptureThread() :
+    m_playbackSpeed(0)
 {
 }
 
 PacketCaptureThread::~PacketCaptureThread()
 {
+  // Drop the packets we have lying around
+  pthread_mutex_lock (&m_pcache_mutex);
+
+  struct packetCache *pc = m_pcache_first;
+  struct packetCache* freeMe = NULL;
+
+  while (pc)
+  {
+    freeMe = pc;
+    pc = pc->next;
+
+    free(freeMe);
+  }
+
+  m_pcache_first = NULL;
+  m_pcache_last = NULL;
+  m_pcache_closed = true;
+
+  pthread_mutex_unlock (&m_pcache_mutex);
+}
+
+void PacketCaptureThread::setPlaybackSpeed(int playbackSpeed)
+{
+    if (playbackSpeed < -1)
+    {
+        m_playbackSpeed = -1;
+    }
+    else if (playbackSpeed > 9)
+    {
+        m_playbackSpeed = 9;
+    }
+    else if (playbackSpeed == 0)
+    {
+        // Fast as possible. But using 0 makes the UI unresponsive!
+        m_playbackSpeed = 100;
+    }
+    else
+    {
+        m_playbackSpeed = playbackSpeed;
+    }
 }
 
 void PacketCaptureThread::start(const char *device, const char *host, bool realtime, uint8_t address_type)
@@ -35,33 +83,34 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
     struct bpf_program bpp;
     struct sched_param sp;
 
-   printf ("Initializing Packet Capture Thread: \n");
+    seqInfo("Initializing Packet Capture Thread: ");
+    m_pcache_closed = false;
 
    // create pcap style filter expressions
    if (address_type == IP_ADDRESS_TYPE)
    {
       if (strcmp(host, AUTOMATIC_CLIENT_IP) == 0)
       {
-          printf ("Filtering packets on device %s, searching for EQ client...\n", device);
-          sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
+	seqInfo("Filtering packets on device %s, searching for EQ client...", device);
+	sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
       }
       else
       {
-          printf ("Filtering packets on device %s, IP host %s\n", device, host);
-          sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and host %s and ether proto 0x0800", host);
+	seqInfo("Filtering packets on device %s, IP host %s", device, host);
+	sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and host %s and ether proto 0x0800", host);
       }
    }
 
    else if (address_type == MAC_ADDRESS_TYPE)
    {
-      printf ("Filtering packets on device %s, MAC host %s\n", device, host);
-      sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether host %s and ether proto 0x0800", host);
+     seqInfo("Filtering packets on device %s, MAC host %s", device, host);
+     sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether host %s and ether proto 0x0800", host);
    }
 
    else
    {
-      fprintf (stderr, "pcap_error:filter_string: unknown address_type (%d)\n", address_type);
-      exit(0);
+     seqFatal("pcap_error:filter_string: unknown address_type (%d)", address_type);
+     exit(0);
    }
 
    /* A word about pcap_open_live() from the docs
@@ -94,17 +143,15 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
    int fd = *((int*)m_pcache_pcap);
    int temp = 1;
    if ( ioctl( fd, BIOCIMMEDIATE, &temp ) < 0 )
-     fprintf( stderr, "PCAP couldn't set immediate mode on BSD\n" );
+     seqWarn("PCAP couldn't set immediate mode on BSD" );
 #endif
    if (!m_pcache_pcap)
    {
-     fprintf(stderr, "pcap_error:pcap_open_live(%s): %s\n", device, ebuf);
+     seqWarn("pcap_error:pcap_open_live(%s): %s", device, ebuf);
      if ((getuid() != 0) && (geteuid() != 0))
-       fprintf(stderr, "Make sure you are running ShowEQ as root.\n");
+       seqWarn("Make sure you are running ShowEQ as root.");
      exit(0);
    }
-
-   setuid(getuid()); // give up root access if running suid root
 
    if (pcap_compile(m_pcache_pcap, &bpp, filter_buf, 1, 0) == -1)
    {
@@ -128,8 +175,41 @@ void PacketCaptureThread::start(const char *device, const char *host, bool realt
       memset (&sp, 0, sizeof (sp));
       sp.sched_priority = 1;
       if (pthread_setschedparam (m_tid, SCHED_RR, &sp) != 0)
-         fprintf (stderr, "Failed to set capture thread realtime.");
+         seqWarn("Failed to set capture thread realtime.");
    }
+}
+
+//------------------------------------------------------------------------
+// Capture thread for offline packet capture. Input filename should be a
+// tcpdump file. playbackSpeed is how fast to playback. 1 = realtime,
+// 2 = 2x speed, 3 = 3x speed, etc. 0 = no throttle. -1 = paused.
+//
+void PacketCaptureThread::startOffline(const char* filename, int playbackSpeed)
+{
+    char ebuf[256]; // pcap error buffer
+
+    seqInfo("Initializing Offline Packet Capture Thread: ");
+    m_pcache_closed = false;
+
+    // initialize the pcap object 
+    m_pcache_pcap = pcap_open_offline(filename, ebuf);
+
+    if (!m_pcache_pcap)
+    {
+        seqWarn("pcap_error:pcap_open_offline(%s): %s", filename, ebuf);
+        exit(0);
+    }
+
+    // Set the speed
+    setPlaybackSpeed(playbackSpeed);
+
+    m_tvLastProcessedActual.tv_sec = 0;
+    m_tvLastProcessedOriginal.tv_sec = 0;
+
+    m_pcache_first = m_pcache_last = NULL;
+
+    pthread_mutex_init(&m_pcache_mutex, NULL);
+    pthread_create(&m_tid, NULL, loop, (void*)this);
 }
 
 void PacketCaptureThread::stop()
@@ -156,15 +236,121 @@ void PacketCaptureThread::packetCallBack(u_char * param,
     memcpy (pc->data, data, ph->len);
     pc->next = NULL;
 
-    pthread_mutex_lock (&myThis->m_pcache_mutex);
+#ifdef PCAP_DEBUG
+    struct ether_header* ethHeader = (struct ether_header*) data;
 
-    if (myThis->m_pcache_last)
+    if (ntohs(ethHeader->ether_type) == ETHERTYPE_IP)
+    {
+        struct ip* ipHeader = 
+            (struct ip*) (data + sizeof(struct ether_header));
+
+        char src[128];
+        strcpy(src, inet_ntoa(ipHeader->ip_src));
+        char dst[128];
+        strcpy(dst, inet_ntoa(ipHeader->ip_dst));
+
+        if (ipHeader->ip_p == IPPROTO_UDP)
+        {
+            struct udphdr* udpHeader = 
+                (struct udphdr*) (data + sizeof(struct ip) + sizeof(struct ether_header));
+
+            printf("recv(%d): %s:%d -> %s:%d (size: %d)\n",
+                    ipHeader->ip_p,
+                    src,
+                    ntohs(udpHeader->source),
+                    dst,
+                    ntohs(udpHeader->dest),
+                    ph->len);
+        }
+        else
+        {
+            printf("Non-UDP traffic %s -> %s\n",
+                    inet_ntoa(ipHeader->ip_src),
+                    inet_ntoa(ipHeader->ip_dst));
+        }
+    }
+    else
+    {
+        printf("Non-IP packet...\n");
+    }
+#endif
+
+    // Throttle offline playback properly if applicable.
+    int speed = myThis->m_playbackSpeed;
+
+    if (speed != 0)
+    {
+        if (speed == -1)
+        {
+            // We are paused. Need to wait for it to unpause.
+            while ((speed = myThis->m_playbackSpeed) == -1)
+            {
+                sleep(1);
+            }
+        }
+
+        // Playing back from a file. Need to honor playback speed and packet
+        // timestamps properly.
+        timeval now;
+
+        if (gettimeofday(&now, NULL) == 0)
+        {
+            // Anchor the first run through.
+            if (myThis->m_tvLastProcessedActual.tv_sec == 0)
+            {
+                myThis->m_tvLastProcessedActual = now;
+            }
+            if (myThis->m_tvLastProcessedOriginal.tv_sec == 0)
+            {
+                myThis->m_tvLastProcessedOriginal = ph->ts;
+            }
+
+            // The goal here is to make sure that time elapsed since last
+            // packet / playbackSpeed > time elapsed between original
+            // previous packet and this packet. If it is not, we need to sleep
+            // for the difference.
+            long usecDiffActual = 
+                ((now.tv_sec - myThis->m_tvLastProcessedActual.tv_sec)*1000000 +
+                (now.tv_usec - myThis->m_tvLastProcessedActual.tv_usec));
+            long usecDiffOriginal =
+                ((ph->ts.tv_sec - myThis->m_tvLastProcessedOriginal.tv_sec)*1000000 +
+                (ph->ts.tv_usec - myThis->m_tvLastProcessedOriginal.tv_usec)) /
+                    ((long) speed);
+
+            if (usecDiffActual < usecDiffOriginal)
+            {
+                // Need to wait out the difference.
+                timeval tvWait;
+                
+                tvWait.tv_usec = (usecDiffOriginal - usecDiffActual) % 1000000;
+                tvWait.tv_sec = (usecDiffOriginal - usecDiffActual) / 1000000;
+
+                select(1, NULL, NULL, NULL, &tvWait);
+            }
+
+            // And get ready for next one
+            myThis->m_tvLastProcessedActual = now;
+        }
+    }
+
+    myThis->m_tvLastProcessedOriginal = ph->ts;
+
+    pthread_mutex_lock (&myThis->m_pcache_mutex);
+   
+    if (! myThis->m_pcache_closed)
+    {
+      if (myThis->m_pcache_last)
        myThis->m_pcache_last->next = pc;
 
-    myThis->m_pcache_last = pc;
+      myThis->m_pcache_last = pc;
 
-    if (!myThis->m_pcache_first)
+      if (!myThis->m_pcache_first)
        myThis->m_pcache_first = pc;
+    }
+    else
+    {
+      free(pc);
+    }
 
     pthread_mutex_unlock (&myThis->m_pcache_mutex);
 }
@@ -225,15 +411,15 @@ void PacketCaptureThread::setFilter (const char *device,
          sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800 and host %s", hostname);
     else
     {
-         printf ("Filtering packets on device %s, searching for EQ client...\n", device);
-         sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
+      seqInfo("Filtering packets on device %s, searching for EQ client...", device);
+      sprintf (filter_buf, "udp[0:2] > 1024 and udp[2:2] > 1024 and ether proto 0x0800");
     }
 
     if (pcap_compile (m_pcache_pcap, &bpp, filter_buf, 1, 0) == -1)
     {
-        printf("%s\n",filter_buf);
-	pcap_perror(m_pcache_pcap, "pcap_error:pcap_compile_error");
-        exit (0);
+      seqWarn("%s",filter_buf);
+      pcap_perror(m_pcache_pcap, "pcap_error:pcap_compile_error");
+      exit (0);
     }
 
     if (pcap_setfilter (m_pcache_pcap, &bpp) == -1)
@@ -242,12 +428,14 @@ void PacketCaptureThread::setFilter (const char *device,
         exit (0);
     }
 
+    seqDebug("PCAP Filter Set: %s", filter_buf);
+
     if (realtime)
     {
        memset (&sp, 0, sizeof (sp));
        sp.sched_priority = 1;
        if (pthread_setschedparam (m_tid, SCHED_RR, &sp) != 0)
-           fprintf (stderr, "Failed to set capture thread realtime.");
+	 seqWarn("Failed to set capture thread realtime.");
     }
 
     m_pcapFilter = filter_buf;
