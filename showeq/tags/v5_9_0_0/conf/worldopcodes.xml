@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE seqopcodes SYSTEM "seqopcodes.dtd">
+<seqopcodes>
+    <!-- OLD OPCODES - these need updating still post 1/26/2005 
+
+    <opcode id="02a5" name="OP_UserCompInfo" updated="02/10/04">
+        <comment>User submitted computer information</comment>
+    </opcode>
+    <opcode id="02db" name="OP_LoginComplete" updated="02/10/04">
+        <comment></comment>
+    </opcode>
+-->
+
+
+    <opcode id="61c9" name="OP_SendLoginInfo" updated="02/13/07">
+        <comment>Client starting world session by asking for login information</comment>
+    </opcode>
+    <opcode id="4465" name="OP_GuildList" updated="02/13/07">
+        <comment>old GuildListCode</comment>
+        <payload dir="server" typename="worldGuildListStruct" sizechecktype="match"/>
+    </opcode>
+    <opcode id="050d" name="OP_LogServer" updated="02/13/07">
+        <comment></comment>
+    </opcode>
+    <opcode id="3e54" name="OP_ApproveWorld" updated="02/13/07">
+        <comment></comment>
+    </opcode>
+    <opcode id="431e" name="OP_EnterWorld" updated="02/13/07">
+        <comment>Server approval for client to enter world</comment>
+    </opcode>
+    <opcode id="4ed2" name="OP_ExpansionInfo" updated="02/13/07">
+        <comment>Which expansions user has</comment>
+    </opcode>
+    <opcode id="66bd" name="OP_SendCharInfo" updated="02/13/07">
+        <comment>Send all chars visible @ char select</comment>
+    </opcode>
+    <opcode id="3d4b" name="OP_SendSpellChecksum" updated="02/13/07">
+        <comment>Contains a snippet of spell data</comment>
+    </opcode>
+    <opcode id="398d" name="OP_SendExeChecksum" updated="02/13/07">
+        <comment>Second client verification packet</comment>
+    </opcode>
+    <opcode id="2024" name="OP_UnknownChecksum" updated="02/13/07">
+        <comment>Third client verification packet</comment>
+    </opcode>
+    <opcode id="2398" name="OP_MOTD" updated="02/13/07">
+        <comment>old MOTDCode Server message of the day</comment>
+        <payload dir="server" typename="worldMOTDStruct" sizechecktype="none"/>
+    </opcode>
+    <opcode id="1007" name="OP_SetChatServer" updated="02/13/07">
+        <comment>Chatserver? IP,Port,servername.Charname,password(?)</comment>
+    </opcode>
+    <opcode id="07e5" name="OP_SetChatServer2" updated="02/13/07">
+        <comment>Chatserver? IP,Port,servername.Charname,password(?)</comment>
+    </opcode>
+    <opcode id="7250" name="OP_ZoneServerInfo" updated="02/13/07">
+        <comment>old ZoneServerInfo</comment>
+    </opcode>
+    <opcode id="69ef" name="OP_WorldComplete" updated="02/13/07">
+        <comment>Client telling world server it is done. World replies by disconnecting.</comment>
+    </opcode>
+
+
+    
+
+    <opcode id="26c9" name="OP_DeleteCharacter" updated="10/27/05">
+        <comment>Delete character @ char select</comment>
+    </opcode>
+    <opcode id="6160" name="OP_CharacterCreate" updated="06/29/04">
+        <comment>Create character @ char select</comment>
+    </opcode>
+    <opcode id="3ea6" name="OP_ApproveName" updated="10/27/04">
+        <comment>Approving new character name @ char creation</comment>
+    </opcode>
+    <opcode id="23d4" name="OP_RandomNameGenerator" updated="06/29/05">
+        <comment>Returns a random name</comment>
+    </opcode>
+</seqopcodes>
