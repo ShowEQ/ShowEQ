@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE seqopcodes SYSTEM "seqopcodes.dtd">
+<seqopcodes>
+    <!-- OLD OPCODES - these need updating still post 1/26/2005 
+
+    <opcode id="02a5" name="OP_UserCompInfo" updated="02/10/04">
+        <comment>User submitted computer information</comment>
+    </opcode>
+    <opcode id="02db" name="OP_LoginComplete" updated="02/10/04">
+        <comment></comment>
+    </opcode>
+-->
+
+    <opcode id="5B0B" name="OP_GuildList" updated="01/17/08">
+        <comment>old GuildListCode</comment>
+        <payload dir="server" typename="worldGuildListStruct" sizechecktype="match"/>
+    </opcode>
+    <opcode id="192E" name="OP_MOTD" updated="01/17/08">
+        <comment>old MOTDCode Server message of the day</comment>
+        <payload dir="server" typename="worldMOTDStruct" sizechecktype="none"/>
+    </opcode>
+
+<!-- Not necessary for SEQ to run but here to name packets in logs -->
+    <opcode id="4892" name="OP_SendLoginInfo" updated="01/17/08">
+        <comment>Client starting world session by asking for login information</comment>
+    </opcode>
+
+    <opcode id="4762" name="OP_LogServer" updated="01/17/08">
+        <comment></comment>
+    </opcode>
+    <opcode id="701F" name="OP_ApproveWorld" updated="01/17/08">
+        <comment></comment>
+    </opcode>
+    <opcode id="399F" name="OP_EnterWorld" updated="01/17/08">
+        <comment>Server approval for client to enter world</comment>
+    </opcode>
+    <opcode id="7519" name="OP_ExpansionInfo" updated="01/17/08">
+        <comment>Which expansions user has</comment>
+    </opcode>
+    <opcode id="0F14" name="OP_SendCharInfo" updated="01/17/08">
+        <comment>Send all chars visible @ char select</comment>
+    </opcode>
+    <opcode id="0CA5" name="OP_SendSpellChecksum" updated="01/17/08">
+        <comment>Contains a snippet of spell data</comment>
+    </opcode>
+    <opcode id="1CB3" name="OP_SendExeChecksum" updated="01/17/08">
+        <comment>Second client verification packet</comment>
+    </opcode>
+    <opcode id="679D" name="OP_SendBaseDataChecksum" updated="01/17/08">
+	    <comment>Second client verification packet</comment>
+    </opcode>
+    <opcode id="21C7" name="OP_SendSkillCapsChecksum" updated="01/17/08">
+        <comment>Third client verification packet</comment>
+    </opcode>
+    <opcode id="26C4" name="OP_SetChatServer" updated="01/17/08">
+        <comment>Chatserver? IP,Port,servername.Charname,password(?)</comment>
+    </opcode>
+    <opcode id="1C20" name="OP_SetChatServer2" updated="01/17/08">
+        <comment>Chatserver? IP,Port,servername.Charname,password(?)</comment>
+    </opcode>
+    <opcode id="13DA" name="OP_ZoneServerInfo" updated="01/17/08">
+        <comment>old ZoneServerInfo</comment>
+    </opcode>
+    <opcode id="3331" name="OP_WorldComplete" updated="01/17/08">
+        <comment>Client telling world server it is done. World replies by disconnecting.</comment>
+    </opcode>
+    <opcode id="0254" name="OP_DeleteCharacter" updated="01/17/08">
+        <comment>Delete character @ char select</comment>
+    </opcode>
+    <opcode id="1513" name="OP_CharacterCreate" updated="01/17/08">
+        <comment>Create character @ char select</comment>
+    </opcode>
+    <opcode id="413F" name="OP_ApproveName" updated="01/17/08">
+        <comment>Approving new character name @ char creation</comment>
+    </opcode>
+    <opcode id="4849" name="OP_RandomNameGenerator" updated="01/17/08">
+        <comment>Returns a random name</comment>
+    </opcode>
+
+</seqopcodes>
